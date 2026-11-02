@@ -37,8 +37,8 @@ jobs:
 
       - name: Build APKs (Release & Debug)
         run: |
-          flutter build apk --release --android-skip-build-dependency-validation
-          flutter build apk --debug --android-skip-build-dependency-validation
+          flutter build apk --release --no-tree-shake-icons --android-skip-build-dependency-validation
+          flutter build apk --debug --no-tree-shake-icons --android-skip-build-dependency-validation
 
       - name: Prepare APKs
         run: |
