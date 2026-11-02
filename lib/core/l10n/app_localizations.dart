@@ -863,6 +863,7 @@ class AppLocalizations {
   String get voiceNotesCountLabel => _get('voiceNotesCountLabel');
   String get voiceStorageUsedLabel => _get('voiceStorageUsedLabel');
 
+  String get stats => _get('stats');
   String get rangeWeek => _get('rangeWeek');
   String get rangeMonth => _get('rangeMonth');
   String get rangeYear => _get('rangeYear');
