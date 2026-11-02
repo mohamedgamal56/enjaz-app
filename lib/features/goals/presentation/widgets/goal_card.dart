@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/db/app_database.dart';
 import '../../../../core/l10n/app_localizations.dart';
-import '../../../../core/settings/settings_controller.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../../domain/goal_progress_service.dart';
 import '../goal_details_screen.dart';
 
@@ -30,15 +30,10 @@ class GoalCard extends ConsumerWidget {
     );
 
     String formatNum(dynamic n) {
-      final s = n.toString();
-      if (numeralsFormat == 'arabic') {
-        const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-        return s.split('').map((char) {
-          final digit = int.tryParse(char);
-          return digit != null ? arabicDigits[digit] : char;
-        }).join('');
-      }
-      return s;
+      if (n is num) return AppFormatter.formatNumber(n, format: numeralsFormat);
+      final parsed = num.tryParse(n.toString());
+      if (parsed != null) return AppFormatter.formatNumber(parsed, format: numeralsFormat);
+      return n.toString();
     }
 
     String getCategoryLabel(String? cat) {

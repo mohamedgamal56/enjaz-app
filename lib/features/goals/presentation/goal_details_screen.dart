@@ -4,10 +4,9 @@ import 'package:drift/drift.dart' as drift;
 
 import '../../../core/db/app_database.dart';
 import '../../../core/l10n/app_localizations.dart';
-import '../../../core/settings/settings_controller.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../tasks/presentation/quick_add_sheet.dart';
-import '../../tasks/presentation/task_details_sheet.dart';
+import '../../tasks/presentation/task_details_screen.dart';
 import '../domain/goal_progress_service.dart';
 import 'add_goal_sheet.dart';
 
@@ -294,15 +293,10 @@ class _GoalDetailsScreenState extends ConsumerState<GoalDetailsScreen> {
     final numeralsFormat = ref.watch(numeralsProvider);
 
     String formatNum(dynamic n) {
-      final s = n.toString();
-      if (numeralsFormat == 'arabic') {
-        const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-        return s.split('').map((char) {
-          final digit = int.tryParse(char);
-          return digit != null ? arabicDigits[digit] : char;
-        }).join('');
-      }
-      return s;
+      if (n is num) return AppFormatter.formatNumber(n, format: numeralsFormat);
+      final parsed = num.tryParse(n.toString());
+      if (parsed != null) return AppFormatter.formatNumber(parsed, format: numeralsFormat);
+      return n.toString();
     }
 
     return StreamBuilder<Goal?>(
@@ -943,9 +937,9 @@ class _GoalDetailsScreenState extends ConsumerState<GoalDetailsScreen> {
                             ? delta.toInt().toString()
                             : delta.toStringAsFixed(1);
                         final dateStr = AppFormatter.formatDate(
-                          DateTime.fromMillisecondsSinceEpoch(u.at).toIso8601String().substring(0, 10),
+                          DateTime.fromMillisecondsSinceEpoch(u.at),
                           locale: isArabic ? 'ar' : 'en',
-                          numerals: numeralsFormat,
+                          format: numeralsFormat,
                         );
 
                         return ListTile(
@@ -1077,7 +1071,11 @@ class _GoalDetailsScreenState extends ConsumerState<GoalDetailsScreen> {
                         ),
                       ),
                       onTap: () {
-                        TaskDetailsSheet.show(context, t);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => TaskDetailsScreen(taskId: t.id),
+                          ),
+                        );
                       },
                     );
                   },
