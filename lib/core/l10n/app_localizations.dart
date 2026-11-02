@@ -223,6 +223,49 @@ class AppLocalizations {
       'filterPaused': 'متوقفة',
       'filterDone': 'مكتملة',
       'editGoal': 'تعديل الهدف',
+
+      'editIdea': 'تعديل الفكرة',
+      'ideaTitle': 'عنوان الفكرة',
+      'ideaDescription': 'تفاصيل وملاحظات الفكرة',
+      'ideaSaved': 'تم حفظ الفكرة بنجاح',
+      'convertToTask': 'تحويل لمهمة',
+      'convertToGoal': 'تحويل لهدف',
+      'ideaConvertedToTaskSuccess': 'تم تحويل الفكرة لمهمة بنجاح',
+      'ideaConvertedToGoalSuccess': 'تم تحويل الفكرة لهدف بنجاح',
+      'archiveIdea': 'أرشفة الفكرة',
+      'unarchiveIdea': 'إلغاء الأرشفة',
+      'deleteIdea': 'حذف الفكرة',
+      'deleteIdeaConfirm': 'هل تريد نقل هذه الفكرة لسلة المحذوفات؟',
+      'searchIdeasHint': 'ابحث في الأفكار والوسوم...',
+      'tags': 'الوسوم',
+      'addTag': 'إضافة وسم',
+      'tagHint': 'اكتب الوسم واضغط Enter...',
+      'allTags': 'كل الوسوم',
+      'noIdeasYet': 'مفيش أفكار مسجلة في هذا القسم',
+      'voiceNotes': 'تسجيلات صوتية',
+      'addVoiceNote': 'تسجيل صوتي جديد',
+      'recordIdea': 'سجّل فكرة',
+      'recordVoiceNote': 'بدء التسجيل',
+      'stopRecording': 'إيقاف وحفظ',
+      'cancelRecording': 'إلغاء',
+      'pauseRecording': 'إيقاف مؤقت',
+      'resumeRecording': 'استئناف',
+      'recordingTime': 'مدة التسجيل',
+      'recordingSaved': 'تم حفظ التسجيل الصوتي بنجاح',
+      'discardRecordingConfirm': 'التسجيل الحالي أطول من 5 ثوانٍ، هل تريد تجاهله وحذفه؟',
+      'voiceNoteLabel': 'عنوان التسجيل (اختياري)',
+      'renameVoiceNote': 'تسمية التسجيل',
+      'deleteVoiceNote': 'حذف التسجيل',
+      'deleteVoiceNoteConfirm': 'هل تريد حذف هذا التسجيل الصوتي؟',
+      'voicePermissionTitle': 'صلاحية الميكروفون',
+      'voicePermissionDesc': 'يحتاج التطبيق إذن استخدام الميكروفون لتسجيل الملاحظات الصوتية وحفظها محلياً على جهازك دون اتصال بالإنترنت.',
+      'grantPermission': 'منح الإذن',
+      'openSettings': 'فتح الإعدادات',
+      'voiceFileMissing': 'الملف غير موجود',
+      'cleanDeletedRecordings': 'تنظيف المحذوفات',
+      'voiceStorage': 'مساحة التسجيلات الصوتية',
+      'voiceNotesCountLabel': 'عدد التسجيلات',
+      'voiceStorageUsedLabel': 'المساحة المستخدمة',
     },
     'en': {
       'appName': 'Enjaz',
@@ -428,6 +471,49 @@ class AppLocalizations {
       'filterPaused': 'Paused',
       'filterDone': 'Done',
       'editGoal': 'Edit Goal',
+
+      'editIdea': 'Edit Idea',
+      'ideaTitle': 'Idea Title',
+      'ideaDescription': 'Idea Details & Notes',
+      'ideaSaved': 'Idea saved successfully',
+      'convertToTask': 'Convert to Task',
+      'convertToGoal': 'Convert to Goal',
+      'ideaConvertedToTaskSuccess': 'Idea converted to task successfully',
+      'ideaConvertedToGoalSuccess': 'Idea converted to goal successfully',
+      'archiveIdea': 'Archive Idea',
+      'unarchiveIdea': 'Unarchive Idea',
+      'deleteIdea': 'Delete Idea',
+      'deleteIdeaConfirm': 'Move this idea to trash?',
+      'searchIdeasHint': 'Search ideas and tags...',
+      'tags': 'Tags',
+      'addTag': 'Add Tag',
+      'tagHint': 'Type tag and press Enter...',
+      'allTags': 'All Tags',
+      'noIdeasYet': 'No ideas in this section yet',
+      'voiceNotes': 'Voice Notes',
+      'addVoiceNote': 'New Voice Note',
+      'recordIdea': 'Record an Idea',
+      'recordVoiceNote': 'Start Recording',
+      'stopRecording': 'Stop & Save',
+      'cancelRecording': 'Cancel',
+      'pauseRecording': 'Pause',
+      'resumeRecording': 'Resume',
+      'recordingTime': 'Recording Duration',
+      'recordingSaved': 'Voice note saved successfully',
+      'discardRecordingConfirm': 'This recording is over 5 seconds. Are you sure you want to discard it?',
+      'voiceNoteLabel': 'Voice note label (optional)',
+      'renameVoiceNote': 'Rename Voice Note',
+      'deleteVoiceNote': 'Delete Voice Note',
+      'deleteVoiceNoteConfirm': 'Delete this voice note?',
+      'voicePermissionTitle': 'Microphone Permission',
+      'voicePermissionDesc': 'Enjaz needs microphone permission to record voice notes offline directly on your device.',
+      'grantPermission': 'Grant Permission',
+      'openSettings': 'Open Settings',
+      'voiceFileMissing': 'File missing',
+      'cleanDeletedRecordings': 'Clean Deleted Recordings',
+      'voiceStorage': 'Voice Notes Storage',
+      'voiceNotesCountLabel': 'Total Recordings',
+      'voiceStorageUsedLabel': 'Storage Used',
     },
   };
 
@@ -639,6 +725,49 @@ class AppLocalizations {
   String get filterPaused => _get('filterPaused');
   String get filterDone => _get('filterDone');
   String get editGoal => _get('editGoal');
+
+  String get editIdea => _get('editIdea');
+  String get ideaTitle => _get('ideaTitle');
+  String get ideaDescription => _get('ideaDescription');
+  String get ideaSaved => _get('ideaSaved');
+  String get convertToTask => _get('convertToTask');
+  String get convertToGoal => _get('convertToGoal');
+  String get ideaConvertedToTaskSuccess => _get('ideaConvertedToTaskSuccess');
+  String get ideaConvertedToGoalSuccess => _get('ideaConvertedToGoalSuccess');
+  String get archiveIdea => _get('archiveIdea');
+  String get unarchiveIdea => _get('unarchiveIdea');
+  String get deleteIdea => _get('deleteIdea');
+  String get deleteIdeaConfirm => _get('deleteIdeaConfirm');
+  String get searchIdeasHint => _get('searchIdeasHint');
+  String get tags => _get('tags');
+  String get addTag => _get('addTag');
+  String get tagHint => _get('tagHint');
+  String get allTags => _get('allTags');
+  String get noIdeasYet => _get('noIdeasYet');
+  String get voiceNotes => _get('voiceNotes');
+  String get addVoiceNote => _get('addVoiceNote');
+  String get recordIdea => _get('recordIdea');
+  String get recordVoiceNote => _get('recordVoiceNote');
+  String get stopRecording => _get('stopRecording');
+  String get cancelRecording => _get('cancelRecording');
+  String get pauseRecording => _get('pauseRecording');
+  String get resumeRecording => _get('resumeRecording');
+  String get recordingTime => _get('recordingTime');
+  String get recordingSaved => _get('recordingSaved');
+  String get discardRecordingConfirm => _get('discardRecordingConfirm');
+  String get voiceNoteLabel => _get('voiceNoteLabel');
+  String get renameVoiceNote => _get('renameVoiceNote');
+  String get deleteVoiceNote => _get('deleteVoiceNote');
+  String get deleteVoiceNoteConfirm => _get('deleteVoiceNoteConfirm');
+  String get voicePermissionTitle => _get('voicePermissionTitle');
+  String get voicePermissionDesc => _get('voicePermissionDesc');
+  String get grantPermission => _get('grantPermission');
+  String get openSettings => _get('openSettings');
+  String get voiceFileMissing => _get('voiceFileMissing');
+  String get cleanDeletedRecordings => _get('cleanDeletedRecordings');
+  String get voiceStorage => _get('voiceStorage');
+  String get voiceNotesCountLabel => _get('voiceNotesCountLabel');
+  String get voiceStorageUsedLabel => _get('voiceStorageUsedLabel');
 
   String getStatusLabel(String status) {
     switch (status) {

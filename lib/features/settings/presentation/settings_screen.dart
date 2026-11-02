@@ -5,6 +5,8 @@ import '../../../core/l10n/app_localizations.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/db/app_database.dart';
+import '../../voice_notes/domain/voice_note_service.dart';
 import 'reasons_manager_screen.dart';
 import 'trash_screen.dart';
 
@@ -195,6 +197,49 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 16),
+
+          // Section: Voice Notes Storage (Spec 14.6)
+          FutureBuilder<(int, int)>(
+            future: ref.read(databaseProvider).getVoiceStorageStats(),
+            builder: (context, snapshot) {
+              final count = snapshot.data?.$1 ?? 0;
+              final bytes = snapshot.data?.$2 ?? 0;
+              final sizeFormatted = VoiceNoteService.formatFileSize(bytes);
+
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.mic_rounded, color: theme.colorScheme.primary),
+                          const SizedBox(width: 12),
+                          Text(
+                            l10n.voiceStorage,
+                            style: theme.textTheme.titleMedium,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('${l10n.voiceNotesCountLabel}: $count'),
+                          Text(
+                            '${l10n.voiceStorageUsedLabel}: $sizeFormatted',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 16),
 

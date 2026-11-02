@@ -5,6 +5,8 @@ import 'package:drift/drift.dart' as drift;
 import '../../../core/db/app_database.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../voice_notes/domain/voice_note_service.dart';
+import '../../voice_notes/presentation/voice_recorder_sheet.dart';
 
 class QuickAddSheet extends ConsumerStatefulWidget {
   final String? initialDate; // YYYY-MM-DD
@@ -53,6 +55,16 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   String? _selectedDate; // YYYY-MM-DD or null (no date / inbox)
   String? _selectedTime; // HH:mm or null
   String _selectedPriority = 'normal'; // low | normal | high
+  VoiceRecordingResult? _recordedVoiceNote;
+
+  Future<void> _recordVoiceNote() async {
+    final result = await VoiceRecorderSheet.show(context);
+    if (result != null) {
+      setState(() {
+        _recordedVoiceNote = result;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -234,13 +246,23 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   }
 
   Future<bool> _saveTask() async {
-    final title = _titleController.text.trim();
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    String title = _titleController.text.trim();
+    if (title.isEmpty && _recordedVoiceNote != null) {
+      title = VoiceNoteService.generateVoiceOnlyTitle(
+        date: DateTime.now(),
+        isArabic: isArabic,
+      );
+    }
     if (title.isEmpty) return false;
 
     final db = ref.read(databaseProvider);
     final now = DateTime.now().millisecondsSinceEpoch;
+    int? insertedId;
+    String parentType = 'task';
 
     if (_selectedKind == 'task' || _selectedKind == 'errand') {
+      parentType = 'task';
       final companion = TasksCompanion.insert(
         title: title,
         notes: _notesController.text.trim().isNotEmpty
@@ -267,9 +289,10 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
         progress: const drift.Value(0),
       );
 
-      await db.insertNewTask(companion);
+      insertedId = await db.insertNewTask(companion);
     } else if (_selectedKind == 'goal') {
-      await db.into(db.goals).insert(
+      parentType = 'goal';
+      insertedId = await db.into(db.goals).insert(
             GoalsCompanion.insert(
               title: title,
               description: _notesController.text.trim().isNotEmpty
@@ -283,7 +306,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
             ),
           );
     } else if (_selectedKind == 'idea') {
-      await db.into(db.ideas).insert(
+      parentType = 'idea';
+      insertedId = await db.into(db.ideas).insert(
             IdeasCompanion.insert(
               title: title,
               description: _notesController.text.trim().isNotEmpty
@@ -293,6 +317,22 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
               updatedAt: now,
             ),
           );
+    }
+
+    if (_recordedVoiceNote != null && insertedId != null) {
+      await db.insertVoiceNote(
+        VoiceNotesCompanion.insert(
+          parentType: parentType,
+          parentId: insertedId,
+          fileName: _recordedVoiceNote!.relativeFileName,
+          durationMs: drift.Value(_recordedVoiceNote!.durationMs),
+          sizeBytes: drift.Value(_recordedVoiceNote!.sizeBytes),
+          recordedAt: now,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+      _recordedVoiceNote = null;
     }
 
     return true;
@@ -421,13 +461,58 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                               : Icons.task_alt_rounded,
                   color: theme.colorScheme.primary,
                 ),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.playlist_add_rounded),
-                  tooltip: l10n.importNotes,
-                  onPressed: () => _showMultiLineImportDialog(),
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        _recordedVoiceNote != null ? Icons.mic_rounded : Icons.mic_none_rounded,
+                        color: _recordedVoiceNote != null ? Colors.red : theme.colorScheme.primary,
+                      ),
+                      tooltip: l10n.addVoiceNote,
+                      onPressed: _recordVoiceNote,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.playlist_add_rounded),
+                      tooltip: l10n.importNotes,
+                      onPressed: () => _showMultiLineImportDialog(),
+                    ),
+                  ],
                 ),
               ),
             ),
+            if (_recordedVoiceNote != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.audiotrack_rounded, color: theme.colorScheme.primary, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${l10n.voiceNotes} (${VoiceNoteService.formatDuration(_recordedVoiceNote!.durationMs)})',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 16),
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () {
+                        setState(() => _recordedVoiceNote = null);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
 
             // Errand Location Input (Visible only for Errand)

@@ -61,3 +61,24 @@
   - Status changes to `paused` and `abandoned` mandate specifying a reason.
   - Main navigation FAB contextually launches `AddGoalSheet` when on the Goals tab and `QuickAddSheet` when on other tabs.
   - Tasks can be linked directly to goals via `goal_id` foreign key.
+
+## Decision 9: Phase 4 Ideas & Voice Notes (v1.1) Architecture & Storage Strategy
+- **Context**: Spec Section 6.8 and Addendum v1.1 introduce Ideas tracking with Tags, conversion to Tasks or Goals, and an offline Audio Recording & Playback system attached across Tasks, Goals, and Ideas.
+- **Decision**:
+  - Audio Engine Packages:
+    - `record: ^5.1.2` for foreground audio recording in AAC-LC (.m4a) mono at 64kbps.
+    - `just_audio: ^0.9.39` for feature-rich, low-latency playback with variable speed support (1.0x, 1.5x, 2.0x) and seeking.
+    - `permission_handler: ^11.3.1` for clean Android runtime microphone permission requesting.
+  - Storage & Privacy (Spec 14.2):
+    - All audio files are stored strictly inside the app-private document directory (`path_provider.getApplicationDocumentsDirectory()`) under the `voice/` subfolder.
+    - No `INTERNET` permission added to `AndroidManifest.xml` - audio stays 100% on-device offline.
+  - Database Migration Strategy:
+    - Drift schema version bumped from 1 to 2.
+    - `onUpgrade` hook dynamically detects `from < 2` and creates the `voice_notes` table and composite index on `(parent_type, parent_id)` without dropping or resetting any existing user data.
+  - Cross-Entity Attachment & Idea Conversion:
+    - Audio recordings are linked polymorphically via `(parent_type, parent_id)`.
+    - When converting an Idea to a Task or Goal, all associated voice notes are updated atomically to point to the new entity (`db.moveVoiceNotes(...)`), and the idea status is updated to `converted` with `converted_type` and `converted_id` audit pointers.
+  - Voice-Only Capture:
+    - When recording without typing a title in Quick Add or Add Idea, a localized placeholder title is automatically generated (`تسجيل صوتي — 3 نوفمبر 12:15 ص`).
+  - Discard Protection:
+    - Discarding or canceling any active recording longer than 5 seconds triggers an explicit confirmation modal to prevent accidental loss of user speech.

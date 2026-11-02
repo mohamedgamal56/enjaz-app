@@ -8,6 +8,7 @@ import '../../../core/utils/date_formatter.dart';
 import '../../tasks/presentation/quick_add_sheet.dart';
 import '../../tasks/presentation/task_details_screen.dart';
 import '../domain/goal_progress_service.dart';
+import '../../voice_notes/presentation/widgets/voice_notes_section.dart';
 import 'add_goal_sheet.dart';
 
 class GoalDetailsScreen extends ConsumerStatefulWidget {
@@ -486,6 +487,10 @@ class _GoalDetailsScreenState extends ConsumerState<GoalDetailsScreen> {
 
                 // Linked Tasks Section
                 _buildLinkedTasksSection(context, goal, formatNum),
+                const SizedBox(height: 16),
+
+                // Voice Notes Section (Spec 14.4)
+                VoiceNotesSection(parentType: 'goal', parentId: goal.id),
                 const SizedBox(height: 32),
               ],
             ),

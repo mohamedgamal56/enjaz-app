@@ -23,12 +23,13 @@ part 'app_database.g.dart';
   IdeaTags,
   Recurrences,
   Settings,
+  VoiceNotes,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -53,7 +54,12 @@ class AppDatabase extends _$AppDatabase {
           }
         },
         onUpgrade: (Migrator m, int from, int to) async {
-          // Versioned migrations go here
+          if (from < 2) {
+            await m.createTable(voiceNotes);
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_voice_notes_parent ON voice_notes (parent_type, parent_id);',
+            );
+          }
         },
       );
 
@@ -652,6 +658,254 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
     });
+  }
+
+  // -------------------------------------------------------------
+  // IDEAS & TAGS QUERIES & MUTATIONS (Phase 4)
+  // -------------------------------------------------------------
+
+  /// Watch ideas by status (new, exploring, converted, archived) with optional search query and tag
+  Stream<List<Idea>> watchIdeas({String? status, String? searchQuery, int? tagId}) {
+    final q = select(ideas)..where((i) => i.deletedAt.isNull());
+    if (status != null && status.isNotEmpty) {
+      q.where((i) => i.status.equals(status));
+    }
+    if (searchQuery != null && searchQuery.trim().isNotEmpty) {
+      final term = '%${searchQuery.trim()}%';
+      q.where((i) => i.title.like(term) | i.description.like(term));
+    }
+    q.orderBy([(i) => OrderingTerm(expression: i.id, mode: OrderingMode.desc)]);
+
+    if (tagId != null) {
+      return q.watch().asyncMap((ideaList) async {
+        final filtered = <Idea>[];
+        for (final idea in ideaList) {
+          final count = await (select(ideaTags)
+                ..where((it) => it.ideaId.equals(idea.id) & it.tagId.equals(tagId)))
+              .get();
+          if (count.isNotEmpty) {
+            filtered.add(idea);
+          }
+        }
+        return filtered;
+      });
+    }
+
+    return q.watch();
+  }
+
+  /// Watch single idea by ID
+  Stream<Idea?> watchIdeaById(int id) {
+    return (select(ideas)..where((i) => i.id.equals(id))).watchSingleOrNull();
+  }
+
+  /// Watch all non-deleted tags
+  Stream<List<Tag>> watchAllTags() {
+    return (select(tags)..where((t) => t.deletedAt.isNull())).watch();
+  }
+
+  /// Watch tags for a specific idea
+  Stream<List<Tag>> watchTagsForIdea(int ideaId) {
+    final q = select(tags).join([
+      innerJoin(ideaTags, ideaTags.tagId.equalsExp(tags.id)),
+    ])..where(ideaTags.ideaId.equals(ideaId) & tags.deletedAt.isNull());
+
+    return q.watch().map((rows) => rows.map((r) => r.readTable(tags)).toList());
+  }
+
+  /// Insert new idea with optional tags
+  Future<int> insertNewIdea({
+    required String title,
+    String? description,
+    List<String>? tagNames,
+  }) async {
+    return transaction(() async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final ideaId = await into(ideas).insert(
+        IdeasCompanion.insert(
+          title: title,
+          description: description != null && description.isNotEmpty
+              ? Value(description)
+              : const Value.absent(),
+          status: const Value('new'),
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+
+      if (tagNames != null && tagNames.isNotEmpty) {
+        await syncIdeaTags(ideaId, tagNames);
+      }
+
+      return ideaId;
+    });
+  }
+
+  /// Update idea fields
+  Future<void> updateIdeaData(IdeasCompanion idea) async {
+    await (update(ideas)..where((i) => i.id.equals(idea.id.value))).write(idea);
+  }
+
+  /// Update idea status
+  Future<void> updateIdeaStatus(int ideaId, String status) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(ideas)..where((i) => i.id.equals(ideaId))).write(
+      IdeasCompanion(
+        status: Value(status),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Soft delete idea
+  Future<void> softDeleteIdea(int ideaId) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(ideas)..where((i) => i.id.equals(ideaId))).write(
+      IdeasCompanion(
+        deletedAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Convert idea to Task or Goal
+  Future<void> convertIdea({
+    required int ideaId,
+    required String targetType, // task | goal
+    required int targetId,
+  }) async {
+    return transaction(() async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      // 1. Mark idea as converted
+      await (update(ideas)..where((i) => i.id.equals(ideaId))).write(
+        IdeasCompanion(
+          status: const Value('converted'),
+          convertedType: Value(targetType),
+          convertedId: Value(targetId),
+          updatedAt: Value(now),
+        ),
+      );
+
+      // 2. Move attached voice notes to target (Spec 14.4)
+      await moveVoiceNotes(
+        fromType: 'idea',
+        fromId: ideaId,
+        toType: targetType,
+        toId: targetId,
+      );
+    });
+  }
+
+  /// Sync idea tags
+  Future<void> syncIdeaTags(int ideaId, List<String> tagNames) async {
+    return transaction(() async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      // remove existing
+      await (delete(ideaTags)..where((it) => it.ideaId.equals(ideaId))).go();
+
+      for (final raw in tagNames) {
+        final name = raw.trim();
+        if (name.isEmpty) continue;
+
+        var tag = await (select(tags)..where((t) => t.name.equals(name) & t.deletedAt.isNull())).getSingleOrNull();
+        if (tag == null) {
+          final tid = await into(tags).insert(
+            TagsCompanion.insert(
+              name: name,
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+          tag = await (select(tags)..where((t) => t.id.equals(tid))).getSingle();
+        }
+
+        await into(ideaTags).insert(
+          IdeaTag(ideaId: ideaId, tagId: tag.id),
+        );
+      }
+    });
+  }
+
+  // -------------------------------------------------------------
+  // VOICE NOTES QUERIES & MUTATIONS (Addendum v1.1)
+  // -------------------------------------------------------------
+
+  /// Watch voice notes for a specific parent (task, idea, goal)
+  Stream<List<VoiceNote>> watchVoiceNotes(String parentType, int parentId) {
+    return (select(voiceNotes)
+          ..where((v) =>
+              v.parentType.equals(parentType) &
+              v.parentId.equals(parentId) &
+              v.deletedAt.isNull())
+          ..orderBy([(v) => OrderingTerm(expression: v.id, mode: OrderingMode.asc)]))
+        .watch();
+  }
+
+  /// Watch count of voice notes for an item
+  Stream<int> watchVoiceNotesCount(String parentType, int parentId) {
+    return (select(voiceNotes)
+          ..where((v) =>
+              v.parentType.equals(parentType) &
+              v.parentId.equals(parentId) &
+              v.deletedAt.isNull()))
+        .watch()
+        .map((list) => list.length);
+  }
+
+  /// Insert voice note
+  Future<int> insertVoiceNote(VoiceNotesCompanion note) async {
+    return into(voiceNotes).insert(note);
+  }
+
+  /// Update label of voice note
+  Future<void> updateVoiceNoteLabel(int id, String label) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(voiceNotes)..where((v) => v.id.equals(id))).write(
+      VoiceNotesCompanion(
+        label: Value(label),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Soft delete voice note
+  Future<void> softDeleteVoiceNote(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(voiceNotes)..where((v) => v.id.equals(id))).write(
+      VoiceNotesCompanion(
+        deletedAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Move voice notes from one item to another (e.g. idea -> task/goal)
+  Future<void> moveVoiceNotes({
+    required String fromType,
+    required int fromId,
+    required String toType,
+    required int toId,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(voiceNotes)
+          ..where((v) => v.parentType.equals(fromType) & v.parentId.equals(fromId)))
+        .write(
+      VoiceNotesCompanion(
+        parentType: Value(toType),
+        parentId: Value(toId),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Storage statistics: (count, totalBytes)
+  Future<(int, int)> getVoiceStorageStats() async {
+    final all = await (select(voiceNotes)..where((v) => v.deletedAt.isNull())).get();
+    int totalBytes = 0;
+    for (final v in all) {
+      totalBytes += v.sizeBytes;
+    }
+    return (all.length, totalBytes);
   }
 }
 

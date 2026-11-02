@@ -10,6 +10,7 @@ import '../../settings/presentation/settings_screen.dart';
 import '../../tasks/presentation/quick_add_sheet.dart';
 import '../../history/presentation/history_screen.dart';
 import '../../goals/presentation/add_goal_sheet.dart';
+import '../../ideas/presentation/add_idea_sheet.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
@@ -126,13 +127,15 @@ class _MainShellState extends ConsumerState<MainShell> {
       // Floating button on Today, Goals and Ideas. Stats has no button.
       floatingActionButton: _currentIndex != 3
           ? FloatingActionButton(
-              tooltip: _currentIndex == 1 ? l10n.addGoal : l10n.addTask,
+              tooltip: _currentIndex == 1
+                  ? l10n.addGoal
+                  : (_currentIndex == 2 ? l10n.addIdea : l10n.addTask),
               child: const Icon(Icons.add_rounded),
               onPressed: () {
                 if (_currentIndex == 1) {
                   AddGoalSheet.show(context);
                 } else if (_currentIndex == 2) {
-                  QuickAddSheet.show(context, initialKind: 'idea');
+                  AddIdeaSheet.show(context);
                 } else {
                   QuickAddSheet.show(context, initialKind: 'task');
                 }

@@ -6,6 +6,7 @@ import '../../../core/db/app_database.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../voice_notes/presentation/widgets/voice_notes_section.dart';
 import 'status_sheet.dart';
 
 class TaskDetailsScreen extends ConsumerStatefulWidget {
@@ -625,6 +626,8 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
                     );
                   },
                 ),
+                const SizedBox(height: 16),
+                VoiceNotesSection(parentType: 'task', parentId: task.id),
                 const SizedBox(height: 32),
               ],
             ),

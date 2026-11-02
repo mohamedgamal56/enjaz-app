@@ -144,3 +144,15 @@ class Settings extends Table {
   @override
   Set<Column> get primaryKey => {key};
 }
+
+// 12. Voice Notes (Addendum v1.1)
+@TableIndex(name: 'idx_voice_notes_parent', columns: {#parentType, #parentId})
+class VoiceNotes extends Table with CommonColumns {
+  TextColumn get parentType => text()(); // task | idea | goal
+  IntColumn get parentId => integer()();
+  TextColumn get fileName => text()(); // relative path inside voice/
+  IntColumn get durationMs => integer().withDefault(const Constant(0))();
+  IntColumn get sizeBytes => integer().withDefault(const Constant(0))();
+  TextColumn get label => text().nullable()();
+  IntColumn get recordedAt => integer()(); // epoch ms
+}

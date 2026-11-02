@@ -625,6 +625,179 @@
       opacity: 1;
       pointer-events: auto;
     }
+  
+    /* --- Phase 4 Ideas & Voice Notes Styles --- */
+    .ideas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .idea-card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--app-radius);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .idea-card:hover {
+      border-color: var(--accent);
+    }
+    .idea-card:active {
+      transform: scale(0.98);
+    }
+    .idea-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .idea-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.4;
+    }
+    .idea-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .voice-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 8px;
+      background: var(--surface-variant);
+      color: var(--accent);
+    }
+    .tag-chip {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: var(--surface-variant);
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    /* Voice Player Card */
+    .voice-player {
+      background-color: var(--surface-variant);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .voice-player-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .voice-player-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .voice-player-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .play-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .speed-btn {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      cursor: pointer;
+    }
+    .scrubber-slider {
+      flex: 1;
+      accent-color: var(--accent);
+      cursor: pointer;
+      height: 4px;
+    }
+    .voice-meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    /* Recorder Sheet Visuals */
+    .recording-pulse-circle {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.15);
+      border: 2px solid var(--color-stopped);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-stopped);
+      animation: pulse-ring 1.5s infinite;
+      margin: 0 auto;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.9; }
+      50% { transform: scale(1.08); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.9; }
+    }
+    .wave-bars {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      height: 36px;
+      margin: 10px 0;
+    }
+    .wave-bar {
+      width: 4px;
+      background: var(--accent);
+      border-radius: 2px;
+      animation: sound-wave 0.8s ease-in-out infinite alternate;
+    }
+    @keyframes sound-wave {
+      0% { height: 6px; }
+      100% { height: 32px; }
+    }
+
   </style>
 </head>
 <body data-theme="light">
@@ -701,24 +874,31 @@
       </div>
 
       <!-- Screen 2: Ideas -->
-      <div id="screenIdeas" class="screen-panel" style="display: none; flex-direction: column; gap: 16px; flex: 1;">
-        <div class="chips-row" style="overflow-x: auto;">
-          <div class="chip active">جديدة (New)</div>
-          <div class="chip">بتتدرس (Exploring)</div>
-          <div class="chip">اتحولت (Converted)</div>
-          <div class="chip">مؤرشفة (Archived)</div>
-        </div>
-        <div class="empty-state">
-          <div class="empty-icon-circle">
-            <span class="material-symbols-rounded" style="font-size: 36px;">lightbulb</span>
-          </div>
-          <div class="empty-title">مفيش أفكار مسجلة</div>
-          <div class="empty-subtitle">No ideas recorded</div>
-          <button class="primary-btn" onclick="openQuickAdd('idea')">
-            <span class="material-symbols-rounded">add</span>
-            <span>أضف فكرة</span>
+      <div id="screenIdeas" class="screen-panel" style="display: none; flex-direction: column; gap: 14px; flex: 1;">
+        <!-- Ideas Search -->
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="text" id="ideasSearchInput" class="form-input" style="flex:1;" placeholder="ابحث في الأفكار أو الوسوم..." oninput="renderIdeas()" />
+          <button class="chip" onclick="openVoiceRecorder('idea')" style="color:var(--accent); border-color:var(--accent); padding:10px 12px;">
+            <span class="material-symbols-rounded" style="font-size: 18px;">mic</span>
           </button>
         </div>
+
+        <!-- Status Filter Chips -->
+        <div class="chips-row" style="overflow-x: auto; gap: 6px;" id="ideaStatusFilters">
+          <div class="chip active" onclick="setIdeaStatusFilter('all')">الكل</div>
+          <div class="chip" onclick="setIdeaStatusFilter('new')">جديدة</div>
+          <div class="chip" onclick="setIdeaStatusFilter('exploring')">بتتدرس</div>
+          <div class="chip" onclick="setIdeaStatusFilter('converted')">اتحولت</div>
+          <div class="chip" onclick="setIdeaStatusFilter('archived')">مؤرشفة</div>
+        </div>
+
+        <!-- Tags Row -->
+        <div class="chips-row" style="overflow-x: auto; gap: 6px;" id="ideaTagsFilterRow">
+          <!-- Dynamic tags will be injected here -->
+        </div>
+
+        <!-- Ideas List Container -->
+        <div id="ideasListContainer" class="ideas-grid"></div>
       </div>
 
       <!-- Screen 3: Stats -->
@@ -787,6 +967,7 @@
     </nav>
 
     <!-- Quick Add Bottom Sheet (Spec 6.2) -->
+        <!-- Quick Add Bottom Sheet (Spec 6.2 & Phase 4 Voice Note) -->
     <div class="sheet-overlay" id="quickAddSheet" onclick="closeSheet('quickAddSheet', event)">
       <div class="sheet-content" onclick="event.stopPropagation()">
         <div class="sheet-header">
@@ -824,8 +1005,22 @@
           </button>
         </div>
 
-        <!-- Title Input -->
-        <input type="text" id="qaTitleInput" class="form-input" placeholder="عنوان المهمة..." autofocus />
+        <!-- Title Input with Voice Note Mic Button -->
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="text" id="qaTitleInput" class="form-input" style="flex: 1;" placeholder="عنوان المهمة..." autofocus />
+          <button type="button" class="chip" onclick="openVoiceRecorder('quick_add')" style="border-color: var(--accent); color: var(--accent); padding: 12px;" title="تسجيل صوتي">
+            <span class="material-symbols-rounded" style="font-size: 20px;">mic</span>
+          </button>
+        </div>
+
+        <!-- Attached Voice Note Preview if recorded -->
+        <div id="qaVoicePreview" style="display: none; align-items: center; justify-content: space-between; background: var(--surface-variant); padding: 6px 12px; border-radius: 10px; font-size: 12px;">
+          <div style="display: flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 600;">
+            <span class="material-symbols-rounded" style="font-size: 18px;">graphic_eq</span>
+            <span id="qaVoiceLabel">تسجيل صوتي (0:30)</span>
+          </div>
+          <button type="button" class="icon-btn" onclick="clearQAVoice()"><span class="material-symbols-rounded" style="font-size: 16px;">close</span></button>
+        </div>
 
         <!-- Location Input (Visible for Errand only) -->
         <div id="qaLocationBox" style="display: none;">
@@ -853,20 +1048,6 @@
         <div style="display: flex; gap: 10px; margin-top: 8px;">
           <button class="primary-btn" style="flex: 1; justify-content: center;" onclick="saveTask(false)">حفظ</button>
           <button class="primary-btn" style="flex: 1; justify-content: center; background: none; border: 1px solid var(--border); color: var(--text);" onclick="saveTask(true)">حفظ وإضافة آخر</button>
-        </div>
-        <!-- Management Links -->
-        <div class="card" style="margin-bottom: 8px;">
-          <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">الإدارة / Management</div>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div class="chip" onclick="openReasonsManager()" style="justify-content: space-between; border-radius: 12px; width: 100%;">
-              <span>إدارة أسباب التأجيل (Reasons Manager)</span>
-              <span class="material-symbols-rounded">chevron_left</span>
-            </div>
-            <div class="chip" onclick="openTrash()" style="justify-content: space-between; border-radius: 12px; width: 100%; color: var(--color-stopped);">
-              <span>سلة المحذوفات (Trash)</span>
-              <span class="material-symbols-rounded">delete</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -988,90 +1169,6 @@
         </div>
 
         <button class="primary-btn" style="margin-top: 12px; justify-content: center;" onclick="confirmStatusChange()">تأكيد الحالة</button>
-        <!-- Management Links -->
-        <div class="card" style="margin-bottom: 8px;">
-          <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">الإدارة / Management</div>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div class="chip" onclick="openReasonsManager()" style="justify-content: space-between; border-radius: 12px; width: 100%;">
-              <span>إدارة أسباب التأجيل (Reasons Manager)</span>
-              <span class="material-symbols-rounded">chevron_left</span>
-            </div>
-            <div class="chip" onclick="openTrash()" style="justify-content: space-between; border-radius: 12px; width: 100%; color: var(--color-stopped);">
-              <span>سلة المحذوفات (Trash)</span>
-              <span class="material-symbols-rounded">delete</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- History Bottom Sheet (Spec 6.5) -->
-    <div class="sheet-overlay" id="historySheet" onclick="closeSheet('historySheet', event)">
-      <div class="sheet-content" onclick="event.stopPropagation()">
-        <div class="sheet-header">
-          <div class="sheet-title">سجل المهام (Task History)</div>
-          <button class="icon-btn" onclick="closeSheetDirect('historySheet')">
-            <span class="material-symbols-rounded">close</span>
-          </button>
-        </div>
-        <input type="text" id="historySearchInput" class="form-input" placeholder="ابحث في المهام، الملاحظات، أو الأسباب..." oninput="renderHistory()" />
-        <div class="chips-row" style="flex-wrap: wrap; margin-top: 4px;">
-          <div class="chip active" id="histSortBtn" onclick="toggleHistorySort()">الأحدث أولاً</div>
-          <div class="chip" onclick="filterHistoryStatus('done')">تمت فقط</div>
-          <div class="chip" onclick="filterHistoryStatus('all')">الكل</div>
-        </div>
-        <div id="historyListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
-      </div>
-    </div>
-
-    <!-- Multi-line Import Sheet (Spec 6.2) -->
-    <div class="sheet-overlay" id="multiLineSheet" onclick="closeSheet('multiLineSheet', event)">
-      <div class="sheet-content" onclick="event.stopPropagation()">
-        <div class="sheet-header">
-          <div class="sheet-title">تحويل الملاحظات لمهام</div>
-          <button class="icon-btn" onclick="closeSheetDirect('multiLineSheet')">
-            <span class="material-symbols-rounded">close</span>
-          </button>
-        </div>
-        <div style="font-size: 13px; color: var(--text-muted);">الصق قائمتك هنا (كل سطر هيكون مهمة منفصلة):</div>
-        <textarea id="multiLineInput" class="form-input" rows="6" placeholder="مهمة 1&#10;مشوار 2&#10;مهمة 3..."></textarea>
-        <button class="primary-btn" style="justify-content: center;" onclick="confirmMultiLineImport()">تحويل لمهام</button>
-      </div>
-    </div>
-
-    <!-- Reasons Manager Sheet (Spec 6.10) -->
-    <div class="sheet-overlay" id="reasonsSheet" onclick="closeSheet('reasonsSheet', event)">
-      <div class="sheet-content" onclick="event.stopPropagation()">
-        <div class="sheet-header">
-          <div class="sheet-title">إدارة أسباب التأجيل</div>
-          <button class="icon-btn" onclick="closeSheetDirect('reasonsSheet')">
-            <span class="material-symbols-rounded">close</span>
-          </button>
-        </div>
-        <div style="display: flex; gap: 8px;">
-          <input type="text" id="newReasonInput" class="form-input" placeholder="اكتب سبب جديد..." />
-          <button class="primary-btn" onclick="addCustomReason()">إضافة</button>
-        </div>
-        <div id="reasonsListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
-      </div>
-    </div>
-
-    <!-- Trash Sheet (Spec 6.10) -->
-    <div class="sheet-overlay" id="trashSheet" onclick="closeSheet('trashSheet', event)">
-      <div class="sheet-content" onclick="event.stopPropagation()">
-        <div class="sheet-header">
-          <div class="sheet-title">سلة المحذوفات (Trash)</div>
-          <button class="icon-btn" onclick="closeSheetDirect('trashSheet')">
-            <span class="material-symbols-rounded">close</span>
-          </button>
-        </div>
-        <div style="display: flex; justify-content: flex-end;">
-          <button class="chip" onclick="purgeTrashItems()" style="color: var(--color-stopped); border-color: var(--color-stopped);">
-            <span class="material-symbols-rounded" style="font-size: 16px;">delete_forever</span>
-            <span>تفريغ السلة نهائياً</span>
-          </button>
-        </div>
-        <div id="trashListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
       </div>
     </div>
 
@@ -1111,6 +1208,23 @@
             <div class="chip" id="optNumArabic" onclick="setNumerals('arabic')">١٢٣</div>
           </div>
         </div>
+
+        <!-- Voice Notes Storage Card (Phase 4 Spec 14.2) -->
+        <div class="card" style="margin-bottom: 8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+            <div style="font-weight: 600; font-size: 14px;">الملاحظات الصوتية والمساحة</div>
+            <span class="material-symbols-rounded" style="color:var(--accent);">mic</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
+            <span id="settingsVoiceCount">عدد التسجيلات: 0</span>
+            <span id="settingsVoiceSize">المساحة: 0 ميجابايت</span>
+          </div>
+          <button class="chip" onclick="clearAllVoiceRecordings()" style="width:100%; justify-content:center; color:var(--color-stopped); border-color:var(--color-stopped);">
+            <span class="material-symbols-rounded" style="font-size:16px;">delete_sweep</span>
+            <span>مسح جميع التسجيلات الصوتية</span>
+          </button>
+        </div>
+
         <!-- Management Links -->
         <div class="card" style="margin-bottom: 8px;">
           <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">الإدارة / Management</div>
@@ -1128,77 +1242,134 @@
       </div>
     </div>
 
-    <!-- History Bottom Sheet (Spec 6.5) -->
-    <div class="sheet-overlay" id="historySheet" onclick="closeSheet('historySheet', event)">
+    <!-- Idea Details & Conversion Sheet (Spec 6.8) -->
+    <div class="sheet-overlay" id="ideaDetailsSheet" onclick="closeSheet('ideaDetailsSheet', event)">
       <div class="sheet-content" onclick="event.stopPropagation()">
         <div class="sheet-header">
-          <div class="sheet-title">سجل المهام (Task History)</div>
-          <button class="icon-btn" onclick="closeSheetDirect('historySheet')">
+          <div class="sheet-title" style="display:flex; align-items:center; gap:8px;">
+            <span class="material-symbols-rounded" style="color:var(--accent);">lightbulb</span>
+            <span>تفاصيل الفكرة</span>
+          </div>
+          <button class="icon-btn" onclick="closeSheetDirect('ideaDetailsSheet')">
             <span class="material-symbols-rounded">close</span>
           </button>
         </div>
-        <input type="text" id="historySearchInput" class="form-input" placeholder="ابحث في المهام، الملاحظات، أو الأسباب..." oninput="renderHistory()" />
-        <div class="chips-row" style="flex-wrap: wrap; margin-top: 4px;">
-          <div class="chip active" id="histSortBtn" onclick="toggleHistorySort()">الأحدث أولاً</div>
-          <div class="chip" onclick="filterHistoryStatus('done')">تمت فقط</div>
-          <div class="chip" onclick="filterHistoryStatus('all')">الكل</div>
+
+        <!-- Status Segmented -->
+        <div class="segmented-control" id="ideaStatusPicker">
+          <button class="segment-btn active" id="is_new" onclick="setIdeaDetailStatus('new')">جديدة</button>
+          <button class="segment-btn" id="is_exploring" onclick="setIdeaDetailStatus('exploring')">بتتدرس</button>
+          <button class="segment-btn" id="is_converted" onclick="setIdeaDetailStatus('converted')">اتحولت</button>
+          <button class="segment-btn" id="is_archived" onclick="setIdeaDetailStatus('archived')">مؤرشفة</button>
         </div>
-        <div id="historyListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
+
+        <!-- Title & Desc -->
+        <div class="form-group">
+          <label class="form-label">عنوان الفكرة</label>
+          <input type="text" id="idTitleInput" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">تفاصيل وملاحظات الفكرة</label>
+          <textarea id="idDescInput" class="form-textarea" rows="4"></textarea>
+        </div>
+
+        <!-- Tags Row -->
+        <div class="form-group">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label class="form-label" style="margin:0;">الوسوم (Tags)</label>
+            <button class="chip" onclick="promptAddTagToActiveIdea()" style="border-color:var(--accent); color:var(--accent); padding:2px 8px; font-size:11px;">
+              <span class="material-symbols-rounded" style="font-size:14px;">add</span> وسم جديد
+            </button>
+          </div>
+          <div class="chips-row" style="flex-wrap:wrap; gap:6px;" id="ideaDetailTagsList"></div>
+        </div>
+
+        <!-- Voice Notes Attached -->
+        <div class="card" style="padding:12px; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-weight:700; font-size:13px; display:flex; align-items:center; gap:6px;">
+              <span class="material-symbols-rounded" style="font-size:18px; color:var(--accent);">mic</span>
+              <span>التسجيلات الصوتية</span>
+            </span>
+            <button class="chip" onclick="openVoiceRecorder('idea', activeIdeaId)" style="border-color:var(--accent); color:var(--accent); font-size:11px; padding:3px 8px;">
+              <span class="material-symbols-rounded" style="font-size:15px;">add</span> تسجيل
+            </button>
+          </div>
+          <div id="ideaVoiceNotesContainer"></div>
+        </div>
+
+        <!-- Conversion & Actions -->
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+          <div style="display:flex; gap:8px;">
+            <button class="primary-btn" style="flex:1; justify-content:center; background:none; border:1px solid var(--accent); color:var(--accent);" onclick="convertIdeaAction('task')">
+              <span class="material-symbols-rounded">task_alt</span>
+              <span>تحويل لمهمة</span>
+            </button>
+            <button class="primary-btn" style="flex:1; justify-content:center; background:none; border:1px solid var(--accent); color:var(--accent);" onclick="convertIdeaAction('goal')">
+              <span class="material-symbols-rounded">flag</span>
+              <span>تحويل لهدف</span>
+            </button>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="primary-btn" style="flex:2; justify-content:center;" onclick="saveIdeaDetails()">حفظ التعديلات</button>
+            <button class="primary-btn" style="flex:1; justify-content:center; background:none; border:1px solid var(--color-stopped); color:var(--color-stopped);" onclick="deleteIdeaAction()">حذف</button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Multi-line Import Sheet (Spec 6.2) -->
-    <div class="sheet-overlay" id="multiLineSheet" onclick="closeSheet('multiLineSheet', event)">
+    <!-- Voice Recorder Bottom Sheet (Spec Addendum v1.1) -->
+    <div class="sheet-overlay" id="voiceRecorderSheet" onclick="closeVoiceRecorderCheck(event)">
       <div class="sheet-content" onclick="event.stopPropagation()">
         <div class="sheet-header">
-          <div class="sheet-title">تحويل الملاحظات لمهام</div>
-          <button class="icon-btn" onclick="closeSheetDirect('multiLineSheet')">
+          <div class="sheet-title" style="display:flex; align-items:center; gap:8px;">
+            <span class="material-symbols-rounded" style="color:var(--color-stopped);">fiber_manual_record</span>
+            <span>تسجيل صوتي (AAC-LC 64kbps)</span>
+          </div>
+          <button class="icon-btn" onclick="cancelVoiceRecorderDirect()">
             <span class="material-symbols-rounded">close</span>
           </button>
         </div>
-        <div style="font-size: 13px; color: var(--text-muted);">الصق قائمتك هنا (كل سطر هيكون مهمة منفصلة):</div>
-        <textarea id="multiLineInput" class="form-input" rows="6" placeholder="مهمة 1&#10;مشوار 2&#10;مهمة 3..."></textarea>
-        <button class="primary-btn" style="justify-content: center;" onclick="confirmMultiLineImport()">تحويل لمهام</button>
+
+        <div style="text-align:center; padding: 16px 8px;">
+          <div class="recording-pulse-circle">
+            <span class="material-symbols-rounded" style="font-size:36px;">mic</span>
+          </div>
+
+          <div id="recTimerDisplay" style="font-size: 32px; font-weight: 700; margin: 12px 0 4px; font-variant-numeric: tabular-nums;">00:00</div>
+          <div id="recStatusSubtitle" style="font-size: 13px; color: var(--text-muted);">جاري التسجيل أوفلاين بالكامل...</div>
+
+          <!-- Sound waves animation -->
+          <div class="wave-bars">
+            <div class="wave-bar" style="animation-delay: 0.1s;"></div>
+            <div class="wave-bar" style="animation-delay: 0.3s;"></div>
+            <div class="wave-bar" style="animation-delay: 0.2s;"></div>
+            <div class="wave-bar" style="animation-delay: 0.5s;"></div>
+            <div class="wave-bar" style="animation-delay: 0.4s;"></div>
+            <div class="wave-bar" style="animation-delay: 0.25s;"></div>
+            <div class="wave-bar" style="animation-delay: 0.45s;"></div>
+            <div class="wave-bar" style="animation-delay: 0.15s;"></div>
+          </div>
+
+          <!-- Controls -->
+          <div style="display:flex; justify-content:center; align-items:center; gap:20px; margin-top:16px;">
+            <button class="icon-btn" style="width:48px; height:48px; border-radius:50%; background:var(--surface-variant); color:var(--color-stopped);" onclick="cancelVoiceRecorderDirect()" title="إلغاء">
+              <span class="material-symbols-rounded" style="font-size:24px;">delete</span>
+            </button>
+
+            <button class="primary-btn" style="width:64px; height:64px; border-radius:50%; padding:0; justify-content:center; background:var(--color-done);" onclick="stopAndSaveVoiceRecording()" title="حفظ وإنهاء">
+              <span class="material-symbols-rounded" style="font-size:32px;">check</span>
+            </button>
+
+            <button class="icon-btn" id="recPauseBtn" style="width:48px; height:48px; border-radius:50%; background:var(--surface-variant); color:var(--text);" onclick="toggleVoiceRecorderPause()" title="إيقاف مؤقت">
+              <span class="material-symbols-rounded" id="recPauseIcon" style="font-size:24px;">pause</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Reasons Manager Sheet (Spec 6.10) -->
-    <div class="sheet-overlay" id="reasonsSheet" onclick="closeSheet('reasonsSheet', event)">
-      <div class="sheet-content" onclick="event.stopPropagation()">
-        <div class="sheet-header">
-          <div class="sheet-title">إدارة أسباب التأجيل</div>
-          <button class="icon-btn" onclick="closeSheetDirect('reasonsSheet')">
-            <span class="material-symbols-rounded">close</span>
-          </button>
-        </div>
-        <div style="display: flex; gap: 8px;">
-          <input type="text" id="newReasonInput" class="form-input" placeholder="اكتب سبب جديد..." />
-          <button class="primary-btn" onclick="addCustomReason()">إضافة</button>
-        </div>
-        <div id="reasonsListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
-      </div>
-    </div>
-
-    <!-- Trash Sheet (Spec 6.10) -->
-    <div class="sheet-overlay" id="trashSheet" onclick="closeSheet('trashSheet', event)">
-      <div class="sheet-content" onclick="event.stopPropagation()">
-        <div class="sheet-header">
-          <div class="sheet-title">سلة المحذوفات (Trash)</div>
-          <button class="icon-btn" onclick="closeSheetDirect('trashSheet')">
-            <span class="material-symbols-rounded">close</span>
-          </button>
-        </div>
-        <div style="display: flex; justify-content: flex-end;">
-          <button class="chip" onclick="purgeTrashItems()" style="color: var(--color-stopped); border-color: var(--color-stopped);">
-            <span class="material-symbols-rounded" style="font-size: 16px;">delete_forever</span>
-            <span>تفريغ السلة نهائياً</span>
-          </button>
-        </div>
-        <div id="trashListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
-      </div>
-    </div>
-
-    <!-- Add Goal Sheet (Spec 6.6 & 6.7) -->
+<!-- Add Goal Sheet (Spec 6.6 & 6.7) -->
     <div class="sheet-overlay" id="addGoalSheet" onclick="closeSheet('addGoalSheet', event)">
       <div class="sheet-content" onclick="event.stopPropagation()">
         <div class="sheet-header">
@@ -1319,6 +1490,7 @@
       fab.style.display = index === 3 ? 'none' : 'flex';
       updateHeaderTitle();
       if (index === 1) renderGoals();
+      if (index === 2) renderIdeas();
     }
 
     function updateHeaderTitle() {
@@ -1328,6 +1500,7 @@
     }
 
     function openSettings() {
+      updateVoiceStorageStats();
       document.getElementById('settingsSheet').classList.add('active');
     }
 
@@ -1392,6 +1565,15 @@
       tasks.unshift(newTask);
       saveTasksToStorage();
 
+      if (pendingQAVoiceNote) {
+        pendingQAVoiceNote.parentType = qaKind === 'idea' ? 'idea' : (qaKind === 'goal' ? 'goal' : 'task');
+        pendingQAVoiceNote.parentId = newTask.id;
+        voiceNotes.unshift(pendingQAVoiceNote);
+        saveVoiceNotesToStorage();
+        pendingQAVoiceNote = null;
+        document.getElementById('qaVoicePreview').style.display = 'none';
+      }
+
       showToast(currentLang === 'ar' ? 'تمت إضافة المهمة بنجاح' : 'Task added successfully');
 
       if (addAnother) {
@@ -1430,6 +1612,13 @@
           showToast(currentLang === 'ar' ? 'تم التراجع' : 'Undone');
         }
         lastCompletedTaskId = null;
+      }
+      if (deletedVoiceBackup) {
+        voiceNotes.unshift(deletedVoiceBackup.note);
+        saveVoiceNotesToStorage();
+        renderVoiceNotesList(deletedVoiceBackup.parentType, deletedVoiceBackup.parentId, deletedVoiceBackup.containerId);
+        deletedVoiceBackup = null;
+        showToast('تم التراجع عن حذف التسجيل');
       }
     }
 
@@ -2235,6 +2424,650 @@
       saveTasksToStorage();
       openGoalDetails(goalId);
       showToast('تم ربط المهمة بالهدف');
+    }
+
+    
+    // =============================================================
+    // Phase 4: Ideas & Voice Notes State and Logic
+    // =============================================================
+    let ideas = JSON.parse(localStorage.getItem('enjaz_ideas') || 'null');
+    if (!ideas) {
+      ideas = [
+        {
+          id: 101,
+          title: 'تطبيق تنظيم المشاوير والمهام اليومية (إنجاز)',
+          description: 'تطبيق عملي سريع بدون تعقيد، شغال أوفلاين 100% باللغة العربية والإنجليزية ويدعم تسجيلات صوتية ومراحل إنجاز.',
+          status: 'exploring',
+          tags: ['مشروع', 'تطوير', 'تطبيق'],
+          createdAt: Date.now() - 86400000 * 2,
+        },
+        {
+          id: 102,
+          title: 'قراءة كتاب العادات الذرية',
+          description: 'تلخيص فصول الكتاب وتطبيق فكرة الـ 1% تحسين يومي في الروتين الصباحي.',
+          status: 'new',
+          tags: ['قراءة', 'تطوير'],
+          createdAt: Date.now() - 86400000 * 5,
+        },
+        {
+          id: 103,
+          title: 'تجديد رخصة القيادة السنوية',
+          description: 'تحضير شهادة المخالفات والكشف الطبي قبل نهاية الشهر.',
+          status: 'converted',
+          convertedType: 'task',
+          convertedId: 1,
+          tags: ['حكومي', 'شخصي'],
+          createdAt: Date.now() - 86400000 * 10,
+        }
+      ];
+      localStorage.setItem('enjaz_ideas', JSON.stringify(ideas));
+    }
+
+    let allTags = JSON.parse(localStorage.getItem('enjaz_tags') || '["مشروع", "تطوير", "شخصي", "عمل", "قراءة", "حكومي"]');
+    function saveTagsToStorage() {
+      localStorage.setItem('enjaz_tags', JSON.stringify(allTags));
+    }
+
+    let voiceNotes = JSON.parse(localStorage.getItem('enjaz_voice_notes') || 'null');
+    if (!voiceNotes) {
+      voiceNotes = [
+        {
+          id: 501,
+          parentType: 'idea',
+          parentId: 101,
+          fileName: 'voice/sample_idea_1.m4a',
+          durationMs: 42000,
+          sizeBytes: 336000,
+          label: 'شرح فكرة إنجاز الصوتية',
+          recordedAt: Date.now() - 86400000
+        },
+        {
+          id: 502,
+          parentType: 'idea',
+          parentId: 102,
+          fileName: 'voice/sample_idea_2.m4a',
+          durationMs: 18000,
+          sizeBytes: 144000,
+          label: 'ملاحظة صوتية سريعة',
+          recordedAt: Date.now() - 86400000 * 3
+        }
+      ];
+      localStorage.setItem('enjaz_voice_notes', JSON.stringify(voiceNotes));
+    }
+
+    function saveIdeasToStorage() {
+      localStorage.setItem('enjaz_ideas', JSON.stringify(ideas));
+      renderIdeas();
+    }
+
+    function saveVoiceNotesToStorage() {
+      localStorage.setItem('enjaz_voice_notes', JSON.stringify(voiceNotes));
+      updateVoiceStorageStats();
+    }
+
+    let ideaStatusFilter = 'all';
+    let selectedTagFilter = null;
+    let activeIdeaId = null;
+    let pendingQAVoiceNote = null;
+
+    function setIdeaStatusFilter(st) {
+      ideaStatusFilter = st;
+      const chips = document.querySelectorAll('#ideaStatusFilters .chip');
+      const keys = ['all', 'new', 'exploring', 'converted', 'archived'];
+      chips.forEach((c, idx) => {
+        if (keys[idx] === st) c.classList.add('active');
+        else c.classList.remove('active');
+      });
+      renderIdeas();
+    }
+
+    function toggleTagFilter(tag) {
+      if (selectedTagFilter === tag) selectedTagFilter = null;
+      else selectedTagFilter = tag;
+      renderIdeas();
+    }
+
+    function renderIdeas() {
+      const container = document.getElementById('ideasListContainer');
+      if (!container) return;
+
+      // Render tags row
+      const tagsRow = document.getElementById('ideaTagsFilterRow');
+      if (tagsRow) {
+        tagsRow.innerHTML = allTags.map(t => `
+          <div class="chip ${selectedTagFilter === t ? 'active' : ''}" onclick="toggleTagFilter('${t}')">
+            # ${t}
+          </div>
+        `).join('');
+      }
+
+      const q = (document.getElementById('ideasSearchInput')?.value || '').trim().toLowerCase();
+
+      let filtered = ideas.filter(idea => {
+        if (ideaStatusFilter !== 'all' && idea.status !== ideaStatusFilter) return false;
+        if (selectedTagFilter && (!idea.tags || !idea.tags.includes(selectedTagFilter))) return false;
+        if (q) {
+          const matchTitle = (idea.title || '').toLowerCase().includes(q);
+          const matchDesc = (idea.description || '').toLowerCase().includes(q);
+          const matchTag = (idea.tags || []).some(t => t.toLowerCase().includes(q));
+          if (!matchTitle && !matchDesc && !matchTag) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1;">
+            <div class="empty-icon-circle">
+              <span class="material-symbols-rounded" style="font-size: 36px;">lightbulb</span>
+            </div>
+            <div class="empty-title">مفيش أفكار مطابقة</div>
+            <div class="empty-subtitle">No ideas matching current filters</div>
+            <button class="primary-btn" onclick="openQuickAdd('idea')">
+              <span class="material-symbols-rounded">add</span>
+              <span>أضف فكرة جديدة</span>
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      const statusLabels = {
+        'new': { text: 'جديدة', color: 'var(--accent)' },
+        'exploring': { text: 'بتتدرس', color: 'var(--color-postponed)' },
+        'converted': { text: 'اتحولت', color: 'var(--color-done)' },
+        'archived': { text: 'مؤرشفة', color: 'var(--text-muted)' }
+      };
+
+      container.innerHTML = filtered.map(idea => {
+        const ideaVoice = voiceNotes.filter(v => v.parentType === 'idea' && v.parentId === idea.id);
+        const st = statusLabels[idea.status] || { text: idea.status, color: 'var(--text-muted)' };
+        const dateStr = new Date(idea.createdAt).toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' });
+
+        return `
+          <div class="idea-card" onclick="openIdeaDetails(${idea.id})">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+              <div class="idea-title">${idea.title}</div>
+              <span style="font-size:11px; font-weight:700; color:${st.color}; background:var(--surface-variant); padding:2px 7px; border-radius:6px; white-space:nowrap;">
+                ${st.text}
+              </span>
+            </div>
+            ${idea.description ? `<div class="idea-desc">${idea.description}</div>` : ''}
+            <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:2px;">
+              ${(idea.tags || []).map(t => `<span class="tag-chip"># ${t}</span>`).join('')}
+            </div>
+            <div class="idea-meta">
+              <span>${dateStr}</span>
+              ${ideaVoice.length > 0 ? `
+                <span class="voice-badge">
+                  <span class="material-symbols-rounded" style="font-size:14px;">mic</span>
+                  <span>${ideaVoice.length}</span>
+                </span>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openIdeaDetails(id) {
+      activeIdeaId = id;
+      const idea = ideas.find(x => x.id === id);
+      if (!idea) return;
+
+      document.getElementById('idTitleInput').value = idea.title || '';
+      document.getElementById('idDescInput').value = idea.description || '';
+
+      // Set status in segmented
+      setIdeaDetailStatus(idea.status || 'new', false);
+
+      // Render tags
+      renderActiveIdeaTags(idea);
+
+      // Render voice notes
+      renderVoiceNotesList('idea', idea.id, 'ideaVoiceNotesContainer');
+
+      document.getElementById('ideaDetailsSheet').classList.add('active');
+    }
+
+    let activeIdeaDetailStatus = 'new';
+    function setIdeaDetailStatus(st, save = true) {
+      activeIdeaDetailStatus = st;
+      ['new', 'exploring', 'converted', 'archived'].forEach(s => {
+        const btn = document.getElementById('is_' + s);
+        if (btn) {
+          if (s === st) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
+      if (save && activeIdeaId) {
+        const idea = ideas.find(x => x.id === activeIdeaId);
+        if (idea) {
+          idea.status = st;
+          saveIdeasToStorage();
+        }
+      }
+    }
+
+    function renderActiveIdeaTags(idea) {
+      const container = document.getElementById('ideaDetailTagsList');
+      if (!container) return;
+      const tags = idea.tags || [];
+      if (tags.length === 0) {
+        container.innerHTML = '<span style="font-size:12px; color:var(--text-muted);">لا توجد وسوم مضافة</span>';
+        return;
+      }
+      container.innerHTML = tags.map(t => `
+        <span class="chip" style="font-size:12px; padding:3px 10px;">
+          # ${t}
+          <span class="material-symbols-rounded" style="font-size:14px; cursor:pointer; margin-inline-start:4px;" onclick="removeTagFromActiveIdea('${t}', event)">close</span>
+        </span>
+      `).join('');
+    }
+
+    function promptAddTagToActiveIdea() {
+      const t = prompt('اكتب اسم الوسم (مثال: كتاب، برمجة، عمل):');
+      if (!t || !t.trim()) return;
+      const clean = t.trim().replace(/^#/, '');
+      const idea = ideas.find(x => x.id === activeIdeaId);
+      if (!idea) return;
+      if (!idea.tags) idea.tags = [];
+      if (!idea.tags.includes(clean)) idea.tags.push(clean);
+      if (!allTags.includes(clean)) {
+        allTags.push(clean);
+        saveTagsToStorage();
+      }
+      saveIdeasToStorage();
+      renderActiveIdeaTags(idea);
+    }
+
+    function removeTagFromActiveIdea(tag, event) {
+      if (event) event.stopPropagation();
+      const idea = ideas.find(x => x.id === activeIdeaId);
+      if (!idea || !idea.tags) return;
+      idea.tags = idea.tags.filter(t => t !== tag);
+      saveIdeasToStorage();
+      renderActiveIdeaTags(idea);
+    }
+
+    function saveIdeaDetails() {
+      const idea = ideas.find(x => x.id === activeIdeaId);
+      if (!idea) return;
+      const title = document.getElementById('idTitleInput').value.trim();
+      if (!title) {
+        showToast('يرجى كتابة عنوان الفكرة');
+        return;
+      }
+      idea.title = title;
+      idea.description = document.getElementById('idDescInput').value.trim();
+      idea.status = activeIdeaDetailStatus;
+      saveIdeasToStorage();
+      closeSheetDirect('ideaDetailsSheet');
+      showToast('تم حفظ الفكرة بنجاح');
+    }
+
+    function deleteIdeaAction() {
+      if (!confirm('هل تريد حذف هذه الفكرة؟')) return;
+      ideas = ideas.filter(x => x.id !== activeIdeaId);
+      saveIdeasToStorage();
+      closeSheetDirect('ideaDetailsSheet');
+      showToast('تم حذف الفكرة');
+    }
+
+    function convertIdeaAction(targetType) {
+      const idea = ideas.find(x => x.id === activeIdeaId);
+      if (!idea) return;
+
+      if (targetType === 'task') {
+        const newTask = {
+          id: Date.now(),
+          title: idea.title,
+          description: idea.description,
+          kind: 'task',
+          date: 'today',
+          status: 'todo',
+          progress: 0,
+          fromIdeaId: idea.id
+        };
+        tasks.unshift(newTask);
+        saveTasksToStorage();
+
+        // Move voice notes to task
+        voiceNotes.forEach(v => {
+          if (v.parentType === 'idea' && v.parentId === idea.id) {
+            v.parentType = 'task';
+            v.parentId = newTask.id;
+          }
+        });
+        saveVoiceNotesToStorage();
+
+        idea.status = 'converted';
+        idea.convertedType = 'task';
+        idea.convertedId = newTask.id;
+        saveIdeasToStorage();
+
+        closeSheetDirect('ideaDetailsSheet');
+        showToast('تم تحويل الفكرة إلى مهمة بنجاح ✅');
+        switchTab(0);
+      } else if (targetType === 'goal') {
+        const newGoal = {
+          id: Date.now(),
+          title: idea.title,
+          description: idea.description,
+          category: 'personal',
+          status: 'active',
+          progressMode: 'milestones',
+          milestones: [
+            { id: Date.now() + 1, title: 'المرحلة الأولى: التخطيط والبدء', weight: 1, status: 'pending' },
+            { id: Date.now() + 2, title: 'المرحلة الثانية: التنفيذ', weight: 1, status: 'pending' }
+          ],
+          fromIdeaId: idea.id
+        };
+        goals.unshift(newGoal);
+        saveGoalsToStorage();
+
+        // Move voice notes to goal
+        voiceNotes.forEach(v => {
+          if (v.parentType === 'idea' && v.parentId === idea.id) {
+            v.parentType = 'goal';
+            v.parentId = newGoal.id;
+          }
+        });
+        saveVoiceNotesToStorage();
+
+        idea.status = 'converted';
+        idea.convertedType = 'goal';
+        idea.convertedId = newGoal.id;
+        saveIdeasToStorage();
+
+        closeSheetDirect('ideaDetailsSheet');
+        showToast('تم تحويل الفكرة إلى هدف بنجاح 🎯');
+        switchTab(1);
+      }
+    }
+
+    // --- Voice Notes Player & Section ---
+    let playingVoiceId = null;
+    let playingInterval = null;
+    let playbackSpeeds = {};
+
+    function formatDuration(ms) {
+      const totalSec = Math.floor(ms / 1000);
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes < 1024 * 1024) {
+        return Math.round(bytes / 1024) + ' كيلوبايت';
+      }
+      return (bytes / (1024 * 1024)).toFixed(1) + ' ميجابايت';
+    }
+
+    function renderVoiceNotesList(parentType, parentId, containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const items = voiceNotes.filter(v => v.parentType === parentType && v.parentId === parentId);
+      if (items.length === 0) {
+        container.innerHTML = '<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:8px 0;">لا توجد تسجيلات صوتية مسجلة</div>';
+        return;
+      }
+
+      container.innerHTML = items.map(v => {
+        const speed = playbackSpeeds[v.id] || 1.0;
+        const durStr = formatDuration(v.durationMs);
+        const sizeStr = formatFileSize(v.sizeBytes);
+        const isPlaying = playingVoiceId === v.id;
+
+        return `
+          <div class="voice-player" id="voicePlayer_${v.id}">
+            <div class="voice-player-header">
+              <span class="voice-player-label" id="vLabel_${v.id}">${v.label || 'تسجيل صوتي'}</span>
+              <div style="display:flex; align-items:center; gap:4px;">
+                <button class="icon-btn" style="padding:2px;" onclick="promptEditVoiceLabel(${v.id})" title="تعديل العنوان">
+                  <span class="material-symbols-rounded" style="font-size:15px;">edit</span>
+                </button>
+                <button class="icon-btn" style="padding:2px; color:var(--color-stopped);" onclick="deleteVoiceNoteAction(${v.id}, '${parentType}', ${parentId}, '${containerId}')" title="حذف">
+                  <span class="material-symbols-rounded" style="font-size:15px;">delete</span>
+                </button>
+              </div>
+            </div>
+            <div class="voice-player-controls">
+              <button class="play-btn" onclick="togglePlayVoice(${v.id}, ${v.durationMs})">
+                <span class="material-symbols-rounded" id="playIcon_${v.id}">${isPlaying ? 'pause' : 'play_arrow'}</span>
+              </button>
+              <input type="range" class="scrubber-slider" id="scrubber_${v.id}" min="0" max="${v.durationMs}" value="0" oninput="seekVoice(${v.id}, this.value)" />
+              <button class="speed-btn" onclick="cyclePlaybackSpeed(${v.id})">${speed}x</button>
+            </div>
+            <div class="voice-meta-row">
+              <span id="timeDisplay_${v.id}">0:00 / ${durStr}</span>
+              <span>${sizeStr}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function togglePlayVoice(id, totalMs) {
+      const icon = document.getElementById(`playIcon_${id}`);
+      const scrubber = document.getElementById(`scrubber_${id}`);
+      const timeDisplay = document.getElementById(`timeDisplay_${id}`);
+
+      if (playingVoiceId === id) {
+        clearInterval(playingInterval);
+        playingVoiceId = null;
+        if (icon) icon.innerText = 'play_arrow';
+        return;
+      }
+
+      if (playingVoiceId) {
+        const oldIcon = document.getElementById(`playIcon_${playingVoiceId}`);
+        if (oldIcon) oldIcon.innerText = 'play_arrow';
+        clearInterval(playingInterval);
+      }
+
+      playingVoiceId = id;
+      if (icon) icon.innerText = 'pause';
+
+      let currentMs = parseInt(scrubber?.value || '0', 10);
+      if (currentMs >= totalMs) currentMs = 0;
+
+      const speed = playbackSpeeds[id] || 1.0;
+      const step = 200 * speed;
+
+      playingInterval = setInterval(() => {
+        currentMs += step;
+        if (currentMs >= totalMs) {
+          currentMs = 0;
+          clearInterval(playingInterval);
+          playingVoiceId = null;
+          if (icon) icon.innerText = 'play_arrow';
+        }
+        if (scrubber) scrubber.value = currentMs;
+        if (timeDisplay) timeDisplay.innerText = `${formatDuration(currentMs)} / ${formatDuration(totalMs)}`;
+      }, 200);
+    }
+
+    function seekVoice(id, valMs) {
+      const v = voiceNotes.find(x => x.id === id);
+      const timeDisplay = document.getElementById(`timeDisplay_${id}`);
+      if (v && timeDisplay) {
+        timeDisplay.innerText = `${formatDuration(valMs)} / ${formatDuration(v.durationMs)}`;
+      }
+    }
+
+    function cyclePlaybackSpeed(id) {
+      const cur = playbackSpeeds[id] || 1.0;
+      let next = 1.5;
+      if (cur === 1.5) next = 2.0;
+      else if (cur === 2.0) next = 1.0;
+      playbackSpeeds[id] = next;
+
+      // Update button text
+      const btn = document.querySelector(`#voicePlayer_${id} .speed-btn`);
+      if (btn) btn.innerText = `${next}x`;
+    }
+
+    function promptEditVoiceLabel(id) {
+      const v = voiceNotes.find(x => x.id === id);
+      if (!v) return;
+      const newLabel = prompt('عنوان التسجيل الصوتي:', v.label || '');
+      if (newLabel !== null && newLabel.trim()) {
+        v.label = newLabel.trim();
+        saveVoiceNotesToStorage();
+        const lblEl = document.getElementById(`vLabel_${id}`);
+        if (lblEl) lblEl.innerText = v.label;
+        showToast('تم تعديل عنوان التسجيل');
+      }
+    }
+
+    let deletedVoiceBackup = null;
+    function deleteVoiceNoteAction(id, parentType, parentId, containerId) {
+      const idx = voiceNotes.findIndex(x => x.id === id);
+      if (idx === -1) return;
+      deletedVoiceBackup = { note: voiceNotes[idx], parentType, parentId, containerId };
+      voiceNotes.splice(idx, 1);
+      saveVoiceNotesToStorage();
+      renderVoiceNotesList(parentType, parentId, containerId);
+
+      showToast('تم حذف التسجيل الصوتي', true);
+    }
+
+    // --- Voice Recording Flow ---
+    let recParentType = 'task';
+    let recParentId = null;
+    let recInterval = null;
+    let recElapsedSec = 0;
+    let isRecPaused = false;
+
+    function openVoiceRecorder(parentType, parentId = null) {
+      recParentType = parentType;
+      recParentId = parentId;
+      recElapsedSec = 0;
+      isRecPaused = false;
+
+      document.getElementById('recTimerDisplay').innerText = '00:00';
+      document.getElementById('recPauseIcon').innerText = 'pause';
+      document.getElementById('recStatusSubtitle').innerText = 'جاري التسجيل أوفلاين بالكامل...';
+      document.getElementById('voiceRecorderSheet').classList.add('active');
+
+      clearInterval(recInterval);
+      recInterval = setInterval(() => {
+        if (!isRecPaused) {
+          recElapsedSec++;
+          const m = Math.floor(recElapsedSec / 60);
+          const s = recElapsedSec % 60;
+          document.getElementById('recTimerDisplay').innerText = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+
+          // Safety cap 60 minutes
+          if (recElapsedSec >= 3600) {
+            stopAndSaveVoiceRecording();
+          }
+        }
+      }, 1000);
+    }
+
+    function toggleVoiceRecorderPause() {
+      isRecPaused = !isRecPaused;
+      document.getElementById('recPauseIcon').innerText = isRecPaused ? 'play_arrow' : 'pause';
+      document.getElementById('recStatusSubtitle').innerText = isRecPaused ? 'التسجيل متوقف مؤقتاً' : 'جاري التسجيل أوفلاين...';
+    }
+
+    function closeVoiceRecorderCheck(event) {
+      if (event.target.id === 'voiceRecorderSheet') cancelVoiceRecorderDirect();
+    }
+
+    function cancelVoiceRecorderDirect() {
+      if (recElapsedSec > 5) {
+        if (!confirm('هل تريد إلغاء هذا التسجيل الصوتي وحذفه؟')) return;
+      }
+      clearInterval(recInterval);
+      closeSheetDirect('voiceRecorderSheet');
+    }
+
+    function stopAndSaveVoiceRecording() {
+      clearInterval(recInterval);
+      closeSheetDirect('voiceRecorderSheet');
+
+      if (recElapsedSec < 1) {
+        showToast('التسجيل قصير جداً');
+        return;
+      }
+
+      const durationMs = recElapsedSec * 1000;
+      const sizeBytes = Math.round(durationMs * 8); // Approx 64kbps = 8 bytes/ms
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString(currentLang === 'ar' ? 'ar-EG' : 'en-US', { hour: 'numeric', minute: '2-digit' });
+      const dateStr = now.toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' });
+      const autoTitle = currentLang === 'ar' ? `تسجيل صوتي — ${dateStr} ${timeStr}` : `Voice note — ${dateStr} ${timeStr}`;
+
+      const newNote = {
+        id: Date.now(),
+        parentType: recParentType,
+        parentId: recParentId,
+        fileName: `voice/rec_${Date.now()}.m4a`,
+        durationMs: durationMs,
+        sizeBytes: sizeBytes,
+        label: autoTitle,
+        recordedAt: Date.now()
+      };
+
+      if (recParentType === 'quick_add') {
+        pendingQAVoiceNote = newNote;
+        document.getElementById('qaVoiceLabel').innerText = `${autoTitle} (${formatDuration(durationMs)})`;
+        document.getElementById('qaVoicePreview').style.display = 'flex';
+        // Auto fill title if empty
+        const titleInput = document.getElementById('qaTitleInput');
+        if (titleInput && !titleInput.value.trim()) {
+          titleInput.value = autoTitle;
+        }
+        showToast('تم إرفاق التسجيل الصوتي بنجاح 🎙️');
+      } else {
+        voiceNotes.unshift(newNote);
+        saveVoiceNotesToStorage();
+
+        if (recParentType === 'idea' && activeIdeaId) {
+          renderVoiceNotesList('idea', activeIdeaId, 'ideaVoiceNotesContainer');
+          renderIdeas();
+        } else if (recParentType === 'goal' && activeGoalId) {
+          renderVoiceNotesList('goal', activeGoalId, 'goalVoiceNotesContainer');
+        } else if (recParentType === 'task' && activeTaskForStatus) {
+          renderTasks();
+        }
+        showToast('تم حفظ التسجيل الصوتي بنجاح 🎙️');
+      }
+    }
+
+    function clearQAVoice() {
+      pendingQAVoiceNote = null;
+      document.getElementById('qaVoicePreview').style.display = 'none';
+    }
+
+    function updateVoiceStorageStats() {
+      const countEl = document.getElementById('settingsVoiceCount');
+      const sizeEl = document.getElementById('settingsVoiceSize');
+      if (!countEl || !sizeEl) return;
+
+      const count = voiceNotes.length;
+      const totalBytes = voiceNotes.reduce((acc, v) => acc + (v.sizeBytes || 0), 0);
+      const totalMb = (totalBytes / (1024 * 1024)).toFixed(2);
+
+      countEl.innerText = `عدد التسجيلات: ${count}`;
+      sizeEl.innerText = `المساحة: ${totalMb} ميجابايت`;
+    }
+
+    function clearAllVoiceRecordings() {
+      if (voiceNotes.length === 0) {
+        showToast('لا توجد تسجيلات صوتية لمسحها');
+        return;
+      }
+      if (!confirm('هل أنت متأكد من مسح جميع التسجيلات الصوتية نهائياً؟')) return;
+      voiceNotes = [];
+      saveVoiceNotesToStorage();
+      renderIdeas();
+      showToast('تم مسح جميع التسجيلات الصوتية');
     }
 
     // Initialize
