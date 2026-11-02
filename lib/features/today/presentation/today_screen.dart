@@ -1,29 +1,161 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/db/app_database.dart';
 import '../../../core/l10n/app_localizations.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../tasks/presentation/quick_add_sheet.dart';
+import '../../tasks/presentation/widgets/task_card.dart';
 
-class TodayScreen extends ConsumerWidget {
+class TodayScreen extends ConsumerStatefulWidget {
   const TodayScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TodayScreen> createState() => _TodayScreenState();
+}
+
+class _TodayScreenState extends ConsumerState<TodayScreen> {
+  late DateTime _selectedDate;
+  bool _isWaitingCollapsed = true;
+  bool _isDoneCollapsed = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _selectedDate = DateTime(now.year, now.month, now.day);
+  }
+
+  String _formatDateString(DateTime dt) {
+    return '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+  }
+
+  void _previousDay() {
+    setState(() {
+      _selectedDate = _selectedDate.subtract(const Duration(days: 1));
+    });
+  }
+
+  void _nextDay() {
+    setState(() {
+      _selectedDate = _selectedDate.add(const Duration(days: 1));
+    });
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: _selectedDate.subtract(const Duration(days: 365)),
+      lastDate: _selectedDate.add(const Duration(days: 3650)),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDate = DateTime(picked.year, picked.month, picked.day);
+      });
+    }
+  }
+
+  void _openInboxSheet() {
+    final db = ref.read(databaseProvider);
+    final l10n = AppLocalizations.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.7,
+          maxChildSize: 0.9,
+          builder: (_, scrollController) {
+            return StreamBuilder<List<Task>>(
+              stream: db.watchUndatedTasks(),
+              builder: (context, snapshot) {
+                final tasks = snapshot.data ?? [];
+
+                return Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 36,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            l10n.noDateInbox,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          Text('${tasks.length}'),
+                        ],
+                      ),
+                      const Divider(),
+                      Expanded(
+                        child: tasks.isEmpty
+                          ? Center(
+                              child: Text(
+                                l10n.noDateInbox,
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            )
+                          : ListView.builder(
+                              controller: scrollController,
+                              itemCount: tasks.length,
+                              itemBuilder: (_, i) => TaskCard(task: tasks[i]),
+                            ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final numeralsFormat = ref.watch(numeralsProvider);
 
     final now = DateTime.now();
+    final todayOnly = DateTime(now.year, now.month, now.day);
+    final isToday = _selectedDate.isAtSameMomentAs(todayOnly);
+
+    final selectedDateStr = _formatDateString(_selectedDate);
+    final todayStr = _formatDateString(todayOnly);
+
     final weekday = AppFormatter.formatWeekday(
-      now,
+      _selectedDate,
       locale: Localizations.localeOf(context).toString(),
     );
     final fullDate = AppFormatter.formatDate(
-      now,
+      _selectedDate,
       locale: Localizations.localeOf(context).toString(),
       format: numeralsFormat,
     );
+
+    final db = ref.watch(databaseProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -35,117 +167,422 @@ class TodayScreen extends ConsumerWidget {
               // Date Switcher Header
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
                         icon: const Icon(Icons.chevron_left_rounded),
                         tooltip: 'Previous day',
-                        onPressed: () {},
+                        onPressed: _previousDay,
                       ),
-                      Column(
-                        children: [
-                          Text(
-                            weekday,
-                            style: theme.textTheme.titleMedium,
+                      InkWell(
+                        onTap: _pickDate,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    weekday,
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  if (isToday) ...[
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: theme.colorScheme.primaryContainer,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        l10n.tabToday,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.colorScheme.onPrimaryContainer,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                fullDate,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.outline,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            fullDate,
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ],
+                        ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.chevron_right_rounded),
                         tooltip: 'Next day',
-                        onPressed: () {},
+                        onPressed: _nextDay,
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               // Progress & Inbox row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Chip(
-                    avatar: const Icon(Icons.inbox_outlined, size: 16),
-                    label: Text(
-                      '${l10n.noDateInbox} (${AppFormatter.formatNumber(0, format: numeralsFormat)})',
-                    ),
-                  ),
-                  Chip(
-                    avatar: const Icon(Icons.check_circle_outline_rounded, size: 16),
-                    label: Text(
-                      isArabic
-                          ? '٠ من ٠ تمت • 0 of 0 done'
-                          : '0 of 0 done',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+              StreamBuilder<List<Task>>(
+                stream: db.watchTasksForDate(selectedDateStr),
+                builder: (context, taskSnapshot) {
+                  final dailyTasks = taskSnapshot.data ?? [];
+                  final totalTasks = dailyTasks.length;
+                  final doneCount =
+                      dailyTasks.where((t) => t.status == 'done').length;
 
-              // Empty State
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.task_alt_rounded,
-                          size: 48,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.emptyTodayTitle,
-                        style: theme.textTheme.titleMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 4),
-                      if (isArabic)
-                        Text(
-                          'Nothing planned today',
-                          style: theme.textTheme.bodySmall,
-                          textAlign: TextAlign.center,
-                        ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.emptyTodaySubtitle,
-                        style: theme.textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 20),
-                      FilledButton.icon(
-                        icon: const Icon(Icons.add_rounded),
-                        label: Text(l10n.addTask),
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size(160, 48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                  return StreamBuilder<int>(
+                    stream: db.watchUndatedTasksCount(),
+                    builder: (context, countSnapshot) {
+                      final undatedCount = countSnapshot.data ?? 0;
+
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          ActionChip(
+                            avatar: const Icon(Icons.inbox_outlined, size: 16),
+                            label: Text(
+                              '${l10n.noDateInbox} (${AppFormatter.formatNumber(undatedCount, format: numeralsFormat)})',
+                            ),
+                            onPressed: _openInboxSheet,
                           ),
-                        ),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
+                          Chip(
+                            avatar: Icon(
+                              Icons.check_circle_rounded,
+                              size: 16,
+                              color: AppColors.getStatusColor('done', isDark),
+                            ),
+                            label: Text(
+                              isArabic
+                                  ? '${AppFormatter.formatNumber(doneCount, format: numeralsFormat)} من ${AppFormatter.formatNumber(totalTasks, format: numeralsFormat)} تمت'
+                                  : '$doneCount of $totalTasks done',
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+
+              // Task Sections List
+              Expanded(
+                child: StreamBuilder<List<Task>>(
+                  stream: db.watchTasksForDate(selectedDateStr),
+                  builder: (context, dayTasksSnapshot) {
+                    final allDayTasks = dayTasksSnapshot.data ?? [];
+
+                    return StreamBuilder<List<Task>>(
+                      stream: db.watchOverdueTasks(todayStr),
+                      builder: (context, overdueSnapshot) {
+                        final overdueTasks = overdueSnapshot.data ?? [];
+
+                        return StreamBuilder<List<Task>>(
+                          stream: db.watchPostponedDueTasks(selectedDateStr),
+                          builder: (context, postponedDueSnapshot) {
+                            final postponedDueTasks =
+                                postponedDueSnapshot.data ?? [];
+
+                            // Categorize tasks for selected day
+                            final regularTasks = allDayTasks
+                                .where((t) =>
+                                    t.kind != 'errand' &&
+                                    t.status != 'done' &&
+                                    t.status != 'postponed' &&
+                                    t.status != 'waiting')
+                                .toList();
+
+                            final errandTasks = allDayTasks
+                                .where((t) =>
+                                    t.kind == 'errand' &&
+                                    t.status != 'done' &&
+                                    t.status != 'postponed' &&
+                                    t.status != 'waiting')
+                                .toList();
+
+                            final waitingAndPostponed = allDayTasks
+                                .where((t) =>
+                                    t.status == 'waiting' ||
+                                    (t.status == 'postponed' &&
+                                        !postponedDueTasks
+                                            .any((p) => p.id == t.id)))
+                                .toList();
+
+                            final doneTasks = allDayTasks
+                                .where((t) => t.status == 'done')
+                                .toList();
+
+                            final bool hasAnyItems = allDayTasks.isNotEmpty ||
+                                (isToday && overdueTasks.isNotEmpty) ||
+                                postponedDueTasks.isNotEmpty;
+
+                            // Empty State
+                            if (!hasAnyItems) {
+                              return Center(
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(20),
+                                        decoration: BoxDecoration(
+                                          color: theme.colorScheme
+                                              .surfaceContainerHighest,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.task_alt_rounded,
+                                          size: 48,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        l10n.emptyTodayTitle,
+                                        style: theme.textTheme.titleMedium,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      if (isArabic)
+                                        Text(
+                                          'Nothing planned today',
+                                          style:
+                                              theme.textTheme.bodySmall?.copyWith(
+                                            color: theme.colorScheme.outline,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        l10n.emptyTodaySubtitle,
+                                        style: theme.textTheme.bodySmall,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 20),
+                                      FilledButton.icon(
+                                        icon: const Icon(Icons.add_rounded),
+                                        label: Text(l10n.addTask),
+                                        style: FilledButton.styleFrom(
+                                          minimumSize: const Size(160, 48),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          QuickAddSheet.show(
+                                            context,
+                                            initialDate: selectedDateStr,
+                                            initialKind: 'task',
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
+
+                            // Render Sections in order (hide empty ones)
+                            return ListView(
+                              children: [
+                                // 1. Overdue Section (Shown on today only)
+                                if (isToday && overdueTasks.isNotEmpty) ...[
+                                  _buildSectionHeader(
+                                    context,
+                                    title: l10n.sectionOverdue,
+                                    count: overdueTasks.length,
+                                    color: Colors.redAccent,
+                                  ),
+                                  ...overdueTasks.map((t) => Column(
+                                        children: [
+                                          TaskCard(task: t),
+                                          Align(
+                                            alignment: Alignment.centerRight,
+                                            child: TextButton.icon(
+                                              icon: const Icon(
+                                                  Icons.redo_rounded,
+                                                  size: 16),
+                                              label: Text(l10n.moveToToday),
+                                              onPressed: () async {
+                                                await db.moveTaskToDate(
+                                                    t.id, todayStr);
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      )),
+                                  const SizedBox(height: 12),
+                                ],
+
+                                // 2. Today's Tasks
+                                if (regularTasks.isNotEmpty) ...[
+                                  _buildSectionHeader(
+                                    context,
+                                    title: l10n.sectionTasks,
+                                    count: regularTasks.length,
+                                  ),
+                                  ...regularTasks
+                                      .map((t) => TaskCard(task: t)),
+                                  const SizedBox(height: 12),
+                                ],
+
+                                // 3. Today's Errands
+                                if (errandTasks.isNotEmpty) ...[
+                                  _buildSectionHeader(
+                                    context,
+                                    title: l10n.sectionErrands,
+                                    count: errandTasks.length,
+                                    icon: Icons.directions_walk_rounded,
+                                  ),
+                                  ...errandTasks
+                                      .map((t) => TaskCard(task: t)),
+                                  const SizedBox(height: 12),
+                                ],
+
+                                // 4. Postponed & Due Now
+                                if (postponedDueTasks.isNotEmpty) ...[
+                                  _buildSectionHeader(
+                                    context,
+                                    title: l10n.sectionPostponedDue,
+                                    count: postponedDueTasks.length,
+                                    color: AppColors.getStatusColor(
+                                        'postponed', isDark),
+                                    icon: Icons.schedule_rounded,
+                                  ),
+                                  ...postponedDueTasks
+                                      .map((t) => TaskCard(task: t)),
+                                  const SizedBox(height: 12),
+                                ],
+
+                                // 5. Waiting & Postponed (collapsed)
+                                if (waitingAndPostponed.isNotEmpty) ...[
+                                  ListTile(
+                                    dense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: Icon(
+                                      _isWaitingCollapsed
+                                          ? Icons.expand_more_rounded
+                                          : Icons.expand_less_rounded,
+                                    ),
+                                    title: Text(
+                                      '${l10n.sectionWaitingAndPostponed} (${waitingAndPostponed.length})',
+                                      style: theme.textTheme.titleSmall,
+                                    ),
+                                    onTap: () {
+                                      setState(() {
+                                        _isWaitingCollapsed =
+                                            !_isWaitingCollapsed;
+                                      });
+                                    },
+                                  ),
+                                  if (!_isWaitingCollapsed)
+                                    ...waitingAndPostponed
+                                        .map((t) => TaskCard(task: t)),
+                                  const SizedBox(height: 8),
+                                ],
+
+                                // 6. Done Today (collapsed)
+                                if (doneTasks.isNotEmpty) ...[
+                                  ListTile(
+                                    dense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: Icon(
+                                      _isDoneCollapsed
+                                          ? Icons.expand_more_rounded
+                                          : Icons.expand_less_rounded,
+                                    ),
+                                    title: Text(
+                                      '${l10n.sectionDoneToday} (${doneTasks.length})',
+                                      style: theme.textTheme.titleSmall,
+                                    ),
+                                    onTap: () {
+                                      setState(() {
+                                        _isDoneCollapsed = !_isDoneCollapsed;
+                                      });
+                                    },
+                                  ),
+                                  if (!_isDoneCollapsed)
+                                    ...doneTasks
+                                        .map((t) => TaskCard(task: t)),
+                                  const SizedBox(height: 8),
+                                ],
+
+                                const SizedBox(height: 64),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(
+    BuildContext context, {
+    required String title,
+    required int count,
+    Color? color,
+    IconData? icon,
+  }) {
+    final theme = Theme.of(context);
+    final numeralsFormat = ref.watch(numeralsProvider);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 16, color: color ?? theme.colorScheme.primary),
+            const SizedBox(width: 6),
+          ],
+          Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: (color ?? theme.colorScheme.primary).withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              AppFormatter.formatNumber(count, format: numeralsFormat),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: color ?? theme.colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

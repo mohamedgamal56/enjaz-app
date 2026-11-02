@@ -41,6 +41,9 @@ jobs:
       - name: Run build_runner for Drift Database
         run: dart run build_runner build --delete-conflicting-outputs
 
+      - name: Run unit tests
+        run: flutter test test/unit/task_status_service_test.dart
+
       - name: Build Release APK
         run: flutter build apk --release --no-tree-shake-icons --android-skip-build-dependency-validation
 

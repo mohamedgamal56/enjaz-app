@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>إنجاز - Enjaz (Phase 0 Web Preview)</title>
+  <title>إنجاز - Enjaz (Phase 1 Tasks Core Preview)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,6 +21,14 @@
       --accent: #0D9488;
       --accent-alpha: rgba(13, 148, 136, 0.12);
 
+      --color-todo: #78716C;
+      --color-inprogress: #2563EB;
+      --color-partial: #D97706;
+      --color-done: #16A34A;
+      --color-postponed: #6B7280;
+      --color-waiting: #7C3AED;
+      --color-stopped: #DC2626;
+
       --font-family: 'Cairo', sans-serif;
       --app-radius: 16px;
       --chip-radius: 999px;
@@ -37,6 +45,14 @@
       --border: #2F3534;
       --accent: #2DD4BF;
       --accent-alpha: rgba(45, 212, 191, 0.18);
+
+      --color-todo: #A8A29E;
+      --color-inprogress: #60A5FA;
+      --color-partial: #FBBF24;
+      --color-done: #4ADE80;
+      --color-postponed: #9CA3AF;
+      --color-waiting: #A78BFA;
+      --color-stopped: #F87171;
     }
 
     * {
@@ -102,42 +118,44 @@
 
     .header-actions {
       display: flex;
-      gap: 4px;
+      gap: 8px;
     }
 
     .icon-btn {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
+      background: none;
       border: none;
-      background: transparent;
       color: var(--text);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      transition: background 0.15s;
     }
 
-    .icon-btn:active {
+    .icon-btn:hover {
       background-color: var(--surface-variant);
     }
 
-    /* Content Area */
+    /* Main Area */
     main {
       flex: 1;
       overflow-y: auto;
       padding: 16px;
+      position: relative;
       display: flex;
       flex-direction: column;
-      gap: 16px;
     }
 
+    /* Card standard: 16dp radius, 1px border, 0 shadow */
     .card {
       background-color: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--app-radius);
       padding: 16px;
-      transition: all 0.2s;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
     }
 
     /* Date Switcher */
@@ -145,10 +163,12 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding: 10px 16px;
     }
 
     .date-info {
       text-align: center;
+      cursor: pointer;
     }
 
     .date-weekday {
@@ -159,43 +179,128 @@
     .date-sub {
       font-size: 12px;
       color: var(--text-muted);
-      margin-top: 2px;
     }
 
     /* Chips Row */
     .chips-row {
       display: flex;
       gap: 8px;
+      align-items: center;
     }
 
     .chip {
-      background-color: var(--surface-variant);
+      background-color: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--chip-radius);
       padding: 6px 14px;
-      font-size: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      color: var(--text);
+      cursor: pointer;
+      white-space: nowrap;
     }
 
     .chip.active {
       background-color: var(--accent-alpha);
-      color: var(--accent);
       border-color: var(--accent);
+      color: var(--accent);
       font-weight: 600;
+    }
+
+    /* Tasks List */
+    .task-card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--app-radius);
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .task-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .task-checkbox {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--text-muted);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .task-checkbox.checked {
+      background-color: var(--color-done);
+      border-color: var(--color-done);
+      color: #fff;
+    }
+
+    .task-title {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .task-title.done {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .task-status-chip {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .task-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      padding-inline-start: 34px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin: 12px 4px 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     /* Empty State */
     .empty-state {
-      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      padding: 40px 16px;
       text-align: center;
-      padding: 32px 16px;
+      flex: 1;
     }
 
     .empty-icon-circle {
@@ -211,55 +316,40 @@
     }
 
     .empty-title {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
-      color: var(--text);
+      margin-bottom: 4px;
     }
 
     .empty-subtitle {
-      font-size: 12px;
+      font-size: 14px;
       color: var(--text-muted);
-      margin-top: 4px;
+      margin-bottom: 16px;
     }
 
-    .empty-desc {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 8px;
-      max-width: 260px;
-    }
-
-    /* Primary Button */
     .primary-btn {
-      margin-top: 20px;
-      height: 48px;
-      padding: 0 24px;
       background-color: var(--accent);
       color: #FFFFFF;
       border: none;
       border-radius: 12px;
-      font-size: 15px;
-      font-family: inherit;
+      padding: 12px 24px;
+      font-size: 14px;
       font-weight: 600;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      cursor: pointer;
-      box-shadow: none;
+      font-family: inherit;
     }
 
-    .primary-btn:active {
-      opacity: 0.9;
-    }
-
-    /* Floating Action Button */
+    /* Floating Action Button (FAB) */
     .fab {
       position: absolute;
       bottom: 84px;
-      left: 20px; /* In RTL it's left, in LTR it flips */
+      inset-inline-end: 20px;
       width: 56px;
       height: 56px;
-      border-radius: 50%;
+      border-radius: 16px;
       background-color: var(--accent);
       color: #FFFFFF;
       border: none;
@@ -268,16 +358,12 @@
       justify-content: center;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       cursor: pointer;
-      z-index: 20;
-    }
-
-    html[dir="ltr"] .fab {
-      left: auto;
-      right: 20px;
+      z-index: 50;
+      transition: transform 0.15s ease;
     }
 
     .fab:active {
-      transform: scale(0.95);
+      transform: scale(0.92);
     }
 
     /* Bottom Navigation Bar */
@@ -288,93 +374,100 @@
       display: flex;
       align-items: center;
       justify-content: space-around;
+      padding: 0 8px;
       z-index: 10;
     }
 
     .nav-item {
-      flex: 1;
-      height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4px;
       background: none;
       border: none;
-      color: var(--text-muted);
       cursor: pointer;
+      color: var(--text-muted);
+      width: 25%;
+      height: 100%;
       font-family: inherit;
-    }
-
-    .nav-item.active {
-      color: var(--accent);
+      transition: color 0.15s;
     }
 
     .nav-icon-container {
-      width: 52px;
+      width: 54px;
       height: 28px;
       border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
+      margin-bottom: 2px;
+      transition: background-color 0.2s;
     }
 
     .nav-item.active .nav-icon-container {
       background-color: var(--accent-alpha);
     }
 
-    .nav-label {
-      font-size: 11px;
-      line-height: 1.1;
-      text-align: center;
-      font-weight: 500;
+    .nav-item.active {
+      color: var(--accent);
+      font-weight: 600;
     }
 
-    .nav-item.active .nav-label {
-      font-weight: 600;
+    .nav-label {
+      font-size: 11px;
+      text-align: center;
+      line-height: 1.1;
     }
 
     .nav-sub {
       font-size: 9px;
-      opacity: 0.8;
-      display: block;
+      opacity: 0.75;
     }
 
-    /* Modal / Settings Sheet */
+    /* Bottom Sheets & Modals */
     .sheet-overlay {
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: rgba(0,0,0,0.4);
+      background: rgba(0,0,0,0.45);
       z-index: 100;
       display: none;
+      align-items: flex-end;
       opacity: 0;
-      transition: opacity 0.2s ease;
+      transition: opacity 0.25s ease;
     }
 
     .sheet-overlay.active {
       display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
       opacity: 1;
     }
 
     .sheet-content {
+      width: 100%;
       background-color: var(--surface);
       border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
-      padding: 20px;
+      padding: 20px 16px 30px;
+      border-top: 1px solid var(--border);
       max-height: 85vh;
       overflow-y: auto;
-      border-top: 1px solid var(--border);
+      transform: translateY(100%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .sheet-overlay.active .sheet-content {
+      transform: translateY(0);
     }
 
     .sheet-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      justify-content: space-between;
+      margin-bottom: 6px;
     }
 
     .sheet-title {
@@ -382,42 +475,55 @@
       font-weight: 600;
     }
 
-    .setting-group {
-      margin-bottom: 20px;
-    }
-
-    .setting-title {
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: inherit;
       font-size: 14px;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      outline: none;
     }
 
-    .option-row {
+    .form-input:focus {
+      border-color: var(--accent);
+    }
+
+    .segmented-control {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px;
       background-color: var(--surface-variant);
       border-radius: 12px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      border: 1px solid transparent;
+      padding: 3px;
+      gap: 3px;
     }
 
-    .option-row.selected {
-      border-color: var(--accent);
-      background-color: var(--accent-alpha);
-    }
-
-    .option-label {
-      font-size: 14px;
+    .segment-btn {
+      flex: 1;
+      padding: 8px 4px;
+      border: none;
+      background: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 13px;
       font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
     }
 
+    .segment-btn.active {
+      background-color: var(--surface);
+      color: var(--text);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    /* Toast */
     .toast {
       position: absolute;
       bottom: 90px;
@@ -433,6 +539,19 @@
       transition: opacity 0.3s;
       z-index: 150;
       white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toast-undo-btn {
+      background: none;
+      border: none;
+      color: #2DD4BF;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: inherit;
+      pointer-events: auto;
     }
 
     [data-theme="dark"] .toast {
@@ -442,6 +561,7 @@
 
     .toast.show {
       opacity: 1;
+      pointer-events: auto;
     }
   </style>
 </head>
@@ -464,7 +584,8 @@
     <!-- Main Content Screens -->
     <main id="mainContent">
       <!-- Screen 0: Today -->
-      <div id="screenToday" class="screen-panel" style="display: flex; flex-direction: column; gap: 16px; flex: 1;">
+      <div id="screenToday" class="screen-panel" style="display: flex; flex-direction: column; gap: 12px; flex: 1;">
+        <!-- Date Switcher -->
         <div class="card date-switcher">
           <button class="icon-btn" onclick="prevDay()">
             <span class="material-symbols-rounded">chevron_right</span>
@@ -478,25 +599,29 @@
           </button>
         </div>
 
+        <!-- Progress and Inbox row -->
         <div class="chips-row">
-          <div class="chip">
+          <div class="chip" onclick="showToast(currentLang === 'ar' ? 'صندوق الوارد (بدون تاريخ)' : 'Inbox (No date)')">
             <span class="material-symbols-rounded" style="font-size: 16px;">inbox</span>
             <span id="labelInbox">بدون تاريخ (٠)</span>
           </div>
           <div class="chip">
-            <span class="material-symbols-rounded" style="font-size: 16px;">check_circle</span>
-            <span id="labelProgress">٠ من ٠ تمت • 0 of 0 done</span>
+            <span class="material-symbols-rounded" style="font-size: 16px; color: var(--color-done);">check_circle</span>
+            <span id="labelProgress">٠ من ٠ تمت</span>
           </div>
         </div>
 
-        <div class="empty-state">
+        <!-- Dynamic Task List Container -->
+        <div id="taskListContainer" style="display: flex; flex-direction: column;"></div>
+
+        <!-- Empty State (hidden when tasks exist) -->
+        <div id="todayEmptyState" class="empty-state">
           <div class="empty-icon-circle">
             <span class="material-symbols-rounded" style="font-size: 36px;">task_alt</span>
           </div>
           <div class="empty-title" id="todayEmptyTitle">مفيش حاجة مخططة النهارده</div>
           <div class="empty-subtitle" id="todayEmptySub">Nothing planned today</div>
-          <div class="empty-desc" id="todayEmptyDesc">ابدأ يومك بإضافة أول مهمة أو مشوار</div>
-          <button class="primary-btn" onclick="showToast(currentLang === 'ar' ? 'نموذج الإضافة السريعة سيعمل في المرحلة ١' : 'Quick add form in Phase 1')">
+          <button class="primary-btn" onclick="openQuickAdd('task')">
             <span class="material-symbols-rounded">add</span>
             <span id="todayAddBtn">أضف مهمة</span>
           </button>
@@ -506,26 +631,26 @@
       <!-- Screen 1: Goals -->
       <div id="screenGoals" class="screen-panel" style="display: none; flex-direction: column; gap: 16px; flex: 1;">
         <div class="chips-row" style="justify-content: center;">
-          <div class="chip active" id="goalChipActive">نشطة • Active</div>
-          <div class="chip" id="goalChipPaused">متوقفة • Paused</div>
-          <div class="chip" id="goalChipDone">مكتملة • Done</div>
+          <div class="chip active">نشطة • Active</div>
+          <div class="chip">متوقفة • Paused</div>
+          <div class="chip">مكتملة • Done</div>
         </div>
         <div class="empty-state">
           <div class="empty-icon-circle">
             <span class="material-symbols-rounded" style="font-size: 36px;">flag</span>
           </div>
-          <div class="empty-title" id="goalsEmptyTitle">مفيش أهداف مسجلة حالياً</div>
-          <div class="empty-subtitle" id="goalsEmptySub">No goals recorded yet</div>
-          <button class="primary-btn" onclick="showToast(currentLang === 'ar' ? 'إضافة هدف ستعمل في المرحلة ٣' : 'Add goal in Phase 3')">
+          <div class="empty-title">مفيش أهداف مسجلة حالياً</div>
+          <div class="empty-subtitle">No goals recorded yet</div>
+          <button class="primary-btn" onclick="openQuickAdd('goal')">
             <span class="material-symbols-rounded">add</span>
-            <span id="goalsAddBtn">أضف هدف</span>
+            <span>أضف هدف</span>
           </button>
         </div>
       </div>
 
       <!-- Screen 2: Ideas -->
       <div id="screenIdeas" class="screen-panel" style="display: none; flex-direction: column; gap: 16px; flex: 1;">
-        <div class="chips-row" style="overflow-x: auto; padding-bottom: 4px;">
+        <div class="chips-row" style="overflow-x: auto;">
           <div class="chip active">جديدة (New)</div>
           <div class="chip">بتتدرس (Exploring)</div>
           <div class="chip">اتحولت (Converted)</div>
@@ -535,11 +660,11 @@
           <div class="empty-icon-circle">
             <span class="material-symbols-rounded" style="font-size: 36px;">lightbulb</span>
           </div>
-          <div class="empty-title" id="ideasEmptyTitle">مفيش أفكار مسجلة</div>
-          <div class="empty-subtitle" id="ideasEmptySub">No ideas recorded</div>
-          <button class="primary-btn" onclick="showToast(currentLang === 'ar' ? 'إضافة فكرة ستعمل في المرحلة ٤' : 'Add idea in Phase 4')">
+          <div class="empty-title">مفيش أفكار مسجلة</div>
+          <div class="empty-subtitle">No ideas recorded</div>
+          <button class="primary-btn" onclick="openQuickAdd('idea')">
             <span class="material-symbols-rounded">add</span>
-            <span id="ideasAddBtn">أضف فكرة</span>
+            <span>أضف فكرة</span>
           </button>
         </div>
       </div>
@@ -547,22 +672,22 @@
       <!-- Screen 3: Stats -->
       <div id="screenStats" class="screen-panel" style="display: none; flex-direction: column; gap: 16px; flex: 1;">
         <div class="chips-row" style="justify-content: center;">
-          <div class="chip active" id="statChipWeek">أسبوع • Week</div>
-          <div class="chip" id="statChipMonth">شهر • Month</div>
-          <div class="chip" id="statChipYear">سنة • Year</div>
+          <div class="chip active">أسبوع • Week</div>
+          <div class="chip">شهر • Month</div>
+          <div class="chip">سنة • Year</div>
         </div>
         <div class="empty-state">
           <div class="empty-icon-circle">
             <span class="material-symbols-rounded" style="font-size: 36px;">insights</span>
           </div>
-          <div class="empty-title" id="statsEmptyTitle">مفيش بيانات كافية للفترة دي</div>
-          <div class="empty-subtitle" id="statsEmptySub">Not enough data for this period</div>
+          <div class="empty-title">مفيش بيانات كافية للفترة دي</div>
+          <div class="empty-subtitle">Not enough data for this period</div>
         </div>
       </div>
     </main>
 
     <!-- Floating Action Button -->
-    <button class="fab" id="mainFab" onclick="showToast(currentLang === 'ar' ? 'الإضافة السريعة جاهزة للتفعيل في المرحلة ١' : 'Quick add ready for Phase 1')">
+    <button class="fab" id="mainFab" onclick="openQuickAdd()">
       <span class="material-symbols-rounded">add</span>
     </button>
 
@@ -573,8 +698,8 @@
           <span class="material-symbols-rounded">today</span>
         </div>
         <div class="nav-label">
-          <span id="navToday">اليوم</span>
-          <span class="nav-sub" id="subToday">Today</span>
+          <span>اليوم</span>
+          <span class="nav-sub">Today</span>
         </div>
       </button>
 
@@ -583,8 +708,8 @@
           <span class="material-symbols-rounded">flag</span>
         </div>
         <div class="nav-label">
-          <span id="navGoals">الأهداف</span>
-          <span class="nav-sub" id="subGoals">Goals</span>
+          <span>الأهداف</span>
+          <span class="nav-sub">Goals</span>
         </div>
       </button>
 
@@ -593,8 +718,8 @@
           <span class="material-symbols-rounded">lightbulb</span>
         </div>
         <div class="nav-label">
-          <span id="navIdeas">الأفكار</span>
-          <span class="nav-sub" id="subIdeas">Ideas</span>
+          <span>الأفكار</span>
+          <span class="nav-sub">Ideas</span>
         </div>
       </button>
 
@@ -603,86 +728,169 @@
           <span class="material-symbols-rounded">bar_chart</span>
         </div>
         <div class="nav-label">
-          <span id="navStats">الإحصائيات</span>
-          <span class="nav-sub" id="subStats">Stats</span>
+          <span>الإحصائيات</span>
+          <span class="nav-sub">Stats</span>
         </div>
       </button>
     </nav>
 
+    <!-- Quick Add Bottom Sheet (Spec 6.2) -->
+    <div class="sheet-overlay" id="quickAddSheet" onclick="closeSheet('quickAddSheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title" id="qaHeaderTitle">إضافة سريعة</div>
+          <button class="icon-btn" onclick="closeSheetDirect('quickAddSheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+
+        <!-- Segmented Control for Item Type -->
+        <div class="segmented-control">
+          <button class="segment-btn active" id="segTask" onclick="setQAKind('task')">
+            <span class="material-symbols-rounded" style="font-size: 16px;">task_alt</span>
+            <span>مهمة</span>
+          </button>
+          <button class="segment-btn" id="segErrand" onclick="setQAKind('errand')">
+            <span class="material-symbols-rounded" style="font-size: 16px;">location_on</span>
+            <span>مشوار</span>
+          </button>
+          <button class="segment-btn" id="segGoal" onclick="setQAKind('goal')">
+            <span class="material-symbols-rounded" style="font-size: 16px;">flag</span>
+            <span>هدف</span>
+          </button>
+          <button class="segment-btn" id="segIdea" onclick="setQAKind('idea')">
+            <span class="material-symbols-rounded" style="font-size: 16px;">lightbulb</span>
+            <span>فكرة</span>
+          </button>
+        </div>
+
+        <!-- Title Input -->
+        <input type="text" id="qaTitleInput" class="form-input" placeholder="عنوان المهمة..." autofocus />
+
+        <!-- Location Input (Visible for Errand only) -->
+        <div id="qaLocationBox" style="display: none;">
+          <input type="text" id="qaLocationInput" class="form-input" placeholder="المكان أو العنوان..." />
+        </div>
+
+        <!-- Date Chips -->
+        <div class="chips-row" style="flex-wrap: wrap;">
+          <div class="chip active" id="qaChipToday" onclick="setQADate('today')">اليوم</div>
+          <div class="chip" id="qaChipTomorrow" onclick="setQADate('tomorrow')">بكرة</div>
+          <div class="chip" id="qaChipNoDate" onclick="setQADate('nodate')">بدون تاريخ</div>
+        </div>
+
+        <!-- Time & Priority -->
+        <div style="display: flex; gap: 8px;">
+          <input type="time" id="qaTimeInput" class="form-input" style="flex: 1;" />
+          <select id="qaPrioritySelect" class="form-input" style="flex: 1;">
+            <option value="normal">عادية (Normal)</option>
+            <option value="high">عالية (High)</option>
+            <option value="low">منخفضة (Low)</option>
+          </select>
+        </div>
+
+        <!-- Buttons -->
+        <div style="display: flex; gap: 10px; margin-top: 8px;">
+          <button class="primary-btn" style="flex: 1; justify-content: center;" onclick="saveTask(false)">حفظ</button>
+          <button class="primary-btn" style="flex: 1; justify-content: center; background: none; border: 1px solid var(--border); color: var(--text);" onclick="saveTask(true)">حفظ وإضافة آخر</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Change Sheet (Spec 6.3 & 5) -->
+    <div class="sheet-overlay" id="statusSheet" onclick="closeSheet('statusSheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title">تغيير الحالة (Status Sheet)</div>
+          <button class="icon-btn" onclick="closeSheetDirect('statusSheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+
+        <div id="statusTaskTitle" style="font-size: 14px; color: var(--text-muted); text-align: center; margin-bottom: 8px;"></div>
+
+        <!-- 7 Statuses Grid -->
+        <div class="chips-row" style="flex-wrap: wrap; justify-content: center; gap: 8px;">
+          <div class="chip" id="st_todo" onclick="selectStatus('todo')">لسه • To do</div>
+          <div class="chip" id="st_in_progress" onclick="selectStatus('in_progress')">جارية • In progress</div>
+          <div class="chip" id="st_partial" onclick="selectStatus('partial')">اتعمل جزء • Partial</div>
+          <div class="chip" id="st_done" onclick="selectStatus('done')">تمت • Done</div>
+          <div class="chip" id="st_postponed" onclick="selectStatus('postponed')">مؤجلة • Postponed</div>
+          <div class="chip" id="st_waiting" onclick="selectStatus('waiting')">منتظرة • Waiting</div>
+          <div class="chip" id="st_stopped" onclick="selectStatus('stopped')">متوقفة • Stopped</div>
+        </div>
+
+        <!-- Partial Progress Slider -->
+        <div id="statusPartialBox" style="display: none; flex-direction: column; gap: 4px; padding: 8px; background: var(--surface-variant); border-radius: 12px;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px;">
+            <span>نسبة الإنجاز:</span>
+            <span id="sliderValLabel">50%</span>
+          </div>
+          <input type="range" id="statusProgressSlider" min="1" max="99" value="50" oninput="document.getElementById('sliderValLabel').innerText = this.value + '%'" />
+        </div>
+
+        <!-- Reasons Box -->
+        <div id="statusReasonBox" style="display: none; flex-direction: column; gap: 6px;">
+          <div style="font-size: 13px; font-weight: 600;">اختر سبب التأجيل / التوقف:</div>
+          <div class="chips-row" style="flex-wrap: wrap; gap: 6px;" id="reasonChipsList">
+            <div class="chip" onclick="pickReason('مفيش فلوس')">مفيش فلوس</div>
+            <div class="chip" onclick="pickReason('مستني حد')">مستني حد</div>
+            <div class="chip" onclick="pickReason('مفيش وقت')">مفيش وقت</div>
+            <div class="chip" onclick="pickReason('مفيش طاقة أو مود')">مفيش طاقة أو مود</div>
+            <div class="chip" onclick="pickReason('ظرف طارئ')">ظرف طارئ</div>
+            <div class="chip" onclick="pickReason('سبب آخر')">سبب آخر</div>
+          </div>
+          <input type="text" id="statusCustomReason" class="form-input" placeholder="اكتب السبب هنا..." style="margin-top: 4px;" />
+        </div>
+
+        <button class="primary-btn" style="margin-top: 12px; justify-content: center;" onclick="confirmStatusChange()">تأكيد الحالة</button>
+      </div>
+    </div>
+
     <!-- Settings Bottom Sheet -->
-    <div class="sheet-overlay" id="settingsSheet" onclick="closeSettings(event)">
+    <div class="sheet-overlay" id="settingsSheet" onclick="closeSheet('settingsSheet', event)">
       <div class="sheet-content" onclick="event.stopPropagation()">
         <div class="sheet-header">
           <div class="sheet-title" id="settingsTitle">الإعدادات • Settings</div>
-          <button class="icon-btn" onclick="closeSettingsDirect()">
+          <button class="icon-btn" onclick="closeSheetDirect('settingsSheet')">
             <span class="material-symbols-rounded">close</span>
           </button>
         </div>
 
         <!-- Language Group -->
-        <div class="setting-group">
-          <div class="setting-title">
-            <span class="material-symbols-rounded" style="font-size: 18px;">language</span>
-            <span id="settingsLangTitle">اللغة / Language</span>
-          </div>
-          <div class="option-row selected" id="optLangAr" onclick="setLanguage('ar')">
-            <span class="option-label">العربية (Arabic - RTL)</span>
-            <span class="material-symbols-rounded" id="chkLangAr" style="color: var(--accent);">check_circle</span>
-          </div>
-          <div class="option-row" id="optLangEn" onclick="setLanguage('en')">
-            <span class="option-label">English (LTR)</span>
-            <span class="material-symbols-rounded" id="chkLangEn" style="display:none; color: var(--accent);">check_circle</span>
+        <div class="card" style="margin-bottom: 8px;">
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">اللغة / Language</div>
+          <div class="chips-row">
+            <div class="chip active" id="optLangAr" onclick="setLanguage('ar')">العربية</div>
+            <div class="chip" id="optLangEn" onclick="setLanguage('en')">English</div>
           </div>
         </div>
 
         <!-- Theme Group -->
-        <div class="setting-group">
-          <div class="setting-title">
-            <span class="material-symbols-rounded" style="font-size: 18px;">palette</span>
-            <span id="settingsThemeTitle">المظهر / Theme</span>
-          </div>
-          <div class="option-row selected" id="optThemeLight" onclick="setTheme('light')">
-            <span class="option-label" id="lblThemeLight">فاتح (Light)</span>
-            <span class="material-symbols-rounded" id="chkThemeLight" style="color: var(--accent);">check_circle</span>
-          </div>
-          <div class="option-row" id="optThemeDark" onclick="setTheme('dark')">
-            <span class="option-label" id="lblThemeDark">داكن (Dark)</span>
-            <span class="material-symbols-rounded" id="chkThemeDark" style="display:none; color: var(--accent);">check_circle</span>
+        <div class="card" style="margin-bottom: 8px;">
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">المظهر / Theme</div>
+          <div class="chips-row">
+            <div class="chip active" id="optThemeLight" onclick="setTheme('light')">فاتح Light</div>
+            <div class="chip" id="optThemeDark" onclick="setTheme('dark')">داكن Dark</div>
           </div>
         </div>
 
         <!-- Numerals Group -->
-        <div class="setting-group">
-          <div class="setting-title">
-            <span class="material-symbols-rounded" style="font-size: 18px;">tag</span>
-            <span id="settingsNumTitle">صيغة الأرقام / Numerals</span>
-          </div>
-          <div class="option-row selected" id="optNumWestern" onclick="setNumerals('western')">
-            <span class="option-label">أرقام إنجليزية (123)</span>
-            <span class="material-symbols-rounded" id="chkNumWestern" style="color: var(--accent);">check_circle</span>
-          </div>
-          <div class="option-row" id="optNumArabic" onclick="setNumerals('arabic')">
-            <span class="option-label">أرقام مشرقية (١٢٣)</span>
-            <span class="material-symbols-rounded" id="chkNumArabic" style="display:none; color: var(--accent);">check_circle</span>
-          </div>
-        </div>
-
-        <!-- About Group -->
-        <div class="setting-group" style="margin-bottom: 0;">
-          <div class="setting-title">
-            <span class="material-symbols-rounded" style="font-size: 18px;">info</span>
-            <span>عن إنجاز • About</span>
-          </div>
-          <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-            تطبيق إنجاز - الإصدار 1.0.0 (Phase 0 Foundation)<br>
-            Offline-first SQLite Drift Architecture • Material 3
+        <div class="card" style="margin-bottom: 8px;">
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">صيغة الأرقام / Numerals</div>
+          <div class="chips-row">
+            <div class="chip active" id="optNumWestern" onclick="setNumerals('western')">123</div>
+            <div class="chip" id="optNumArabic" onclick="setNumerals('arabic')">١٢٣</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Toast Notification -->
-    <div class="toast" id="toast">تمت العملية</div>
+    <!-- Toast Notification with Undo -->
+    <div class="toast" id="toast">
+      <span id="toastMsg">تمت العملية</span>
+      <button class="toast-undo-btn" id="toastUndoBtn" style="display: none;" onclick="undoLastAction()">تراجع</button>
+    </div>
   </div>
 
   <script>
@@ -692,12 +900,24 @@
     let currentNumerals = 'western';
     let currentDateOffset = 0;
 
-    const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+    let qaKind = 'task';
+    let qaDate = 'today';
+    let activeTaskForStatus = null;
+    let selectedStatusKey = 'todo';
+    let lastCompletedTaskId = null;
+    let toastTimeout = null;
 
+    // Local Tasks Store
+    let tasks = JSON.parse(localStorage.getItem('enjaz_tasks') || '[]');
+
+    function saveTasksToStorage() {
+      localStorage.setItem('enjaz_tasks', JSON.stringify(tasks));
+      renderTasks();
+    }
+
+    const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
     function toArabicDigits(str) {
-      return String(str).replace(/[0-9]/g, function(d) {
-        return arabicDigits[d];
-      });
+      return String(str).replace(/[0-9]/g, function(d) { return arabicDigits[d]; });
     }
 
     function switchTab(index) {
@@ -710,138 +930,271 @@
       document.querySelectorAll('.nav-item')[index].classList.add('active');
 
       const fab = document.getElementById('mainFab');
-      // Stats has no button
-      if (index === 3) {
-        fab.style.display = 'none';
-      } else {
-        fab.style.display = 'flex';
-      }
-
+      fab.style.display = index === 3 ? 'none' : 'flex';
       updateHeaderTitle();
     }
 
     function updateHeaderTitle() {
       const titlesAr = ['إنجاز', 'الأهداف', 'الأفكار', 'الإحصائيات'];
       const titlesEn = ['Enjaz', 'Goals', 'Ideas', 'Stats'];
-      const title = currentLang === 'ar' ? titlesAr[currentTab] : titlesEn[currentTab];
-      document.getElementById('pageTitle').innerText = title;
+      document.getElementById('pageTitle').innerText = currentLang === 'ar' ? titlesAr[currentTab] : titlesEn[currentTab];
     }
 
     function openSettings() {
-      const sheet = document.getElementById('settingsSheet');
-      sheet.classList.add('active');
+      document.getElementById('settingsSheet').classList.add('active');
     }
 
-    function closeSettings(e) {
-      if (e.target.id === 'settingsSheet') {
-        closeSettingsDirect();
-      }
+    function openQuickAdd(kind = 'task') {
+      setQAKind(kind);
+      document.getElementById('qaTitleInput').value = '';
+      document.getElementById('qaLocationInput').value = '';
+      document.getElementById('quickAddSheet').classList.add('active');
+      setTimeout(() => document.getElementById('qaTitleInput').focus(), 150);
     }
 
-    function closeSettingsDirect() {
-      document.getElementById('settingsSheet').classList.remove('active');
+    function closeSheet(id, e) {
+      if (e.target.id === id) closeSheetDirect(id);
     }
 
-    function setLanguage(lang) {
-      currentLang = lang;
-      const html = document.documentElement;
+    function closeSheetDirect(id) {
+      document.getElementById(id).classList.remove('active');
+    }
 
-      if (lang === 'ar') {
-        html.setAttribute('lang', 'ar');
-        html.setAttribute('dir', 'rtl');
-        document.body.style.fontFamily = "'Cairo', sans-serif";
+    function setQAKind(kind) {
+      qaKind = kind;
+      ['Task', 'Errand', 'Goal', 'Idea'].forEach(k => {
+        const btn = document.getElementById('seg' + k);
+        if (btn) btn.classList.remove('active');
+      });
+      const target = document.getElementById('seg' + kind.charAt(0).toUpperCase() + kind.slice(1));
+      if (target) target.classList.add('active');
 
-        document.getElementById('optLangAr').classList.add('selected');
-        document.getElementById('chkLangAr').style.display = 'inline-block';
-        document.getElementById('optLangEn').classList.remove('selected');
-        document.getElementById('chkLangEn').style.display = 'none';
+      document.getElementById('qaLocationBox').style.display = kind === 'errand' ? 'block' : 'none';
+      document.getElementById('qaTitleInput').placeholder = kind === 'errand' ? 'اسم المشوار...' : (kind === 'goal' ? 'عنوان الهدف...' : (kind === 'idea' ? 'عنوان الفكرة...' : 'عنوان المهمة...'));
+    }
 
-        // Subtitles visible in Arabic mode
-        document.querySelectorAll('.nav-sub').forEach(s => s.style.display = 'block');
-        document.getElementById('todayEmptySub').style.display = 'block';
-        document.getElementById('goalsEmptySub').style.display = 'block';
-        document.getElementById('ideasEmptySub').style.display = 'block';
-        document.getElementById('statsEmptySub').style.display = 'block';
+    function setQADate(d) {
+      qaDate = d;
+      ['qaChipToday', 'qaChipTomorrow', 'qaChipNoDate'].forEach(c => document.getElementById(c).classList.remove('active'));
+      if (d === 'today') document.getElementById('qaChipToday').classList.add('active');
+      if (d === 'tomorrow') document.getElementById('qaChipTomorrow').classList.add('active');
+      if (d === 'nodate') document.getElementById('qaChipNoDate').classList.add('active');
+    }
 
-        document.getElementById('todayEmptyTitle').innerText = 'مفيش حاجة مخططة النهارده';
-        document.getElementById('todayEmptyDesc').innerText = 'ابدأ يومك بإضافة أول مهمة أو مشوار';
-        document.getElementById('todayAddBtn').innerText = 'أضف مهمة';
-        document.getElementById('goalsEmptyTitle').innerText = 'مفيش أهداف مسجلة حالياً';
-        document.getElementById('goalsAddBtn').innerText = 'أضف هدف';
-        document.getElementById('ideasEmptyTitle').innerText = 'مفيش أفكار مسجلة';
-        document.getElementById('ideasAddBtn').innerText = 'أضف فكرة';
-        document.getElementById('statsEmptyTitle').innerText = 'مفيش بيانات كافية للفترة دي';
+    function saveTask(addAnother = false) {
+      const title = document.getElementById('qaTitleInput').value.trim();
+      if (!title) return;
+
+      const loc = document.getElementById('qaLocationInput').value.trim();
+      const time = document.getElementById('qaTimeInput').value;
+      const priority = document.getElementById('qaPrioritySelect').value;
+
+      const newTask = {
+        id: Date.now(),
+        title: title,
+        kind: qaKind,
+        date: qaDate,
+        time: time || null,
+        location: loc || null,
+        priority: priority,
+        status: 'todo',
+        progress: 0,
+        reason: null,
+      };
+
+      tasks.unshift(newTask);
+      saveTasksToStorage();
+
+      showToast(currentLang === 'ar' ? 'تمت إضافة المهمة بنجاح' : 'Task added successfully');
+
+      if (addAnother) {
+        document.getElementById('qaTitleInput').value = '';
+        document.getElementById('qaLocationInput').value = '';
+        document.getElementById('qaTitleInput').focus();
       } else {
-        html.setAttribute('lang', 'en');
-        html.setAttribute('dir', 'ltr');
-        document.body.style.fontFamily = "'Inter', sans-serif";
-
-        document.getElementById('optLangEn').classList.add('selected');
-        document.getElementById('chkLangEn').style.display = 'inline-block';
-        document.getElementById('optLangAr').classList.remove('selected');
-        document.getElementById('chkLangAr').style.display = 'none';
-
-        // In English mode show English only (hide subtitles)
-        document.querySelectorAll('.nav-sub').forEach(s => s.style.display = 'none');
-        document.getElementById('todayEmptySub').style.display = 'none';
-        document.getElementById('goalsEmptySub').style.display = 'none';
-        document.getElementById('ideasEmptySub').style.display = 'none';
-        document.getElementById('statsEmptySub').style.display = 'none';
-
-        document.getElementById('todayEmptyTitle').innerText = 'Nothing planned today';
-        document.getElementById('todayEmptyDesc').innerText = 'Start your day by adding your first task or errand';
-        document.getElementById('todayAddBtn').innerText = 'Add task';
-        document.getElementById('goalsEmptyTitle').innerText = 'No goals recorded yet';
-        document.getElementById('goalsAddBtn').innerText = 'Add goal';
-        document.getElementById('ideasEmptyTitle').innerText = 'No ideas recorded';
-        document.getElementById('ideasAddBtn').innerText = 'Add idea';
-        document.getElementById('statsEmptyTitle').innerText = 'Not enough data for this period';
+        closeSheetDirect('quickAddSheet');
       }
-
-      updateDateDisplay();
-      updateHeaderTitle();
-      showToast(lang === 'ar' ? 'تم تحويل اللغة إلى العربية' : 'Switched to English');
     }
 
-    function setTheme(theme) {
-      currentTheme = theme;
-      document.body.setAttribute('data-theme', theme);
+    function toggleTaskDone(id, event) {
+      if (event) event.stopPropagation();
+      const t = tasks.find(x => x.id === id);
+      if (!t) return;
 
-      if (theme === 'light') {
-        document.getElementById('optThemeLight').classList.add('selected');
-        document.getElementById('chkThemeLight').style.display = 'inline-block';
-        document.getElementById('optThemeDark').classList.remove('selected');
-        document.getElementById('chkThemeDark').style.display = 'none';
+      if (t.status === 'done') {
+        t.status = 'todo';
+        t.progress = 0;
       } else {
-        document.getElementById('optThemeDark').classList.add('selected');
-        document.getElementById('chkThemeDark').style.display = 'inline-block';
-        document.getElementById('optThemeLight').classList.remove('selected');
-        document.getElementById('chkThemeLight').style.display = 'none';
+        t.status = 'done';
+        t.progress = 100;
+        lastCompletedTaskId = id;
+        showToast(currentLang === 'ar' ? 'تم إنجاز المهمة! 🎉' : 'Task completed! 🎉', true);
       }
-      showToast(currentLang === 'ar' ? (theme === 'light' ? 'المظهر الفاتح' : 'المظهر الداكن') : (theme === 'light' ? 'Light Theme' : 'Dark Theme'));
+      saveTasksToStorage();
     }
 
-    function setNumerals(num) {
-      currentNumerals = num;
-      if (num === 'western') {
-        document.getElementById('optNumWestern').classList.add('selected');
-        document.getElementById('chkNumWestern').style.display = 'inline-block';
-        document.getElementById('optNumArabic').classList.remove('selected');
-        document.getElementById('chkNumArabic').style.display = 'none';
-      } else {
-        document.getElementById('optNumArabic').classList.add('selected');
-        document.getElementById('chkNumArabic').style.display = 'inline-block';
-        document.getElementById('optNumWestern').classList.remove('selected');
-        document.getElementById('chkNumWestern').style.display = 'none';
+    function undoLastAction() {
+      if (lastCompletedTaskId) {
+        const t = tasks.find(x => x.id === lastCompletedTaskId);
+        if (t) {
+          t.status = 'todo';
+          t.progress = 0;
+          saveTasksToStorage();
+          showToast(currentLang === 'ar' ? 'تم التراجع' : 'Undone');
+        }
+        lastCompletedTaskId = null;
       }
-      updateDateDisplay();
-      showToast(currentLang === 'ar' ? 'تم ضبط الأرقام' : 'Numerals updated');
     }
+
+    function openStatusModal(id, event) {
+      if (event) event.stopPropagation();
+      const t = tasks.find(x => x.id === id);
+      if (!t) return;
+
+      activeTaskForStatus = t;
+      document.getElementById('statusTaskTitle').innerText = t.title;
+      selectStatus(t.status || 'todo');
+      document.getElementById('statusSheet').classList.add('active');
+    }
+
+    function selectStatus(status) {
+      selectedStatusKey = status;
+      ['todo', 'in_progress', 'partial', 'done', 'postponed', 'waiting', 'stopped'].forEach(s => {
+        const el = document.getElementById('st_' + s);
+        if (el) el.classList.remove('active');
+      });
+      const activeEl = document.getElementById('st_' + status);
+      if (activeEl) activeEl.classList.add('active');
+
+      document.getElementById('statusPartialBox').style.display = status === 'partial' ? 'flex' : 'none';
+      document.getElementById('statusReasonBox').style.display = ['partial', 'postponed', 'waiting', 'stopped'].includes(status) ? 'flex' : 'none';
+    }
+
+    function pickReason(r) {
+      document.getElementById('statusCustomReason').value = r;
+    }
+
+    function confirmStatusChange() {
+      if (!activeTaskForStatus) return;
+      activeTaskForStatus.status = selectedStatusKey;
+      if (selectedStatusKey === 'partial') {
+        activeTaskForStatus.progress = parseInt(document.getElementById('statusProgressSlider').value, 10);
+      } else if (selectedStatusKey === 'done') {
+        activeTaskForStatus.progress = 100;
+      }
+      activeTaskForStatus.reason = document.getElementById('statusCustomReason').value.trim() || null;
+
+      saveTasksToStorage();
+      closeSheetDirect('statusSheet');
+      showToast(currentLang === 'ar' ? 'تم تحديث الحالة بنجاح' : 'Status updated successfully');
+    }
+
+    function renderTasks() {
+      const container = document.getElementById('taskListContainer');
+      const emptyState = document.getElementById('todayEmptyState');
+
+      const regularTasks = tasks.filter(t => t.status !== 'done');
+      const doneTasks = tasks.filter(t => t.status === 'done');
+
+      const total = tasks.length;
+      const done = doneTasks.length;
+
+      let progressText = currentLang === 'ar' ? `${done} من ${total} تمت` : `${done} of ${total} done`;
+      if (currentNumerals === 'arabic') {
+        progressText = toArabicDigits(progressText);
+      }
+      document.getElementById('labelProgress').innerText = progressText;
+
+      if (tasks.length === 0) {
+        container.innerHTML = '';
+        emptyState.style.display = 'flex';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      let html = '';
+
+      if (regularTasks.length > 0) {
+        html += `<div class="section-title">مهام اليوم (${regularTasks.length})</div>`;
+        regularTasks.forEach(t => {
+          html += createTaskCardHtml(t);
+        });
+      }
+
+      if (doneTasks.length > 0) {
+        html += `<div class="section-title">تمت اليوم (${doneTasks.length})</div>`;
+        doneTasks.forEach(t => {
+          html += createTaskCardHtml(t);
+        });
+      }
+
+      container.innerHTML = html;
+    }
+
+    function createTaskCardHtml(t) {
+      const isDone = t.status === 'done';
+      const statusLabels = {
+        todo: 'لسه',
+        in_progress: 'جارية',
+        partial: 'اتعمل جزء',
+        done: 'تمت',
+        postponed: 'مؤجلة',
+        waiting: 'منتظرة',
+        stopped: 'متوقفة',
+      };
+      const statusColors = {
+        todo: 'var(--color-todo)',
+        in_progress: 'var(--color-inprogress)',
+        partial: 'var(--color-partial)',
+        done: 'var(--color-done)',
+        postponed: 'var(--color-postponed)',
+        waiting: 'var(--color-waiting)',
+        stopped: 'var(--color-stopped)',
+      };
+
+      const color = statusColors[t.status] || 'var(--text-muted)';
+      const label = statusLabels[t.status] || t.status;
+
+      return `
+        <div class="task-card" onclick="openStatusModal(${t.id}, event)">
+          <div class="task-header">
+            <div class="task-checkbox ${isDone ? 'checked' : ''}" onclick="toggleTaskDone(${t.id}, event)">
+              ${isDone ? '<span class="material-symbols-rounded" style="font-size: 16px;">check</span>' : ''}
+            </div>
+            <div class="task-title ${isDone ? 'done' : ''}">${t.title}</div>
+            <div class="task-status-chip" style="background-color: ${color}20; color: ${color};" onclick="openStatusModal(${t.id}, event)">
+              ${label}
+            </div>
+          </div>
+          ${(t.time || t.location || t.reason) ? `
+            <div class="task-meta">
+              ${t.time ? `<span><span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle;">schedule</span> ${t.time}</span>` : ''}
+              ${t.location ? `<span><span class="material-symbols-rounded" style="font-size:14px; vertical-align:middle;">pin_drop</span> ${t.location}</span>` : ''}
+              ${t.reason ? `<span style="color: ${color}; font-style: italic;">بسبب: ${t.reason}</span>` : ''}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function showToast(msg, showUndo = false) {
+      clearTimeout(toastTimeout);
+      const t = document.getElementById('toast');
+      document.getElementById('toastMsg').innerText = msg;
+      document.getElementById('toastUndoBtn').style.display = showUndo ? 'inline-block' : 'none';
+
+      t.classList.add('show');
+      toastTimeout = setTimeout(() => {
+        t.classList.remove('show');
+      }, showUndo ? 8000 : 2500);
+    }
+
+    function prevDay() { currentDateOffset--; updateDateDisplay(); }
+    function nextDay() { currentDateOffset++; updateDateDisplay(); }
 
     function updateDateDisplay() {
       const d = new Date();
       d.setDate(d.getDate() + currentDateOffset);
-
       const optionsWeekday = { weekday: 'long' };
       const optionsFull = { year: 'numeric', month: 'long', day: 'numeric' };
       const locale = currentLang === 'ar' ? 'ar-EG' : 'en-US';
@@ -851,36 +1204,38 @@
 
       if (currentNumerals === 'arabic') {
         fullDateStr = toArabicDigits(fullDateStr);
-        document.getElementById('labelInbox').innerText = currentLang === 'ar' ? 'بدون تاريخ (٠)' : 'No date (0)';
-      } else {
-        document.getElementById('labelInbox').innerText = currentLang === 'ar' ? 'بدون تاريخ (0)' : 'No date (0)';
       }
-
       document.getElementById('currentWeekday').innerText = weekdayStr;
       document.getElementById('currentFullDate').innerText = fullDateStr;
     }
 
-    function prevDay() {
-      currentDateOffset--;
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.setAttribute('lang', lang);
+      document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+      document.body.style.fontFamily = lang === 'ar' ? "'Cairo', sans-serif" : "'Inter', sans-serif";
       updateDateDisplay();
+      updateHeaderTitle();
+      renderTasks();
+      closeSheetDirect('settingsSheet');
     }
 
-    function nextDay() {
-      currentDateOffset++;
-      updateDateDisplay();
+    function setTheme(th) {
+      currentTheme = th;
+      document.body.setAttribute('data-theme', th);
+      closeSheetDirect('settingsSheet');
     }
 
-    function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.innerText = msg;
-      t.classList.add('show');
-      setTimeout(() => {
-        t.classList.remove('show');
-      }, 2200);
+    function setNumerals(num) {
+      currentNumerals = num;
+      updateDateDisplay();
+      renderTasks();
+      closeSheetDirect('settingsSheet');
     }
 
     // Initialize
     updateDateDisplay();
+    renderTasks();
   </script>
 </body>
 </html>

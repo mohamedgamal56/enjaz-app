@@ -7,6 +7,7 @@ import '../../goals/presentation/goals_screen.dart';
 import '../../ideas/presentation/ideas_screen.dart';
 import '../../stats/presentation/stats_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
+import '../../tasks/presentation/quick_add_sheet.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
@@ -131,16 +132,12 @@ class _MainShellState extends ConsumerState<MainShell> {
               tooltip: l10n.addTask,
               child: const Icon(Icons.add_rounded),
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      isArabic
-                          ? 'الإضافة السريعة جاهزة للتفعيل في المرحلة ١'
-                          : 'Quick add will be active in Phase 1',
-                    ),
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
+                final kind = _currentIndex == 1
+                    ? 'goal'
+                    : _currentIndex == 2
+                        ? 'idea'
+                        : 'task';
+                QuickAddSheet.show(context, initialKind: kind);
               },
             )
           : null,

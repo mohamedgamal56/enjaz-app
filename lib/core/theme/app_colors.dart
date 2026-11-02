@@ -38,4 +38,46 @@ class AppColors {
   static const Color darkStatusPostponed = Color(0xFF9CA3AF);
   static const Color darkStatusWaiting = Color(0xFFA78BFA);
   static const Color darkStatusStopped = Color(0xFFF87171);
+
+  /// Helper to get status color based on current brightness
+  static Color getStatusColor(String status, bool isDark) {
+    switch (status) {
+      case 'in_progress':
+        return isDark ? darkStatusInProgress : lightStatusInProgress;
+      case 'partial':
+        return isDark ? darkStatusPartial : lightStatusPartial;
+      case 'done':
+        return isDark ? darkStatusDone : lightStatusDone;
+      case 'postponed':
+        return isDark ? darkStatusPostponed : lightStatusPostponed;
+      case 'waiting':
+        return isDark ? darkStatusWaiting : lightStatusWaiting;
+      case 'stopped':
+        return isDark ? darkStatusStopped : lightStatusStopped;
+      case 'todo':
+      default:
+        return isDark ? darkStatusTodo : lightStatusTodo;
+    }
+  }
+
+  /// Helper to get status icon based on Spec Section 5 table
+  static IconData getStatusIcon(String status) {
+    switch (status) {
+      case 'in_progress':
+        return Icons.play_circle_outline_rounded;
+      case 'partial':
+        return Icons.pie_chart_outline_rounded;
+      case 'done':
+        return Icons.check_circle_rounded;
+      case 'postponed':
+        return Icons.schedule_rounded;
+      case 'waiting':
+        return Icons.hourglass_empty_rounded;
+      case 'stopped':
+        return Icons.stop_circle_outlined;
+      case 'todo':
+      default:
+        return Icons.circle_outlined;
+    }
+  }
 }

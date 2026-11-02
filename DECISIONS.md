@@ -33,5 +33,13 @@
 ## Decision 5: Non-programmer CI/CD Pipeline
 - **Context**: The app owner does not have a local Flutter SDK on their Windows machine and uses a Redmi 12 smartphone.
 - **Decision**:
-  - Provided a GitHub Actions workflow (`.github/workflows/build.yml`) that triggers on push or manual trigger, sets up Flutter, generates Drift code, builds the Android APK, uploads it as an artifact for 1-click download, and builds/deploys the Flutter Web App.
+  - Provided a GitHub Actions workflow (`.github/workflows/build_apk.yml`) that triggers on push or manual trigger, sets up Flutter, generates Drift code, runs unit tests, builds the Android APK, and uploads it as an artifact.
   - Also provided a live local Web preview server running on port 8080 accessible across the local network (`http://192.168.100.11:8080`) for instant zero-setup testing.
+
+## Decision 6: Phase 1 Tasks Core & Status Transition Engine
+- **Context**: Spec Section 5 mandates strict status transition rules, append-only history tracking in `task_events`, undo mechanisms, and reasons tracking.
+- **Decision**:
+  - Created a pure Dart business service `TaskStatusService` to compute state transitions without UI coupling, verified by unit tests in `test/unit/task_status_service_test.dart`.
+  - Status changes write atomic transactions in Drift: updating `tasks`, logging `task_events`, and incrementing reason usage counts.
+  - Quick checkbox on task card marks done immediately with an 8-second SnackBar with Undo action.
+  - Long press opens the comprehensive `StatusSheet` supporting the 7 statuses, reason chips, partial slider (1-99%), postpone date picker, and confirm button.
