@@ -340,6 +340,7 @@ class AppLocalizations {
   String get outcomeNoteLabel => _get('outcomeNoteLabel');
   String get outcomeNoteHint => _get('outcomeNoteHint');
   String get historyLog => _get('historyLog');
+  String get duplicateTask => _get('duplicateTask');
   String get deleteTask => _get('deleteTask');
   String get deleteTaskConfirm => _get('deleteTaskConfirm');
   String get taskDeleted => _get('taskDeleted');

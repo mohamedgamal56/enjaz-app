@@ -68,6 +68,14 @@ class AppFormatter {
     return formatted;
   }
 
+  static String formatDateTime(DateTime date, {required String locale, NumeralsFormat format = NumeralsFormat.western}) {
+    final formatted = DateFormat.yMMMd(locale).add_jm().format(date);
+    if (format == NumeralsFormat.arabicIndic) {
+      return formatted.split('').map((char) => _westernToArabicDigits[char] ?? char).join();
+    }
+    return formatted;
+  }
+
   static String formatWeekday(DateTime date, {required String locale}) {
     return DateFormat.EEEE(locale).format(date);
   }
