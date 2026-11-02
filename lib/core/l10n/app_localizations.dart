@@ -266,6 +266,53 @@ class AppLocalizations {
       'voiceStorage': 'مساحة التسجيلات الصوتية',
       'voiceNotesCountLabel': 'عدد التسجيلات',
       'voiceStorageUsedLabel': 'المساحة المستخدمة',
+      'stats': 'الإحصائيات',
+      'rangeWeek': 'أسبوع',
+      'rangeMonth': 'شهر',
+      'rangeYear': 'سنة',
+      'rangeAllTime': 'كل الأوقات',
+      'rangeCustom': 'نطاق مخصص',
+      'rangeThisWeek': 'الأسبوع الحالي',
+      'rangeLastWeek': 'الأسبوع الماضي',
+      'rangeThisMonth': 'الشهر الحالي',
+      'rangeLastMonth': 'الشهر الماضي',
+      'rangeThisYear': 'السنة الحالية',
+      'completionRate': 'نسبة الإنجاز',
+      'completedTasksCount': 'المهام المنجزة',
+      'postponedTasksCount': 'المهام المؤجلة',
+      'partialTasksCount': 'أُنجز جزء منها',
+      'waitingStoppedCount': 'منتظرة ومتوقفة',
+      'averageDuration': 'متوسط المدة',
+      'currentStreak': 'الحماسة الحالية',
+      'bestStreak': 'أفضل حماسة',
+      'daysUnit': 'أيام',
+      'minutesUnit': 'دقيقة',
+      'vsPreviousPeriod': 'مقارنة بالفترة السابقة',
+      'completionTrend': 'إنجاز المهام عبر الوقت',
+      'statusDistribution': 'توزيع حالات المهام',
+      'topReasons': 'أبرز أسباب التأجيل والتوقف',
+      'productiveWeekday': 'أكثر الأيام إنتاجية',
+      'goalsStats': 'أهداف تم التقدم فيها',
+      'ideasStats': 'الأفكار والتحويلات',
+      'highlights': 'أبرز ما اتنجز',
+      'noStatsData': 'مفيش بيانات كافية للفترة دي',
+      'noStatsDataSubtitle': 'أنجز بعض المهام وارجع هنا لمتابعة إحصائياتك الصادقة',
+      'exportExcel': 'تصدير تقرير الإكسيل',
+      'exportExcelSubtitle': 'ملف .xlsx أوفلاين بالكامل متوافق مع Excel و Google Sheets',
+      'exportRange': 'اختر الفترة الزمنية للتقرير',
+      'generatingReport': 'جاري تجهيز تقرير الإكسيل أوفلاين...',
+      'saveReport': 'حفظ في الملفات',
+      'shareReport': 'مشاركة التقرير',
+      'reportSavedSuccess': 'تم حفظ ملف التقرير بنجاح',
+      'reportSharedSuccess': 'تم فتح نافذة المشاركة',
+      'googleSheetsTip': 'نصيحة: تطبيق Google Sheets يفتح ملفات .xlsx مباشرة من Drive',
+      'sheetSummary': 'الملخص',
+      'sheetTasks': 'المهام',
+      'sheetHistory': 'السجل',
+      'sheetDaily': 'يومي',
+      'sheetReasons': 'الأسباب',
+      'sheetGoals': 'الأهداف',
+      'sheetIdeas': 'الأفكار',
     },
     'en': {
       'appName': 'Enjaz',
@@ -514,6 +561,53 @@ class AppLocalizations {
       'voiceStorage': 'Voice Notes Storage',
       'voiceNotesCountLabel': 'Total Recordings',
       'voiceStorageUsedLabel': 'Storage Used',
+      'stats': 'Stats',
+      'rangeWeek': 'Week',
+      'rangeMonth': 'Month',
+      'rangeYear': 'Year',
+      'rangeAllTime': 'All Time',
+      'rangeCustom': 'Custom Range',
+      'rangeThisWeek': 'This Week',
+      'rangeLastWeek': 'Last Week',
+      'rangeThisMonth': 'This Month',
+      'rangeLastMonth': 'Last Month',
+      'rangeThisYear': 'This Year',
+      'completionRate': 'Completion Rate',
+      'completedTasksCount': 'Completed Tasks',
+      'postponedTasksCount': 'Postponed Tasks',
+      'partialTasksCount': 'Partially Done',
+      'waitingStoppedCount': 'Waiting & Stopped',
+      'averageDuration': 'Average Duration',
+      'currentStreak': 'Current Streak',
+      'bestStreak': 'Best Streak',
+      'daysUnit': 'days',
+      'minutesUnit': 'mins',
+      'vsPreviousPeriod': 'vs previous period',
+      'completionTrend': 'Completion Trend',
+      'statusDistribution': 'Status Distribution',
+      'topReasons': 'Top Postponement Reasons',
+      'productiveWeekday': 'Most Productive Weekday',
+      'goalsStats': 'Goals Progress',
+      'ideasStats': 'Ideas & Conversions',
+      'highlights': 'Highlights',
+      'noStatsData': 'Not enough data for this period',
+      'noStatsDataSubtitle': 'Complete some tasks and come back to review your honest stats',
+      'exportExcel': 'Export Excel Report',
+      'exportExcelSubtitle': 'Fully offline .xlsx file compatible with Excel & Google Sheets',
+      'exportRange': 'Select Report Range',
+      'generatingReport': 'Preparing Excel report offline...',
+      'saveReport': 'Save to Files',
+      'shareReport': 'Share Report',
+      'reportSavedSuccess': 'Report file saved successfully',
+      'reportSharedSuccess': 'Opened share dialog',
+      'googleSheetsTip': 'Tip: Google Sheets opens .xlsx files directly from Google Drive',
+      'sheetSummary': 'Summary',
+      'sheetTasks': 'Tasks',
+      'sheetHistory': 'History',
+      'sheetDaily': 'Daily',
+      'sheetReasons': 'Reasons',
+      'sheetGoals': 'Goals',
+      'sheetIdeas': 'Ideas',
     },
   };
 
@@ -768,6 +862,53 @@ class AppLocalizations {
   String get voiceStorage => _get('voiceStorage');
   String get voiceNotesCountLabel => _get('voiceNotesCountLabel');
   String get voiceStorageUsedLabel => _get('voiceStorageUsedLabel');
+
+  String get rangeWeek => _get('rangeWeek');
+  String get rangeMonth => _get('rangeMonth');
+  String get rangeYear => _get('rangeYear');
+  String get rangeAllTime => _get('rangeAllTime');
+  String get rangeCustom => _get('rangeCustom');
+  String get rangeThisWeek => _get('rangeThisWeek');
+  String get rangeLastWeek => _get('rangeLastWeek');
+  String get rangeThisMonth => _get('rangeThisMonth');
+  String get rangeLastMonth => _get('rangeLastMonth');
+  String get rangeThisYear => _get('rangeThisYear');
+  String get completionRate => _get('completionRate');
+  String get completedTasksCount => _get('completedTasksCount');
+  String get postponedTasksCount => _get('postponedTasksCount');
+  String get partialTasksCount => _get('partialTasksCount');
+  String get waitingStoppedCount => _get('waitingStoppedCount');
+  String get averageDuration => _get('averageDuration');
+  String get currentStreak => _get('currentStreak');
+  String get bestStreak => _get('bestStreak');
+  String get daysUnit => _get('daysUnit');
+  String get minutesUnit => _get('minutesUnit');
+  String get vsPreviousPeriod => _get('vsPreviousPeriod');
+  String get completionTrend => _get('completionTrend');
+  String get statusDistribution => _get('statusDistribution');
+  String get topReasons => _get('topReasons');
+  String get productiveWeekday => _get('productiveWeekday');
+  String get goalsStats => _get('goalsStats');
+  String get ideasStats => _get('ideasStats');
+  String get highlights => _get('highlights');
+  String get noStatsData => _get('noStatsData');
+  String get noStatsDataSubtitle => _get('noStatsDataSubtitle');
+  String get exportExcel => _get('exportExcel');
+  String get exportExcelSubtitle => _get('exportExcelSubtitle');
+  String get exportRange => _get('exportRange');
+  String get generatingReport => _get('generatingReport');
+  String get saveReport => _get('saveReport');
+  String get shareReport => _get('shareReport');
+  String get reportSavedSuccess => _get('reportSavedSuccess');
+  String get reportSharedSuccess => _get('reportSharedSuccess');
+  String get googleSheetsTip => _get('googleSheetsTip');
+  String get sheetSummary => _get('sheetSummary');
+  String get sheetTasks => _get('sheetTasks');
+  String get sheetHistory => _get('sheetHistory');
+  String get sheetDaily => _get('sheetDaily');
+  String get sheetReasons => _get('sheetReasons');
+  String get sheetGoals => _get('sheetGoals');
+  String get sheetIdeas => _get('sheetIdeas');
 
   String getStatusLabel(String status) {
     switch (status) {

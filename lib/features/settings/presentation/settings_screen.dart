@@ -7,6 +7,7 @@ import '../../../core/theme/theme_provider.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/db/app_database.dart';
 import '../../voice_notes/domain/voice_note_service.dart';
+import '../../excel_export/presentation/excel_export_sheet.dart';
 import 'reasons_manager_screen.dart';
 import 'trash_screen.dart';
 
@@ -243,6 +244,20 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
+          // Section: Excel Report Export (Spec 15.2)
+          Card(
+            child: ListTile(
+              leading: Icon(Icons.table_chart_rounded, color: theme.colorScheme.primary),
+              title: Text(l10n.exportExcel),
+              subtitle: Text(l10n.exportExcelSubtitle),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+              onTap: () {
+                ExcelExportSheet.show(context);
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // Section: About
           Card(
             child: Padding(
@@ -267,7 +282,7 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    '${l10n.version}: 1.0.0 (Phase 0)',
+                    '${l10n.version}: 1.0.0 (Phase 5)',
                     style: theme.textTheme.labelSmall,
                   ),
                 ],

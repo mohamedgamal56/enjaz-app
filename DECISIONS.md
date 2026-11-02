@@ -82,3 +82,23 @@
     - When recording without typing a title in Quick Add or Add Idea, a localized placeholder title is automatically generated (`تسجيل صوتي — 3 نوفمبر 12:15 ص`).
   - Discard Protection:
     - Discarding or canceling any active recording longer than 5 seconds triggers an explicit confirmation modal to prevent accidental loss of user speech.
+
+## Decision 10: Phase 5 Stats Dashboard & Excel Export (v1.2) Engine & Packages
+- **Context**: Spec Section 7 and Addendum v1.2 require an offline honest statistical dashboard (completed trend, status donut, top reasons, weekday productivity, streaks) and an offline real `.xlsx` generator with 7 dedicated worksheets, RTL support, and Android system sharing.
+- **Decision**:
+  - Visualization Engine (`fl_chart: ^0.68.0`):
+    - Chosen for rich, reactive, performant rendering of bar charts, pie/donut charts, and horizontal progress bars without internet access or webview wrappers.
+    - Status distribution donut utilizes exact theme tokens defined in `AppColors`.
+  - Excel Generation Engine (`excel: ^4.0.6`):
+    - Generates genuine OpenXML `.xlsx` files 100% offline using pure Dart.
+    - Supports setting `sheet.isRTL = true` when the user's active locale is Arabic, ensuring native Right-to-Left orientation in Microsoft Excel and Google Sheets.
+    - All 7 sheets conform to Addendum 15.3 specification: Summary, Tasks, History, Daily, Reasons, Goals, Ideas.
+    - Numerical data is strictly written using Western digits (123) inside the spreadsheet regardless of display numerals setting, guaranteeing compatibility with Excel formulas, Pivot Tables, and Google Sheets charts.
+  - Safe Sharing & Privacy:
+    - Utilizes `share_plus: ^9.0.0` to invoke the native Android share sheet.
+    - Enjaz maintains zero `INTERNET` permission in its manifest; the OS-level share sheet handles handing off the generated file to Drive, Gmail, or WhatsApp upon explicit user request.
+  - Core Statistics Mathematical Integrity:
+    - Implemented in pure Dart service `StatsService`:
+      - Denominator for completion rate strictly excludes future scheduled tasks.
+      - Streak engine accounts for continuous active days, allowing today's task completion or yesterday's ongoing streak without penalty.
+      - Unit tests verified in `test/unit/stats_service_test.dart`.

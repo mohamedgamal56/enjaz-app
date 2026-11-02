@@ -907,6 +907,99 @@ class AppDatabase extends _$AppDatabase {
     }
     return (all.length, totalBytes);
   }
+
+  // --- Phase 5: Stats & Excel Export Queries ---
+
+  /// Get all task events occurring in a date range
+  Future<List<TaskEvent>> getEventsForRange(DateTime start, DateTime end) {
+    final startMs = start.millisecondsSinceEpoch;
+    final endMs = end.millisecondsSinceEpoch;
+    return (select(taskEvents)
+          ..where((e) =>
+              e.at.isBiggerOrEqualValue(startMs) &
+              e.at.isSmallerOrEqualValue(endMs) &
+              e.deletedAt.isNull())
+          ..orderBy([(e) => OrderingTerm(expression: e.at, mode: OrderingMode.asc)]))
+        .get();
+  }
+
+  /// Get all done events for global streak calculation
+  Future<List<TaskEvent>> getAllDoneEvents() {
+    return (select(taskEvents)
+          ..where((e) => e.toStatus.equals('done') & e.deletedAt.isNull())
+          ..orderBy([(e) => OrderingTerm(expression: e.at, mode: OrderingMode.asc)]))
+        .get();
+  }
+
+  /// Get tasks relevant for statistics and export in a date range
+  Future<List<Task>> getTasksForStatsRange(DateTime start, DateTime end) async {
+    final startMs = start.millisecondsSinceEpoch;
+    final endMs = end.millisecondsSinceEpoch;
+    final all = await (select(tasks)..where((t) => t.deletedAt.isNull())).get();
+
+    return all.where((task) {
+      // 1. Finished inside range
+      if (task.finishedAt != null && task.finishedAt! >= startMs && task.finishedAt! <= endMs) {
+        return true;
+      }
+
+      // 2. Scheduled inside range
+      if (task.dueDate != null && task.dueDate!.isNotEmpty) {
+        try {
+          final due = DateTime.parse(task.dueDate!);
+          final dueDay = DateTime(due.year, due.month, due.day);
+          final startDay = DateTime(start.year, start.month, start.day);
+          final endDay = DateTime(end.year, end.month, end.day);
+          if (!dueDay.isBefore(startDay) && !dueDay.isAfter(endDay)) {
+            return true;
+          }
+        } catch (_) {}
+      } else {
+        // No due date: counted by created_at
+        if (task.createdAt >= startMs && task.createdAt <= endMs) {
+          return true;
+        }
+      }
+
+      return false;
+    }).toList();
+  }
+
+  /// Get all active goals
+  Future<List<Goal>> getAllGoalsList() {
+    return (select(goals)..where((g) => g.deletedAt.isNull())).get();
+  }
+
+  /// Get goal updates in date range
+  Future<List<GoalUpdate>> getGoalUpdatesForRange(DateTime start, DateTime end) {
+    final startMs = start.millisecondsSinceEpoch;
+    final endMs = end.millisecondsSinceEpoch;
+    return (select(goalUpdates)
+          ..where((u) =>
+              u.at.isBiggerOrEqualValue(startMs) &
+              u.at.isSmallerOrEqualValue(endMs)))
+        .get();
+  }
+
+  /// Get all milestones
+  Future<List<Milestone>> getAllMilestonesList() {
+    return (select(milestones)..where((m) => m.deletedAt.isNull())).get();
+  }
+
+  /// Get all ideas
+  Future<List<Idea>> getAllIdeasList() {
+    return (select(ideas)..where((i) => i.deletedAt.isNull())).get();
+  }
+
+  /// Get all active voice notes
+  Future<List<VoiceNote>> getAllVoiceNotesList() {
+    return (select(voiceNotes)..where((v) => v.deletedAt.isNull())).get();
+  }
+
+  /// Get all active reasons
+  Future<List<Reason>> getAllReasonsList() {
+    return (select(reasons)..where((r) => r.deletedAt.isNull())).get();
+  }
 }
 
 LazyDatabase _openConnection() {

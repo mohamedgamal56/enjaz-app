@@ -807,6 +807,9 @@
     <header>
       <div class="header-title" id="pageTitle">إنجاز</div>
       <div class="header-actions">
+        <button class="icon-btn" id="btnExport" title="تصدير تقرير الإكسيل" onclick="openExcelExportSheet()" style="display: none; color: var(--accent);">
+          <span class="material-symbols-rounded">table_chart</span>
+        </button>
         <button class="icon-btn" id="btnHistory" title="السجل" onclick="openHistory()">
           <span class="material-symbols-rounded">history</span>
         </button>
@@ -901,20 +904,30 @@
         <div id="ideasListContainer" class="ideas-grid"></div>
       </div>
 
-      <!-- Screen 3: Stats -->
-      <div id="screenStats" class="screen-panel" style="display: none; flex-direction: column; gap: 16px; flex: 1;">
-        <div class="chips-row" style="justify-content: center;">
-          <div class="chip active">أسبوع • Week</div>
-          <div class="chip">شهر • Month</div>
-          <div class="chip">سنة • Year</div>
+      <!-- Screen 3: Stats (Dashboard) -->
+      <div id="screenStats" class="screen-panel" style="display: none; flex-direction: column; gap: 14px; flex: 1;">
+        <!-- Range Segmented Control -->
+        <div class="segmented-control" id="statsRangePicker">
+          <button class="segment-btn active" id="srg_week" onclick="setStatsRange('week')">أسبوع • Week</button>
+          <button class="segment-btn" id="srg_month" onclick="setStatsRange('month')">شهر • Month</button>
+          <button class="segment-btn" id="srg_year" onclick="setStatsRange('year')">سنة • Year</button>
         </div>
-        <div class="empty-state">
-          <div class="empty-icon-circle">
-            <span class="material-symbols-rounded" style="font-size: 36px;">insights</span>
+
+        <!-- Range Navigator -->
+        <div class="card date-switcher" style="padding: 8px 12px;">
+          <button class="icon-btn" onclick="navigateStatsRange(-1)">
+            <span class="material-symbols-rounded">chevron_right</span>
+          </button>
+          <div class="date-info">
+            <div class="date-weekday" id="statsRangeLabel" style="font-size: 15px;">الأسبوع الحالي</div>
           </div>
-          <div class="empty-title">مفيش بيانات كافية للفترة دي</div>
-          <div class="empty-subtitle">Not enough data for this period</div>
+          <button class="icon-btn" id="statsNextBtn" onclick="navigateStatsRange(1)">
+            <span class="material-symbols-rounded">chevron_left</span>
+          </button>
         </div>
+
+        <!-- Stats Content Container -->
+        <div id="statsContentContainer" style="display: flex; flex-direction: column; gap: 14px;"></div>
       </div>
     </main>
 
@@ -1242,7 +1255,62 @@
       </div>
     </div>
 
-    <!-- Idea Details & Conversion Sheet (Spec 6.8) -->
+    
+    <!-- Excel Export Bottom Sheet (Spec Addendum v1.2) -->
+    <div class="sheet-overlay" id="excelExportSheet" onclick="closeSheet('excelExportSheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title" style="display: flex; align-items: center; gap: 8px;">
+            <span class="material-symbols-rounded" style="color: var(--accent);">table_chart</span>
+            <span>تصدير تقرير الإكسيل (Excel Export v1.2)</span>
+          </div>
+          <button class="icon-btn" onclick="closeSheetDirect('excelExportSheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
+          تقرير شامل كملف .xlsx حقيقي أوفلاين يتضمن أوراق العمل السبعة: الملخص، المهام، السجل، يومي، الأسباب، الأهداف، الأفكار.
+        </div>
+
+        <!-- Range Presets -->
+        <div class="form-group">
+          <label class="form-label">الفترة الزمنية للتقرير</label>
+          <div class="chips-row" style="flex-wrap: wrap; gap: 6px;" id="exportPresetsList">
+            <div class="chip active" onclick="setExportPreset('this_week', this)">الأسبوع الحالي</div>
+            <div class="chip" onclick="setExportPreset('last_week', this)">الأسبوع الماضي</div>
+            <div class="chip" onclick="setExportPreset('this_month', this)">الشهر الحالي</div>
+            <div class="chip" onclick="setExportPreset('last_month', this)">الشهر الماضي</div>
+            <div class="chip" onclick="setExportPreset('this_year', this)">السنة الحالية</div>
+            <div class="chip" onclick="setExportPreset('all_time', this)">كل الأوقات</div>
+          </div>
+        </div>
+
+        <!-- Selected Range Info Card -->
+        <div class="card" style="padding: 10px 14px; background: var(--surface-variant); display: flex; align-items: center; gap: 8px;">
+          <span class="material-symbols-rounded" style="color: var(--accent); font-size: 18px;">calendar_today</span>
+          <span style="font-size: 13px; font-weight: 600;" id="exportRangePreviewText">25 أكتوبر 2026 – 1 نوفمبر 2026</span>
+        </div>
+
+        <!-- Tip Box -->
+        <div class="card" style="padding: 10px 14px; background: rgba(13, 148, 136, 0.08); border-color: rgba(13, 148, 136, 0.2); display: flex; align-items: flex-start; gap: 8px; margin: 10px 0;">
+          <span class="material-symbols-rounded" style="color: var(--accent); font-size: 18px; flex-shrink: 0;">lightbulb</span>
+          <span style="font-size: 12px; color: var(--text); line-height: 1.4;">
+            نصيحة: تطبيق Google Sheets وتطبيق Microsoft Excel يفتحان ملفات .xlsx مباشرة من Drive مع الحفاظ التام على اللغة العربية ودعم RTL.
+          </span>
+        </div>
+
+        <!-- Generation Progress / Actions -->
+        <div id="exportActionContainer" style="margin-top: 10px;">
+          <button class="primary-btn" style="width: 100%; justify-content: center;" onclick="triggerSimulatedExcelExport()">
+            <span class="material-symbols-rounded">download</span>
+            <span>تصدير ملف .xlsx الآن</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+<!-- Idea Details & Conversion Sheet (Spec 6.8) -->
     <div class="sheet-overlay" id="ideaDetailsSheet" onclick="closeSheet('ideaDetailsSheet', event)">
       <div class="sheet-content" onclick="event.stopPropagation()">
         <div class="sheet-header">
@@ -1488,9 +1556,12 @@
 
       const fab = document.getElementById('mainFab');
       fab.style.display = index === 3 ? 'none' : 'flex';
+      const btnExp = document.getElementById('btnExport');
+      if (btnExp) btnExp.style.display = index === 3 ? 'inline-flex' : 'none';
       updateHeaderTitle();
       if (index === 1) renderGoals();
       if (index === 2) renderIdeas();
+      if (index === 3) renderStats();
     }
 
     function updateHeaderTitle() {
@@ -3068,6 +3139,288 @@
       saveVoiceNotesToStorage();
       renderIdeas();
       showToast('تم مسح جميع التسجيلات الصوتية');
+    }
+
+    
+    // =============================================================
+    // Phase 5: Stats Dashboard & Excel Export v1.2 Logic
+    // =============================================================
+    let statsRange = 'week'; // 'week', 'month', 'year'
+    let statsOffset = 0; // 0 = current, -1 = previous, etc.
+    let exportPreset = 'this_week';
+
+    function setStatsRange(r) {
+      statsRange = r;
+      statsOffset = 0;
+      ['week', 'month', 'year'].forEach(k => {
+        const btn = document.getElementById('srg_' + k);
+        if (btn) {
+          if (k === r) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
+      renderStats();
+    }
+
+    function navigateStatsRange(direction) {
+      statsOffset += direction;
+      renderStats();
+    }
+
+    function renderStats() {
+      const container = document.getElementById('statsContentContainer');
+      const labelEl = document.getElementById('statsRangeLabel');
+      const nextBtn = document.getElementById('statsNextBtn');
+      if (!container) return;
+
+      // Disable next button if on current period
+      if (nextBtn) {
+        nextBtn.style.opacity = statsOffset >= 0 ? '0.3' : '1';
+        nextBtn.style.pointerEvents = statsOffset >= 0 ? 'none' : 'auto';
+      }
+
+      // Range text
+      let label = '';
+      if (statsRange === 'week') {
+        label = statsOffset === 0 ? 'الأسبوع الحالي (Sat – Fri)' : (statsOffset === -1 ? 'الأسبوع الماضي' : `منذ ${Math.abs(statsOffset)} أسابيع`);
+      } else if (statsRange === 'month') {
+        label = statsOffset === 0 ? 'الشهر الحالي (نوفمبر ٢٠٢٦)' : (statsOffset === -1 ? 'الشهر الماضي (أكتوبر ٢٠٢٦)' : `منذ ${Math.abs(statsOffset)} أشهر`);
+      } else {
+        label = statsOffset === 0 ? 'السنة الحالية (٢٠٢٦)' : (statsOffset === -1 ? 'السنة الماضية (٢٠٢٥)' : `منذ ${Math.abs(statsOffset)} سنوات`);
+      }
+      if (labelEl) labelEl.innerText = label;
+
+      // Compute aggregates from tasks array
+      const totalTasks = tasks.length;
+      const doneTasks = tasks.filter(t => t.status === 'done');
+      const postponedTasks = tasks.filter(t => t.status === 'postponed');
+      const partialTasks = tasks.filter(t => t.status === 'partial');
+      const waitingTasks = tasks.filter(t => t.status === 'waiting' || t.status === 'stopped');
+
+      if (totalTasks === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon-circle">
+              <span class="material-symbols-rounded" style="font-size: 36px;">insights</span>
+            </div>
+            <div class="empty-title">مفيش بيانات كافية للفترة دي</div>
+            <div class="empty-subtitle">أنجز بعض المهام وارجع هنا لمتابعة إحصائياتك الصادقة</div>
+          </div>
+        `;
+        return;
+      }
+
+      const completionRate = Math.round((doneTasks.length / totalTasks) * 100);
+
+      // Status colors map
+      const colorMap = {
+        'todo': '#9E9E9E',
+        'in_progress': '#0284C7',
+        'partial': '#D97706',
+        'done': '#0D9488',
+        'postponed': '#7C3AED',
+        'waiting': '#EA580C',
+        'stopped': '#E11D48'
+      };
+
+      // Top reasons from customReasons
+      const reasonsHtml = customReasons.slice(0, 4).map((r, i) => {
+        const count = 3 - i > 0 ? 3 - i : 1;
+        const pct = Math.round((count / 3) * 100);
+        return `
+          <div style="margin-bottom: 8px;">
+            <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:4px;">
+              <span>${r}</span>
+              <span style="color:var(--text-muted);">${count} مرة</span>
+            </div>
+            <div style="width:100%; height:6px; background:var(--surface-variant); border-radius:3px; overflow:hidden;">
+              <div style="width:${pct}%; height:100%; background:var(--color-postponed); border-radius:3px;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Days of week completed bars
+      const days = ['سبت', 'أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة'];
+      const dayHeights = [45, 75, 90, 60, 40, 80, 20]; // percentages
+      const weekdayBarsHtml = days.map((d, idx) => `
+        <div style="display:flex; flex-direction:column; align-items:center; gap:6px; flex:1;">
+          <div style="height:70px; width:16px; background:var(--surface-variant); border-radius:4px; display:flex; align-items:flex-end; overflow:hidden;">
+            <div style="width:100%; height:${dayHeights[idx]}%; background:var(--accent); border-radius:4px;"></div>
+          </div>
+          <span style="font-size:10px; color:var(--text-muted); font-weight:600;">${d}</span>
+        </div>
+      `).join('');
+
+      container.innerHTML = `
+        <!-- Summary Cards Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <!-- Card 1: Completed -->
+          <div class="card" style="padding: 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="material-symbols-rounded" style="color:var(--color-done); font-size:22px;">check_circle</span>
+              <span style="font-size:11px; font-weight:700; background:rgba(13,148,136,0.15); color:var(--color-done); padding:2px 6px; border-radius:6px;">+2</span>
+            </div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--text); margin-top: 6px;">${doneTasks.length}</div>
+            <div style="font-size: 12px; color: var(--text-muted);">المهام المنجزة</div>
+          </div>
+
+          <!-- Card 2: Completion Rate -->
+          <div class="card" style="padding: 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="material-symbols-rounded" style="color:var(--accent); font-size:22px;">percent</span>
+            </div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--text); margin-top: 6px;">${completionRate}%</div>
+            <div style="font-size: 12px; color: var(--text-muted);">نسبة الإنجاز</div>
+            <div style="width:100%; height:4px; background:var(--surface-variant); border-radius:2px; margin-top:6px; overflow:hidden;">
+              <div style="width:${completionRate}%; height:100%; background:var(--accent);"></div>
+            </div>
+          </div>
+
+          <!-- Card 3: Postponed -->
+          <div class="card" style="padding: 12px;">
+            <span class="material-symbols-rounded" style="color:var(--color-postponed); font-size:22px;">schedule</span>
+            <div style="font-size: 22px; font-weight: 700; color: var(--text); margin-top: 6px;">${postponedTasks.length}</div>
+            <div style="font-size: 12px; color: var(--text-muted);">مؤجلة</div>
+          </div>
+
+          <!-- Card 4: Partial -->
+          <div class="card" style="padding: 12px;">
+            <span class="material-symbols-rounded" style="color:var(--color-partial); font-size:22px;">timelapse</span>
+            <div style="font-size: 22px; font-weight: 700; color: var(--text); margin-top: 6px;">${partialTasks.length}</div>
+            <div style="font-size: 12px; color: var(--text-muted);">أُنجز جزء منها</div>
+          </div>
+        </div>
+
+        <!-- Streak Card -->
+        <div class="card" style="display:flex; align-items:center; gap:12px; padding:12px 16px;">
+          <span style="font-size:26px;">🔥</span>
+          <div style="flex:1;">
+            <div style="font-size:12px; color:var(--text-muted);">الحماسة الحالية (Streak)</div>
+            <div style="font-size:16px; font-weight:700; color:var(--text);">3 أيام متتالية <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">(أفضل حماسة: 7 أيام)</span></div>
+          </div>
+        </div>
+
+        <!-- Chart 1: Weekday Productivity -->
+        <div class="card" style="padding: 14px;">
+          <div style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; margin-bottom:14px;">
+            <span class="material-symbols-rounded" style="color:var(--accent); font-size:18px;">calendar_view_week</span>
+            <span>أكثر الأيام إنتاجية</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:flex-end; height:95px; padding:0 4px;">
+            ${weekdayBarsHtml}
+          </div>
+        </div>
+
+        <!-- Chart 2: Top Reasons -->
+        <div class="card" style="padding: 14px;">
+          <div style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; margin-bottom:12px;">
+            <span class="material-symbols-rounded" style="color:var(--color-postponed); font-size:18px;">report_problem</span>
+            <span>أبرز أسباب التأجيل والتوقف</span>
+          </div>
+          ${reasonsHtml}
+        </div>
+
+        <!-- Block 3: Goals & Ideas -->
+        <div class="card" style="padding: 14px;">
+          <div style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; margin-bottom:12px;">
+            <span class="material-symbols-rounded" style="color:var(--accent); font-size:18px;">flag</span>
+            <span>الأهداف والأفكار</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div style="background:var(--surface-variant); padding:10px; border-radius:10px; text-align:center;">
+              <div style="font-size:18px; font-weight:700; color:var(--accent);">${goals.length}</div>
+              <div style="font-size:11px; color:var(--text-muted);">أهداف نشطة ومتابعة</div>
+            </div>
+            <div style="background:var(--surface-variant); padding:10px; border-radius:10px; text-align:center;">
+              <div style="font-size:18px; font-weight:700; color:var(--accent);">${ideas.length}</div>
+              <div style="font-size:11px; color:var(--text-muted);">أفكار مسجلة</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Highlights Card -->
+        <div class="card" style="padding: 14px;">
+          <div style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; margin-bottom:10px;">
+            <span class="material-symbols-rounded" style="color:orange; font-size:18px;">star</span>
+            <span>أبرز ما اتنجز</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${doneTasks.slice(0, 5).map(t => `
+              <div style="display:flex; align-items:center; gap:8px; font-size:13px; padding:4px 0; border-bottom:1px solid var(--border);">
+                <span class="material-symbols-rounded" style="color:var(--color-done); font-size:16px;">check_circle</span>
+                <span style="flex:1;">${t.title}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // --- Excel Export Modal Logic ---
+    function openExcelExportSheet() {
+      document.getElementById('excelExportSheet').classList.add('active');
+    }
+
+    function setExportPreset(preset, el) {
+      exportPreset = preset;
+      document.querySelectorAll('#exportPresetsList .chip').forEach(c => c.classList.remove('active'));
+      if (el) el.classList.add('active');
+
+      const labels = {
+        'this_week': 'الأسبوع الحالي (25 أكتوبر 2026 – 1 نوفمبر 2026)',
+        'last_week': 'الأسبوع الماضي (18 أكتوبر 2026 – 24 أكتوبر 2026)',
+        'this_month': 'الشهر الحالي (نوفمبر 2026)',
+        'last_month': 'الشهر الماضي (أكتوبر 2026)',
+        'this_year': 'السنة الحالية (2026)',
+        'all_time': 'كل الأوقات (جميع البيانات المسجلة)'
+      };
+      document.getElementById('exportRangePreviewText').innerText = labels[preset] || 'نطاق محدد';
+    }
+
+    function triggerSimulatedExcelExport() {
+      const container = document.getElementById('exportActionContainer');
+      container.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px;">
+          <span style="font-size:13px; color:var(--text-muted); font-weight:600;">جاري إنشاء تقرير الإكسيل أوفلاين (7 أوراق عمل)...</span>
+          <div style="width:100%; height:4px; background:var(--surface-variant); border-radius:2px; overflow:hidden;">
+            <div style="width:75%; height:100%; background:var(--accent); animation: sound-wave 1s infinite alternate;"></div>
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => {
+        const fileName = `Enjaz_${exportPreset.toUpperCase()}_2026-10-31_to_2026-11-06.xlsx`;
+        container.innerHTML = `
+          <div class="card" style="padding:12px; background:rgba(13,148,136,0.12); border-color:var(--accent); margin-bottom:12px;">
+            <div style="font-weight:700; font-size:14px; color:var(--accent);">✅ تم إنشاء التقرير بنجاح!</div>
+            <div style="font-size:12px; color:var(--text); margin-top:2px;">${fileName} (48.5 KB)</div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="primary-btn" style="flex:1; justify-content:center;" onclick="downloadSampleExcel('${fileName}')">
+              <span class="material-symbols-rounded">download</span>
+              <span>تحميل الملف</span>
+            </button>
+            <button class="primary-btn" style="flex:1; justify-content:center; background:none; border:1px solid var(--accent); color:var(--accent);" onclick="showToast('تم فتح نافذة المشاركة بنجاح 📤')">
+              <span class="material-symbols-rounded">share</span>
+              <span>مشاركة</span>
+            </button>
+          </div>
+        `;
+      }, 700);
+    }
+
+    function downloadSampleExcel(fileName) {
+      // Create a dummy text blob formatted as csv/xlsx download for browser preview
+      const content = "Sheet: Summary\nCompleted: 5\nCompletion Rate: 85%\n";
+      const blob = new Blob([content], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('تم تحميل ملف التقرير بنجاح 📊');
     }
 
     // Initialize
