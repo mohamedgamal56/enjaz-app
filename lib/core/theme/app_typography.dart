@@ -6,6 +6,17 @@ class AppTypography {
   static const String fontArabic = 'Cairo';
   static const String fontEnglish = 'Inter';
 
+  static TextStyle titleLarge(BuildContext context) =>
+      Theme.of(context).textTheme.titleLarge ?? const TextStyle();
+  static TextStyle titleMedium(BuildContext context) =>
+      Theme.of(context).textTheme.titleMedium ?? const TextStyle();
+  static TextStyle bodyLarge(BuildContext context) =>
+      Theme.of(context).textTheme.bodyLarge ?? const TextStyle();
+  static TextStyle bodyMedium(BuildContext context) =>
+      Theme.of(context).textTheme.bodyMedium ?? const TextStyle();
+  static TextStyle bodySmall(BuildContext context) =>
+      Theme.of(context).textTheme.bodySmall ?? const TextStyle();
+
   static String getFontFamily(String languageCode) {
     return languageCode == 'ar' ? fontArabic : fontEnglish;
   }

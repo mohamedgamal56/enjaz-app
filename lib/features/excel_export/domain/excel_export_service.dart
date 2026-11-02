@@ -414,7 +414,7 @@ class ExcelExportService {
       final rangeUpdates = updates.where((u) => u.goalId == g.id && u.at >= startMs && u.at <= endMs).toList();
       double progressChange = 0;
       for (final u in rangeUpdates) {
-        progressChange += u.delta;
+        progressChange += (u.valueDelta ?? 0.0);
       }
 
       final createdStr = DateFormat('yyyy-MM-dd').format(DateTime.fromMillisecondsSinceEpoch(g.createdAt));
@@ -468,7 +468,7 @@ class ExcelExportService {
       sheet.appendRow([
         TextCellValue(idea.title),
         TextCellValue(idea.status),
-        TextCellValue(idea.tags ?? ''),
+        TextCellValue(''),
         TextCellValue(createdStr),
         TextCellValue(convertedTo),
         IntCellValue(vnMap[idea.id] ?? 0),

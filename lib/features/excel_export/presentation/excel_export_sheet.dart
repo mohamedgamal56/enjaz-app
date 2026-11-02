@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
+
 import '../../../core/db/app_database.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../stats/domain/stats_service.dart';
 import '../domain/excel_export_service.dart';
 
@@ -149,7 +150,6 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
 
       // Compute statistics for the summary sheet
       final prevRange = range.getPreviousRange();
-      final prevTasks = await db.getTasksForStatsRange(prevRange.start, prevRange.end);
       final prevEvents = await db.getEventsForRange(prevRange.start, prevRange.end);
       final prevDoneCount = prevEvents.where((e) => e.toStatus == 'done').map((e) => e.taskId).toSet().length;
 
@@ -212,14 +212,22 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
     final isAr = l10n.locale.languageCode == 'ar';
     final range = _resolveSelectedRange();
+    final primaryColor = theme.colorScheme.primary;
+    final surfaceColor = theme.colorScheme.surface;
+    final surfaceVariant = theme.colorScheme.surfaceContainerHighest;
+    final textColor = theme.colorScheme.onSurface;
+    final textMuted = theme.colorScheme.onSurfaceVariant;
+    final borderColor = theme.colorScheme.outlineVariant;
+    final doneColor = AppColors.getStatusColor('done', isDark);
 
     return Container(
       decoration: BoxDecoration(
-        color: colors.surface,
+        color: surfaceColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
@@ -240,7 +248,7 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: colors.border,
+                  color: borderColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -252,10 +260,10 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: colors.surfaceVariant,
+                    color: surfaceVariant,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.table_chart_rounded, color: colors.accent, size: 24),
+                  child: Icon(Icons.table_chart_rounded, color: primaryColor, size: 24),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -264,22 +272,22 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
                     children: [
                       Text(
                         l10n.exportExcel,
-                        style: AppTypography.titleLarge(context).copyWith(
+                        style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: colors.text,
+                          color: textColor,
                         ),
                       ),
                       Text(
                         l10n.exportExcelSubtitle,
-                        style: AppTypography.bodySmall(context).copyWith(
-                          color: colors.textMuted,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: textMuted,
                         ),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.close_rounded, color: colors.textMuted),
+                  icon: Icon(Icons.close_rounded, color: textMuted),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -289,9 +297,9 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
             // Range Preset Chips
             Text(
               l10n.exportRange,
-              style: AppTypography.bodyMedium(context).copyWith(
+              style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: colors.text,
+                color: textColor,
               ),
             ),
             const SizedBox(height: 10),
@@ -315,20 +323,20 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: colors.surfaceVariant,
+                color: surfaceVariant,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: colors.border),
+                border: Border.all(color: borderColor),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.calendar_today_rounded, size: 18, color: colors.accent),
+                  Icon(Icons.calendar_today_rounded, size: 18, color: primaryColor),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       range.getLocalizedLabel(isAr ? 'ar' : 'en'),
-                      style: AppTypography.bodyMedium(context).copyWith(
+                      style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: colors.text,
+                        color: textColor,
                       ),
                     ),
                   ),
@@ -341,20 +349,20 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: colors.accent.withOpacity(0.08),
+                color: primaryColor.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: colors.accent.withOpacity(0.2)),
+                border: Border.all(color: primaryColor.withOpacity(0.2)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.lightbulb_outline_rounded, color: colors.accent, size: 20),
+                  Icon(Icons.lightbulb_outline_rounded, color: primaryColor, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       l10n.googleSheetsTip,
-                      style: AppTypography.bodySmall(context).copyWith(
-                        color: colors.text,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: textColor,
                         height: 1.4,
                       ),
                     ),
@@ -370,12 +378,12 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Column(
                   children: [
-                    CircularProgressIndicator(color: colors.accent),
+                    CircularProgressIndicator(color: primaryColor),
                     const SizedBox(height: 12),
                     Text(
                       l10n.generatingReport,
-                      style: AppTypography.bodyMedium(context).copyWith(
-                        color: colors.textMuted,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: textMuted,
                       ),
                     ),
                   ],
@@ -386,13 +394,13 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: colors.done.withOpacity(0.1),
+                  color: doneColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: colors.done),
+                  border: Border.all(color: doneColor),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.check_circle_rounded, color: colors.done, size: 28),
+                    Icon(Icons.check_circle_rounded, color: doneColor, size: 28),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -400,15 +408,15 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
                         children: [
                           Text(
                             p.basename(_generatedFile!.path),
-                            style: AppTypography.bodyMedium(context).copyWith(
+                            style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: colors.text,
+                              color: textColor,
                             ),
                           ),
                           Text(
                             '${(_generatedFile!.lengthSync() / 1024).toStringAsFixed(1)} KB • 7 ${l10n.sheetTasks}',
-                            style: AppTypography.bodySmall(context).copyWith(
-                              color: colors.textMuted,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: textMuted,
                             ),
                           ),
                         ],
@@ -425,7 +433,7 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
                 icon: const Icon(Icons.share_rounded),
                 label: Text(l10n.shareReport),
                 style: FilledButton.styleFrom(
-                  backgroundColor: colors.accent,
+                  backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -437,7 +445,7 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Text(
                     _errorMessage!,
-                    style: TextStyle(color: colors.stopped, fontSize: 13),
+                    style: TextStyle(color: theme.colorScheme.error, fontSize: 13),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -448,7 +456,7 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
                 icon: const Icon(Icons.download_rounded),
                 label: Text(l10n.exportExcel),
                 style: FilledButton.styleFrom(
-                  backgroundColor: colors.accent,
+                  backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -462,8 +470,12 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
   }
 
   Widget _buildPresetChip(ExportPreset preset, String label) {
-    final colors = AppColors.of(context);
+    final theme = Theme.of(context);
     final isSelected = _selectedPreset == preset;
+    final primaryColor = theme.colorScheme.primary;
+    final surfaceVariant = theme.colorScheme.surfaceContainerHighest;
+    final textColor = theme.colorScheme.onSurface;
+    final borderColor = theme.colorScheme.outlineVariant;
 
     return ChoiceChip(
       label: Text(label),
@@ -474,15 +486,15 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
           _generatedFile = null;
         });
       },
-      selectedColor: colors.accent.withOpacity(0.18),
-      backgroundColor: colors.surfaceVariant,
+      selectedColor: primaryColor.withOpacity(0.18),
+      backgroundColor: surfaceVariant,
       labelStyle: TextStyle(
-        color: isSelected ? colors.accent : colors.text,
+        color: isSelected ? primaryColor : textColor,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
         fontSize: 13,
       ),
       side: BorderSide(
-        color: isSelected ? colors.accent : colors.border,
+        color: isSelected ? primaryColor : borderColor,
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     );

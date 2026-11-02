@@ -1,7 +1,60 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  AppColors._();
+  final bool isDark;
+  final Color background;
+  final Color surface;
+  final Color surfaceVariant;
+  final Color text;
+  final Color textMuted;
+  final Color border;
+  final Color accent;
+  final Color todo;
+  final Color inProgress;
+  final Color partial;
+  final Color done;
+  final Color postponed;
+  final Color waiting;
+  final Color stopped;
+
+  const AppColors({
+    this.isDark = false,
+    this.background = lightBackground,
+    this.surface = lightSurface,
+    this.surfaceVariant = lightSurfaceVariant,
+    this.text = lightText,
+    this.textMuted = lightTextMuted,
+    this.border = lightBorder,
+    this.accent = lightAccent,
+    this.todo = lightStatusTodo,
+    this.inProgress = lightStatusInProgress,
+    this.partial = lightStatusPartial,
+    this.done = lightStatusDone,
+    this.postponed = lightStatusPostponed,
+    this.waiting = lightStatusWaiting,
+    this.stopped = lightStatusStopped,
+  });
+
+  static AppColors of(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AppColors(
+      isDark: isDark,
+      background: isDark ? darkBackground : lightBackground,
+      surface: isDark ? darkSurface : lightSurface,
+      surfaceVariant: isDark ? darkSurfaceVariant : lightSurfaceVariant,
+      text: isDark ? darkText : lightText,
+      textMuted: isDark ? darkTextMuted : lightTextMuted,
+      border: isDark ? darkBorder : lightBorder,
+      accent: isDark ? darkAccent : lightAccent,
+      todo: isDark ? darkStatusTodo : lightStatusTodo,
+      inProgress: isDark ? darkStatusInProgress : lightStatusInProgress,
+      partial: isDark ? darkStatusPartial : lightStatusPartial,
+      done: isDark ? darkStatusDone : lightStatusDone,
+      postponed: isDark ? darkStatusPostponed : lightStatusPostponed,
+      waiting: isDark ? darkStatusWaiting : lightStatusWaiting,
+      stopped: isDark ? darkStatusStopped : lightStatusStopped,
+    );
+  }
 
   // Light Tokens
   static const Color lightBackground = Color(0xFFFAFAF9);
