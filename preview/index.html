@@ -342,6 +342,68 @@
       font-family: inherit;
     }
 
+    /* Goals Styles */
+    .goal-card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      transition: transform 0.15s ease;
+    }
+    .goal-card:active {
+      transform: scale(0.98);
+    }
+    .progress-bar-bg {
+      width: 100%;
+      height: 8px;
+      background-color: var(--surface-variant);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background-color: var(--accent);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    .circular-progress-wrap {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      margin: 0 auto 12px;
+    }
+    .circular-progress-svg {
+      transform: rotate(-90deg);
+      width: 110px;
+      height: 110px;
+    }
+    .circular-progress-bg {
+      stroke: var(--surface-variant);
+      stroke-width: 8;
+      fill: none;
+    }
+    .circular-progress-bar {
+      stroke: var(--accent);
+      stroke-width: 8;
+      stroke-linecap: round;
+      fill: none;
+      transition: stroke-dashoffset 0.5s ease;
+    }
+    .circular-progress-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
     /* Floating Action Button (FAB) */
     .fab {
       position: absolute;
@@ -629,23 +691,13 @@
       </div>
 
       <!-- Screen 1: Goals -->
-      <div id="screenGoals" class="screen-panel" style="display: none; flex-direction: column; gap: 16px; flex: 1;">
-        <div class="chips-row" style="justify-content: center;">
-          <div class="chip active">نشطة • Active</div>
-          <div class="chip">متوقفة • Paused</div>
-          <div class="chip">مكتملة • Done</div>
+      <div id="screenGoals" class="screen-panel" style="display: none; flex-direction: column; gap: 12px; flex: 1;">
+        <div class="chips-row" style="justify-content: center; gap: 8px;">
+          <div id="goalSegActive" class="chip active" onclick="setGoalSegment('active')">نشطة • Active</div>
+          <div id="goalSegPaused" class="chip" onclick="setGoalSegment('paused')">متوقفة • Paused</div>
+          <div id="goalSegDone" class="chip" onclick="setGoalSegment('done')">مكتملة • Done</div>
         </div>
-        <div class="empty-state">
-          <div class="empty-icon-circle">
-            <span class="material-symbols-rounded" style="font-size: 36px;">flag</span>
-          </div>
-          <div class="empty-title">مفيش أهداف مسجلة حالياً</div>
-          <div class="empty-subtitle">No goals recorded yet</div>
-          <button class="primary-btn" onclick="openQuickAdd('goal')">
-            <span class="material-symbols-rounded">add</span>
-            <span>أضف هدف</span>
-          </button>
-        </div>
+        <div id="goalsListContainer" style="display: flex; flex-direction: column; gap: 12px;"></div>
       </div>
 
       <!-- Screen 2: Ideas -->
@@ -687,7 +739,7 @@
     </main>
 
     <!-- Floating Action Button -->
-    <button class="fab" id="mainFab" onclick="openQuickAdd()">
+    <button class="fab" id="mainFab" onclick="handleFabClick()">
       <span class="material-symbols-rounded">add</span>
     </button>
 
@@ -1146,6 +1198,80 @@
       </div>
     </div>
 
+    <!-- Add Goal Sheet (Spec 6.6 & 6.7) -->
+    <div class="sheet-overlay" id="addGoalSheet" onclick="closeSheet('addGoalSheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title">
+            <span class="material-symbols-rounded" style="color: var(--accent); vertical-align: middle;">flag</span>
+            <span>إضافة هدف جديد (New Goal)</span>
+          </div>
+          <button class="icon-btn" onclick="closeSheetDirect('addGoalSheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">عنوان الهدف</label>
+          <input type="text" id="goalTitleInput" class="form-input" placeholder="مثال: قراءة 10 كتب، إطلاق المشروع، وزن مثالي..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">وصف وتفاصيل إضافية</label>
+          <textarea id="goalDescInput" class="form-textarea" placeholder="ملاحظات وخطة الإنجاز..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">التصنيف (Category)</label>
+          <div class="chips-row" style="flex-wrap: wrap;">
+            <div class="chip active" id="goalCatPersonal" onclick="setGoalCat('personal')">شخصي</div>
+            <div class="chip" id="goalCatWork" onclick="setGoalCat('work')">عمل</div>
+            <div class="chip" id="goalCatStudy" onclick="setGoalCat('study')">دراسة</div>
+            <div class="chip" id="goalCatHealth" onclick="setGoalCat('health')">صحة</div>
+            <div class="chip" id="goalCatFinance" onclick="setGoalCat('finance')">مالية</div>
+            <div class="chip" id="goalCatOther" onclick="setGoalCat('other')">أخرى</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">طريقة تتبع التقدم</label>
+          <div class="chips-row">
+            <div class="chip active" id="goalModeMilestones" onclick="setGoalMode('milestones')">مراحل وخطوات (Milestones)</div>
+            <div class="chip" id="goalModeNumeric" onclick="setGoalMode('numeric')">مستهدف رقمي (Numeric)</div>
+          </div>
+        </div>
+        <div id="goalNumericFields" style="display: none;" class="form-group">
+          <div style="display: flex; gap: 8px;">
+            <div style="flex: 1;">
+              <label class="form-label">المستهدف الرقمي</label>
+              <input type="number" id="goalTargetValInput" class="form-input" placeholder="مثال: 5000" />
+            </div>
+            <div style="flex: 1;">
+              <label class="form-label">الوحدة</label>
+              <input type="text" id="goalUnitInput" class="form-input" placeholder="مثال: جنيه، صفحة، كم" />
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">تاريخ الهدف المستهدف</label>
+          <input type="date" id="goalDateInput" class="form-input" />
+        </div>
+        <button class="primary-btn" style="width: 100%; justify-content: center; margin-top: 8px;" onclick="saveNewGoal()">
+          <span class="material-symbols-rounded">check</span>
+          <span>حفظ الهدف</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Goal Details Sheet (Spec 6.7) -->
+    <div class="sheet-overlay" id="goalDetailsSheet" onclick="closeSheet('goalDetailsSheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()" style="max-height: 85vh;">
+        <div class="sheet-header">
+          <div class="sheet-title" id="gdTitle">تفاصيل الهدف</div>
+          <button class="icon-btn" onclick="closeSheetDirect('goalDetailsSheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div id="gdBody" style="display: flex; flex-direction: column; gap: 14px;"></div>
+      </div>
+    </div>
+
     <!-- Toast Notification with Undo -->
     <div class="toast" id="toast">
       <span id="toastMsg">تمت العملية</span>
@@ -1192,6 +1318,7 @@
       const fab = document.getElementById('mainFab');
       fab.style.display = index === 3 ? 'none' : 'flex';
       updateHeaderTitle();
+      if (index === 1) renderGoals();
     }
 
     function updateHeaderTitle() {
@@ -1640,9 +1767,480 @@
       showToast('تم تفريغ سلة المحذوفات نهائياً');
     }
 
+    function handleFabClick() {
+      if (currentTab === 1) {
+        openAddGoal();
+      } else if (currentTab === 2) {
+        openQuickAdd('idea');
+      } else {
+        openQuickAdd('task');
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Goals Management (Phase 3)
+    // -------------------------------------------------------------
+    let goalSegment = 'active'; // 'active' | 'paused' | 'done'
+    let currentGoalCat = 'personal';
+    let currentGoalMode = 'milestones';
+
+    let goals = JSON.parse(localStorage.getItem('enjaz_goals') || 'null');
+    if (!goals) {
+      goals = [
+        {
+          id: 1,
+          title: 'قراءة كتاب العادات الذرية',
+          description: 'إنهاء قراءة وتلخيص الفصول الـ 20',
+          category: 'study',
+          progressMode: 'numeric',
+          targetDate: '2026-12-31',
+          currentValue: 120,
+          targetValue: 300,
+          unit: 'صفحة',
+          status: 'active',
+          updates: [
+            { at: Date.now() - 86400000 * 2, delta: 50, note: 'بدء الجزء الأول' },
+            { at: Date.now() - 86400000, delta: 70, note: 'الفصول 4-8' }
+          ]
+        },
+        {
+          id: 2,
+          title: 'إطلاق تطبيق إنجاز على متجر Google Play',
+          description: 'تطوير واختبار ورفع التطبيق كاملاً للمستخدمين',
+          category: 'work',
+          progressMode: 'milestones',
+          targetDate: '2026-11-20',
+          status: 'active',
+          milestones: [
+            { id: 101, title: 'المرحلة 0: الأساسيات وقاعدة البيانات', weight: 1, status: 'done' },
+            { id: 102, title: 'المرحلة 1: التفاعل مع المهام', weight: 1, status: 'done' },
+            { id: 103, title: 'المرحلة 2: السجل واستيراد الملاحظات', weight: 1, status: 'done' },
+            { id: 104, title: 'المرحلة 3: شاشة الأهداف والمراحل', weight: 1, status: 'done' },
+            { id: 105, title: 'المرحلة 4: الأفكار والتسجيلات الصوتية', weight: 2, status: 'pending' },
+            { id: 106, title: 'المرحلة 5: الإحصائيات وتقرير الإكسيل', weight: 2, status: 'pending' },
+          ]
+        }
+      ];
+      localStorage.setItem('enjaz_goals', JSON.stringify(goals));
+    }
+
+    function saveGoalsToStorage() {
+      localStorage.setItem('enjaz_goals', JSON.stringify(goals));
+      renderGoals();
+    }
+
+    function setGoalSegment(seg) {
+      goalSegment = seg;
+      ['goalSegActive', 'goalSegPaused', 'goalSegDone'].forEach(id => {
+        document.getElementById(id).classList.remove('active');
+      });
+      if (seg === 'active') document.getElementById('goalSegActive').classList.add('active');
+      if (seg === 'paused') document.getElementById('goalSegPaused').classList.add('active');
+      if (seg === 'done') document.getElementById('goalSegDone').classList.add('active');
+      renderGoals();
+    }
+
+    function setGoalCat(cat) {
+      currentGoalCat = cat;
+      ['personal', 'work', 'study', 'health', 'finance', 'other'].forEach(c => {
+        const el = document.getElementById('goalCat' + c.charAt(0).toUpperCase() + c.slice(1));
+        if (el) el.classList.remove('active');
+      });
+      const target = document.getElementById('goalCat' + cat.charAt(0).toUpperCase() + cat.slice(1));
+      if (target) target.classList.add('active');
+    }
+
+    function setGoalMode(mode) {
+      currentGoalMode = mode;
+      document.getElementById('goalModeMilestones').classList.toggle('active', mode === 'milestones');
+      document.getElementById('goalModeNumeric').classList.toggle('active', mode === 'numeric');
+      document.getElementById('goalNumericFields').style.display = mode === 'numeric' ? 'block' : 'none';
+    }
+
+    function openAddGoal() {
+      document.getElementById('goalTitleInput').value = '';
+      document.getElementById('goalDescInput').value = '';
+      setGoalCat('personal');
+      setGoalMode('milestones');
+      const d = new Date();
+      d.setDate(d.getDate() + 90);
+      document.getElementById('goalDateInput').value = d.toISOString().split('T')[0];
+      document.getElementById('addGoalSheet').classList.add('active');
+    }
+
+    function saveNewGoal() {
+      const title = document.getElementById('goalTitleInput').value.trim();
+      if (!title) return;
+
+      const desc = document.getElementById('goalDescInput').value.trim();
+      const targetDate = document.getElementById('goalDateInput').value || null;
+      const targetVal = parseFloat(document.getElementById('goalTargetValInput').value) || 100;
+      const unit = document.getElementById('goalUnitInput').value.trim() || '';
+
+      const newGoal = {
+        id: Date.now(),
+        title: title,
+        description: desc || null,
+        category: currentGoalCat,
+        progressMode: currentGoalMode,
+        targetDate: targetDate,
+        status: 'active',
+        currentValue: 0,
+        targetValue: targetVal,
+        unit: unit,
+        milestones: currentGoalMode === 'milestones' ? [
+          { id: Date.now() + 1, title: 'الخطوة الأولى', weight: 1, status: 'pending' },
+          { id: Date.now() + 2, title: 'الخطوة الثانية', weight: 1, status: 'pending' }
+        ] : [],
+        updates: []
+      };
+
+      goals.unshift(newGoal);
+      saveGoalsToStorage();
+      closeSheetDirect('addGoalSheet');
+      showToast('تمت إضافة الهدف بنجاح 🎯');
+    }
+
+    function calcGoalProgress(g) {
+      if (g.progressMode === 'numeric') {
+        const curr = g.currentValue || 0;
+        const targ = g.targetValue || 1;
+        return Math.min(100, Math.round((curr / targ) * 100));
+      } else {
+        const ms = g.milestones || [];
+        if (ms.length === 0) return 0;
+        let totalW = 0, doneW = 0;
+        ms.forEach(m => {
+          const w = m.weight || 1;
+          totalW += w;
+          if (m.status === 'done') doneW += w;
+        });
+        return totalW > 0 ? Math.round((doneW / totalW) * 100) : 0;
+      }
+    }
+
+    function calcDaysLeft(targetDateStr) {
+      if (!targetDateStr) return null;
+      const t = new Date(targetDateStr);
+      const now = new Date();
+      now.setHours(0,0,0,0);
+      t.setHours(0,0,0,0);
+      const diffTime = t.getTime() - now.getTime();
+      return Math.round(diffTime / (1000 * 3600 * 24));
+    }
+
+    function renderGoals() {
+      const container = document.getElementById('goalsListContainer');
+      if (!container) return;
+
+      const filtered = goals.filter(g => g.status === goalSegment);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon-circle">
+              <span class="material-symbols-rounded" style="font-size: 36px;">flag</span>
+            </div>
+            <div class="empty-title">مفيش أهداف مسجلة في هذا القسم</div>
+            <div class="empty-subtitle">No goals in this section yet</div>
+            <button class="primary-btn" onclick="openAddGoal()">
+              <span class="material-symbols-rounded">add</span>
+              <span>أضف هدف</span>
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(g => {
+        const progress = calcGoalProgress(g);
+        const daysLeft = calcDaysLeft(g.targetDate);
+        let badgeHtml = '';
+
+        if (g.status === 'paused') {
+          badgeHtml = '<span class="chip" style="color:var(--color-stopped); border-color:var(--color-stopped);">متوقف مؤقتاً</span>';
+        } else if (g.status === 'done') {
+          badgeHtml = '<span class="chip" style="color:var(--color-done); border-color:var(--color-done);">مكتمل 🎉</span>';
+        } else if (daysLeft !== null) {
+          if (daysLeft < 0) {
+            badgeHtml = `<span class="chip" style="color:var(--color-stopped); border-color:var(--color-stopped);">متأخر ${Math.abs(daysLeft)} يوم</span>`;
+          } else if (daysLeft === 0) {
+            badgeHtml = '<span class="chip" style="color:var(--color-postponed); border-color:var(--color-postponed);">موعده اليوم</span>';
+          } else {
+            badgeHtml = `<span class="chip" style="color:var(--accent); border-color:var(--accent);">باقي ${daysLeft} يوم</span>`;
+          }
+        }
+
+        let subtitle = '';
+        let nextMilestone = '';
+        if (g.progressMode === 'numeric') {
+          subtitle = `${g.currentValue || 0} من ${g.targetValue} ${g.unit || ''}`;
+        } else {
+          const ms = g.milestones || [];
+          const doneCount = ms.filter(m => m.status === 'done').length;
+          subtitle = `${doneCount} من ${ms.length} مراحل`;
+          const pending = ms.filter(m => m.status !== 'done');
+          if (pending.length > 0) nextMilestone = pending[0].title;
+        }
+
+        const catNames = { personal: 'شخصي', work: 'عمل', study: 'دراسة', health: 'صحة', finance: 'مالية', other: 'أخرى' };
+
+        return `
+          <div class="goal-card" onclick="openGoalDetails(${g.id})">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--accent); background: var(--surface-variant); padding: 3px 8px; border-radius: 6px;">
+                ${catNames[g.category] || 'شخصي'}
+              </span>
+              <div>${badgeHtml}</div>
+            </div>
+            <div style="font-size: 16px; font-weight: 700; color: var(--text);">${g.title}</div>
+            ${g.description ? `<div style="font-size: 13px; color: var(--text-muted);">${g.description}</div>` : ''}
+            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-top: 4px;">
+              <span>${subtitle}</span>
+              <span style="color: var(--accent); font-weight: 700;">${progress}%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" style="width: ${progress}%; ${progress >= 100 ? 'background-color: var(--color-done);' : ''}"></div>
+            </div>
+            ${nextMilestone ? `<div style="font-size: 12px; color: var(--accent); font-style: italic;">المرحلة القادمة: ${nextMilestone}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    let activeGoalId = null;
+
+    function openGoalDetails(id) {
+      activeGoalId = id;
+      const g = goals.find(x => x.id === id);
+      if (!g) return;
+
+      const progress = calcGoalProgress(g);
+      const daysLeft = calcDaysLeft(g.targetDate);
+
+      // Dash offset for circle
+      const radius = 45;
+      const circumference = 2 * Math.PI * radius;
+      const offset = circumference - (progress / 100) * circumference;
+
+      document.getElementById('gdTitle').innerText = g.title;
+
+      let modeHtml = '';
+      if (g.progressMode === 'milestones') {
+        const ms = g.milestones || [];
+        modeHtml = `
+          <div class="card" style="padding: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-weight: 700;">المراحل (${ms.filter(m => m.status === 'done').length}/${ms.length})</span>
+              <button class="chip" onclick="promptAddMilestone(${g.id})" style="border-color: var(--accent); color: var(--accent);">
+                <span class="material-symbols-rounded" style="font-size: 16px;">add</span> إضافة مرحلة
+              </button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              ${ms.map(m => `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" ${m.status === 'done' ? 'checked' : ''} onchange="toggleGoalMilestone(${g.id}, ${m.id})" style="width: 18px; height: 18px; cursor: pointer;" />
+                    <span style="${m.status === 'done' ? 'text-decoration: line-through; color: var(--text-muted);' : 'font-weight: 500;'}">${m.title}</span>
+                  </div>
+                  ${m.weight > 1 ? `<span style="font-size: 11px; color: var(--accent); font-weight: 600;">وزن: ${m.weight}</span>` : ''}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else {
+        const updates = g.updates || [];
+        modeHtml = `
+          <div class="card" style="padding: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <div>
+                <div style="font-size: 12px; color: var(--text-muted);">الحالي / المستهدف</div>
+                <div style="font-size: 20px; font-weight: 700; color: var(--accent);">${g.currentValue || 0} / ${g.targetValue} ${g.unit || ''}</div>
+              </div>
+              <button class="primary-btn" onclick="promptLogProgress(${g.id})">
+                <span class="material-symbols-rounded">trending_up</span> تسجيل تقدم
+              </button>
+            </div>
+            <div style="font-weight: 700; font-size: 13px; margin-bottom: 8px;">سجل التحديثات:</div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              ${updates.length === 0 ? '<div style="font-size: 12px; color: var(--text-muted);">لا توجد تحديثات سابقة</div>' : updates.map(u => `
+                <div style="display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px solid var(--border);">
+                  <span style="font-weight: 700; color: ${u.delta >= 0 ? 'var(--color-done)' : 'var(--color-stopped)'};">${u.delta >= 0 ? '+' : ''}${u.delta} ${g.unit || ''}</span>
+                  <span>${u.note || ''}</span>
+                  <span style="color: var(--text-muted); font-size: 11px;">${new Date(u.at).toLocaleDateString()}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      // Linked Tasks
+      const linked = tasks.filter(t => t.goalId === g.id);
+      const linkedHtml = `
+        <div class="card" style="padding: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span style="font-weight: 700;">مهام مرتبطة بهذا الهدف (${linked.length})</span>
+            <button class="chip" onclick="addTaskToGoalPrompt(${g.id})" style="border-color: var(--accent); color: var(--accent);">
+              <span class="material-symbols-rounded" style="font-size: 16px;">add_task</span> مهمة جديدة
+            </button>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            ${linked.length === 0 ? '<div style="font-size: 12px; color: var(--text-muted);">لا توجد مهام مرتبطة بعد</div>' : linked.map(t => `
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
+                <span style="${t.status === 'done' ? 'text-decoration: line-through; color: var(--text-muted);' : ''}">${t.title}</span>
+                <span class="chip" style="font-size: 11px;">${t.status}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      // Goal Actions buttons
+      let actionButtons = '';
+      if (g.status === 'active') {
+        actionButtons = `
+          <button class="chip" onclick="updateGoalStatusAction(${g.id}, 'paused')" style="color: var(--color-postponed); border-color: var(--color-postponed);">إيقاف مؤقت</button>
+          <button class="chip" onclick="updateGoalStatusAction(${g.id}, 'done')" style="color: var(--color-done); border-color: var(--color-done);">إكمال الهدف 🎉</button>
+          <button class="chip" onclick="updateGoalStatusAction(${g.id}, 'abandoned')" style="color: var(--color-stopped); border-color: var(--color-stopped);">إلغاء الهدف</button>
+        `;
+      } else if (g.status === 'paused') {
+        actionButtons = `
+          <button class="chip" onclick="updateGoalStatusAction(${g.id}, 'active')" style="color: var(--color-done); border-color: var(--color-done);">استئناف</button>
+          <button class="chip" onclick="updateGoalStatusAction(${g.id}, 'done')" style="color: var(--color-done); border-color: var(--color-done);">إكمال الهدف</button>
+        `;
+      } else {
+        actionButtons = `
+          <button class="chip" onclick="updateGoalStatusAction(${g.id}, 'active')">إعادة فتح</button>
+        `;
+      }
+
+      document.getElementById('gdBody').innerHTML = `
+        <div style="text-align: center;">
+          <div class="circular-progress-wrap">
+            <svg class="circular-progress-svg" viewBox="0 0 110 110">
+              <circle class="circular-progress-bg" cx="55" cy="55" r="${radius}"></circle>
+              <circle class="circular-progress-bar" cx="55" cy="55" r="${radius}" style="stroke-dasharray: ${circumference}; stroke-dashoffset: ${offset};"></circle>
+            </svg>
+            <div class="circular-progress-text">${progress}%</div>
+          </div>
+          <div style="font-size: 18px; font-weight: 700; color: var(--text);">${g.title}</div>
+          ${g.description ? `<div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">${g.description}</div>` : ''}
+          <div style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+            تاريخ الإنجاز: <strong>${g.targetDate || 'غير محدد'}</strong> ${daysLeft !== null ? `(باقي ${daysLeft} يوم)` : ''}
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+          ${actionButtons}
+          <button class="chip" onclick="deleteGoalAction(${g.id})" style="color: var(--color-stopped); border-color: var(--color-stopped);">حذف</button>
+        </div>
+
+        ${modeHtml}
+        ${linkedHtml}
+      `;
+
+      document.getElementById('goalDetailsSheet').classList.add('active');
+    }
+
+    function toggleGoalMilestone(goalId, milestoneId) {
+      const g = goals.find(x => x.id === goalId);
+      if (!g || !g.milestones) return;
+      const m = g.milestones.find(x => x.id === milestoneId);
+      if (!m) return;
+
+      m.status = m.status === 'done' ? 'pending' : 'done';
+
+      // Check if all milestones are now done
+      const allDone = g.milestones.every(x => x.status === 'done');
+      if (allDone && g.status === 'active') {
+        if (confirm('أحسنت! أكملت كل مراحل الهدف، هل تريد تعيينه كمكتمل؟ 🎉')) {
+          g.status = 'done';
+        }
+      }
+
+      saveGoalsToStorage();
+      openGoalDetails(goalId);
+    }
+
+    function promptAddMilestone(goalId) {
+      const title = prompt('اسم المرحلة الجديدة:');
+      if (!title || !title.trim()) return;
+      const weightStr = prompt('الوزن النسبي (1-10):', '1');
+      const weight = parseInt(weightStr) || 1;
+
+      const g = goals.find(x => x.id === goalId);
+      if (!g) return;
+      if (!g.milestones) g.milestones = [];
+      g.milestones.push({ id: Date.now(), title: title.trim(), weight: weight, status: 'pending' });
+
+      saveGoalsToStorage();
+      openGoalDetails(goalId);
+      showToast('تمت إضافة المرحلة');
+    }
+
+    function promptLogProgress(goalId) {
+      const deltaStr = prompt('القيمة المضافة (+ أو -):', '10');
+      if (!deltaStr) return;
+      const delta = parseFloat(deltaStr);
+      if (isNaN(delta)) return;
+      const note = prompt('ملاحظة على التقدم (اختياري):', '');
+
+      const g = goals.find(x => x.id === goalId);
+      if (!g) return;
+      g.currentValue = (g.currentValue || 0) + delta;
+      if (!g.updates) g.updates = [];
+      g.updates.unshift({ at: Date.now(), delta: delta, note: note || null });
+
+      saveGoalsToStorage();
+      openGoalDetails(goalId);
+      showToast('تم تسجيل التقدم بنجاح 📈');
+    }
+
+    function updateGoalStatusAction(goalId, newStatus) {
+      const g = goals.find(x => x.id === goalId);
+      if (!g) return;
+      if (newStatus === 'paused' || newStatus === 'abandoned') {
+        const reason = prompt(newStatus === 'paused' ? 'سبب الإيقاف المؤقت:' : 'سبب الإلغاء:');
+        if (!reason) return;
+        g.statusReason = reason;
+      }
+      g.status = newStatus;
+      saveGoalsToStorage();
+      closeSheetDirect('goalDetailsSheet');
+      showToast('تم تحديث حالة الهدف');
+    }
+
+    function deleteGoalAction(goalId) {
+      if (!confirm('هل تريد حذف هذا الهدف؟')) return;
+      goals = goals.filter(x => x.id !== goalId);
+      saveGoalsToStorage();
+      closeSheetDirect('goalDetailsSheet');
+      showToast('تم حذف الهدف');
+    }
+
+    function addTaskToGoalPrompt(goalId) {
+      const title = prompt('عنوان المهمة المرتبطة:');
+      if (!title || !title.trim()) return;
+      tasks.unshift({
+        id: Date.now(),
+        title: title.trim(),
+        kind: 'task',
+        date: 'today',
+        status: 'todo',
+        progress: 0,
+        goalId: goalId
+      });
+      saveTasksToStorage();
+      openGoalDetails(goalId);
+      showToast('تم ربط المهمة بالهدف');
+    }
+
     // Initialize
     updateDateDisplay();
     renderTasks();
+    renderGoals();
   </script>
 </body>
 </html>

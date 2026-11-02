@@ -9,17 +9,20 @@ import '../../../core/utils/date_formatter.dart';
 class QuickAddSheet extends ConsumerStatefulWidget {
   final String? initialDate; // YYYY-MM-DD
   final String initialKind; // task | errand | goal | idea
+  final int? initialGoalId;
 
   const QuickAddSheet({
     super.key,
     this.initialDate,
     this.initialKind = 'task',
+    this.initialGoalId,
   });
 
   static Future<void> show(
     BuildContext context, {
     String? initialDate,
     String initialKind = 'task',
+    int? initialGoalId,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -31,6 +34,7 @@ class QuickAddSheet extends ConsumerStatefulWidget {
       builder: (_) => QuickAddSheet(
         initialDate: initialDate,
         initialKind: initialKind,
+        initialGoalId: initialGoalId,
       ),
     );
   }
@@ -253,6 +257,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
         locationText: _selectedKind == 'errand' &&
                 _locationController.text.trim().isNotEmpty
             ? drift.Value(_locationController.text.trim())
+            : const drift.Value.absent(),
+        goalId: widget.initialGoalId != null
+            ? drift.Value(widget.initialGoalId)
             : const drift.Value.absent(),
         createdAt: now,
         updatedAt: now,

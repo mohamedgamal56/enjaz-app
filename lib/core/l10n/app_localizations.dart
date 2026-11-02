@@ -168,6 +168,61 @@ class AppLocalizations {
       'purgeTrashConfirm': 'هل أنت متأكد من تفريغ سلة المحذوفات نهائياً؟ لا يمكن التراجع عن هذا الإجراء.',
       'restore': 'استعادة',
       'taskRestored': 'تمت استعادة المهمة',
+
+      'goalTitle': 'عنوان الهدف',
+      'goalDescription': 'وصف الهدف وملاحظاته',
+      'progressMode': 'طريقة حساب التقدم',
+      'modeMilestones': 'مراحل وخطوات',
+      'modeNumeric': 'مستهدف رقمي',
+      'targetValue': 'المستهدف',
+      'currentValue': 'الحالي',
+      'unit': 'الوحدة',
+      'unitHint': 'مثال: صفحة، جنيه، كم، ساعة',
+      'targetDate': 'تاريخ الهدف',
+      'category': 'التصنيف',
+      'categoryPersonal': 'شخصي',
+      'categoryWork': 'عمل',
+      'categoryStudy': 'دراسة',
+      'categoryHealth': 'صحة',
+      'categoryFinance': 'مالية',
+      'categoryOther': 'أخرى',
+      'milestones': 'المراحل',
+      'addMilestone': 'إضافة مرحلة',
+      'editMilestone': 'تعديل المرحلة',
+      'milestoneTitle': 'اسم المرحلة',
+      'milestoneWeight': 'الوزن النسبي',
+      'milestoneDone': 'مكتملة',
+      'milestonePending': 'قيد الانتظار',
+      'logProgress': 'تسجيل تقدم',
+      'progressDelta': 'القيمة المضافة (+ أو -)',
+      'progressNote': 'ملاحظة (اختياري)',
+      'progressHistory': 'سجل التحديثات الرقمية',
+      'dueToday': 'موعده اليوم',
+      'noTargetDate': 'بدون تاريخ محدد',
+      'nextMilestone': 'المرحلة القادمة',
+      'allMilestonesDone': 'تمت جميع المراحل!',
+      'linkedTasks': 'مهام مرتبطة',
+      'addTaskToGoal': 'إضافة مهمة لهذا الهدف',
+      'noMilestonesYet': 'لم تتم إضافة أي مراحل بعد',
+      'noLinkedTasksYet': 'لا توجد مهام مرتبطة بهذا الهدف',
+      'noGoalUpdatesYet': 'لم يتم تسجيل أي تقدم بعد',
+      'pauseGoal': 'إيقاف مؤقت للهدف',
+      'resumeGoal': 'استئناف الهدف',
+      'abandonGoal': 'إلغاء الهدف',
+      'markGoalDone': 'إكمال الهدف',
+      'deleteGoal': 'حذف الهدف',
+      'deleteGoalConfirm': 'هل تريد نقل هذا الهدف لسلة المحذوفات؟',
+      'pauseReasonPrompt': 'سبب الإيقاف المؤقت:',
+      'abandonReasonPrompt': 'سبب الإلغاء أو التراجع:',
+      'reasonRequired': 'يرجى كتابة أو اختيار السبب',
+      'allMilestonesDonePrompt': 'مبروك! تم إنجاز كل مراحل الهدف، هل تريد تعيينه كمكتمل؟',
+      'goalSavedSuccess': 'تم حفظ الهدف بنجاح',
+      'milestoneAdded': 'تمت إضافة المرحلة بنجاح',
+      'progressLoggedSuccess': 'تم تسجيل التقدم بنجاح',
+      'filterActive': 'نشطة',
+      'filterPaused': 'متوقفة',
+      'filterDone': 'مكتملة',
+      'editGoal': 'تعديل الهدف',
     },
     'en': {
       'appName': 'Enjaz',
@@ -318,6 +373,61 @@ class AppLocalizations {
       'purgeTrashConfirm': 'Permanently purge all items in trash? This cannot be undone.',
       'restore': 'Restore',
       'taskRestored': 'Task restored',
+
+      'goalTitle': 'Goal Title',
+      'goalDescription': 'Goal Description & Notes',
+      'progressMode': 'Progress Tracking Mode',
+      'modeMilestones': 'Milestones & Steps',
+      'modeNumeric': 'Numeric Target',
+      'targetValue': 'Target Value',
+      'currentValue': 'Current Value',
+      'unit': 'Unit',
+      'unitHint': 'e.g. pages, EGP, km, hrs',
+      'targetDate': 'Target Date',
+      'category': 'Category',
+      'categoryPersonal': 'Personal',
+      'categoryWork': 'Work',
+      'categoryStudy': 'Study',
+      'categoryHealth': 'Health',
+      'categoryFinance': 'Finance',
+      'categoryOther': 'Other',
+      'milestones': 'Milestones',
+      'addMilestone': 'Add Milestone',
+      'editMilestone': 'Edit Milestone',
+      'milestoneTitle': 'Milestone Title',
+      'milestoneWeight': 'Relative Weight',
+      'milestoneDone': 'Done',
+      'milestonePending': 'Pending',
+      'logProgress': 'Log Progress',
+      'progressDelta': 'Value Delta (+ or -)',
+      'progressNote': 'Note (optional)',
+      'progressHistory': 'Numeric Progress History',
+      'dueToday': 'Due today',
+      'noTargetDate': 'No target date',
+      'nextMilestone': 'Next Milestone',
+      'allMilestonesDone': 'All milestones completed!',
+      'linkedTasks': 'Linked Tasks',
+      'addTaskToGoal': 'Add Task to Goal',
+      'noMilestonesYet': 'No milestones added yet',
+      'noLinkedTasksYet': 'No linked tasks yet',
+      'noGoalUpdatesYet': 'No progress updates recorded yet',
+      'pauseGoal': 'Pause Goal',
+      'resumeGoal': 'Resume Goal',
+      'abandonGoal': 'Abandon Goal',
+      'markGoalDone': 'Mark Goal Done',
+      'deleteGoal': 'Delete Goal',
+      'deleteGoalConfirm': 'Move this goal to trash?',
+      'pauseReasonPrompt': 'Reason for pausing:',
+      'abandonReasonPrompt': 'Reason for abandoning:',
+      'reasonRequired': 'Please specify a reason',
+      'allMilestonesDonePrompt': 'Congratulations! All milestones are done. Mark this goal as completed?',
+      'goalSavedSuccess': 'Goal saved successfully',
+      'milestoneAdded': 'Milestone added successfully',
+      'progressLoggedSuccess': 'Progress logged successfully',
+      'filterActive': 'Active',
+      'filterPaused': 'Paused',
+      'filterDone': 'Done',
+      'editGoal': 'Edit Goal',
     },
   };
 
@@ -474,6 +584,61 @@ class AppLocalizations {
   String get purgeTrashConfirm => _get('purgeTrashConfirm');
   String get restore => _get('restore');
   String get taskRestored => _get('taskRestored');
+
+  String get goalTitle => _get('goalTitle');
+  String get goalDescription => _get('goalDescription');
+  String get progressMode => _get('progressMode');
+  String get modeMilestones => _get('modeMilestones');
+  String get modeNumeric => _get('modeNumeric');
+  String get targetValue => _get('targetValue');
+  String get currentValue => _get('currentValue');
+  String get unit => _get('unit');
+  String get unitHint => _get('unitHint');
+  String get targetDate => _get('targetDate');
+  String get category => _get('category');
+  String get categoryPersonal => _get('categoryPersonal');
+  String get categoryWork => _get('categoryWork');
+  String get categoryStudy => _get('categoryStudy');
+  String get categoryHealth => _get('categoryHealth');
+  String get categoryFinance => _get('categoryFinance');
+  String get categoryOther => _get('categoryOther');
+  String get milestones => _get('milestones');
+  String get addMilestone => _get('addMilestone');
+  String get editMilestone => _get('editMilestone');
+  String get milestoneTitle => _get('milestoneTitle');
+  String get milestoneWeight => _get('milestoneWeight');
+  String get milestoneDone => _get('milestoneDone');
+  String get milestonePending => _get('milestonePending');
+  String get logProgress => _get('logProgress');
+  String get progressDelta => _get('progressDelta');
+  String get progressNote => _get('progressNote');
+  String get progressHistory => _get('progressHistory');
+  String get dueToday => _get('dueToday');
+  String get noTargetDate => _get('noTargetDate');
+  String get nextMilestone => _get('nextMilestone');
+  String get allMilestonesDone => _get('allMilestonesDone');
+  String get linkedTasks => _get('linkedTasks');
+  String get addTaskToGoal => _get('addTaskToGoal');
+  String get noMilestonesYet => _get('noMilestonesYet');
+  String get noLinkedTasksYet => _get('noLinkedTasksYet');
+  String get noGoalUpdatesYet => _get('noGoalUpdatesYet');
+  String get pauseGoal => _get('pauseGoal');
+  String get resumeGoal => _get('resumeGoal');
+  String get abandonGoal => _get('abandonGoal');
+  String get markGoalDone => _get('markGoalDone');
+  String get deleteGoal => _get('deleteGoal');
+  String get deleteGoalConfirm => _get('deleteGoalConfirm');
+  String get pauseReasonPrompt => _get('pauseReasonPrompt');
+  String get abandonReasonPrompt => _get('abandonReasonPrompt');
+  String get reasonRequired => _get('reasonRequired');
+  String get allMilestonesDonePrompt => _get('allMilestonesDonePrompt');
+  String get goalSavedSuccess => _get('goalSavedSuccess');
+  String get milestoneAdded => _get('milestoneAdded');
+  String get progressLoggedSuccess => _get('progressLoggedSuccess');
+  String get filterActive => _get('filterActive');
+  String get filterPaused => _get('filterPaused');
+  String get filterDone => _get('filterDone');
+  String get editGoal => _get('editGoal');
 
   String getStatusLabel(String status) {
     switch (status) {

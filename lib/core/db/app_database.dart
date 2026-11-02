@@ -231,6 +231,59 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // -------------------------------------------------------------
+  // GOALS & MILESTONES QUERIES
+  // -------------------------------------------------------------
+
+  /// Watch goals by status (active, paused, done, abandoned)
+  Stream<List<Goal>> watchGoals({String? status}) {
+    final q = select(goals)..where((g) => g.deletedAt.isNull());
+    if (status != null && status.isNotEmpty) {
+      q.where((g) => g.status.equals(status));
+    }
+    q.orderBy([(g) => OrderingTerm(expression: g.id, mode: OrderingMode.desc)]);
+    return q.watch();
+  }
+
+  /// Watch single goal by ID
+  Stream<Goal?> watchGoalById(int id) {
+    return (select(goals)..where((g) => g.id.equals(id))).watchSingleOrNull();
+  }
+
+  /// Get single goal by ID
+  Future<Goal?> getGoalById(int id) {
+    return (select(goals)..where((g) => g.id.equals(id))).getSingleOrNull();
+  }
+
+  /// Watch milestones for a goal ordered by sortOrder
+  Stream<List<Milestone>> watchMilestonesForGoal(int goalId) {
+    return (select(milestones)
+          ..where((m) => m.goalId.equals(goalId) & m.deletedAt.isNull())
+          ..orderBy([
+            (m) => OrderingTerm(expression: m.sortOrder, mode: OrderingMode.asc),
+            (m) => OrderingTerm(expression: m.id, mode: OrderingMode.asc),
+          ]))
+        .watch();
+  }
+
+  /// Watch numeric progress updates for a goal
+  Stream<List<GoalUpdate>> watchGoalUpdates(int goalId) {
+    return (select(goalUpdates)
+          ..where((u) => u.goalId.equals(goalId) & u.deletedAt.isNull())
+          ..orderBy([
+            (u) => OrderingTerm(expression: u.at, mode: OrderingMode.desc),
+          ]))
+        .watch();
+  }
+
+  /// Watch tasks linked to a goal
+  Stream<List<Task>> watchTasksForGoal(int goalId) {
+    return (select(tasks)
+          ..where((t) => t.goalId.equals(goalId) & t.deletedAt.isNull())
+          ..orderBy([(t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc)]))
+        .watch();
+  }
+
+  // -------------------------------------------------------------
   // MUTATIONS & TRANSACTIONS
   // -------------------------------------------------------------
 
@@ -489,6 +542,116 @@ class AppDatabase extends _$AppDatabase {
   /// Permanently purge soft-deleted trash tasks
   Future<void> purgeTrash() async {
     await (delete(tasks)..where((t) => t.deletedAt.isNotNull())).go();
+  }
+
+  // -------------------------------------------------------------
+  // GOALS & MILESTONES MUTATIONS
+  // -------------------------------------------------------------
+
+  /// Insert a new goal
+  Future<int> insertNewGoal(GoalsCompanion goal) async {
+    return into(goals).insert(goal);
+  }
+
+  /// Update goal fields
+  Future<void> updateGoalData(GoalsCompanion goal) async {
+    await (update(goals)..where((g) => g.id.equals(goal.id.value))).write(goal);
+  }
+
+  /// Update goal status (active, paused, done, abandoned) with optional reason
+  Future<void> updateGoalStatus(
+    int goalId,
+    String newStatus, {
+    String? reason,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(goals)..where((g) => g.id.equals(goalId))).write(
+      GoalsCompanion(
+        status: Value(newStatus),
+        statusReason: reason != null ? Value(reason) : const Value.absent(),
+        completedAt: newStatus == 'done' ? Value(now) : const Value(null),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Soft delete goal
+  Future<void> softDeleteGoal(int goalId) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(goals)..where((g) => g.id.equals(goalId))).write(
+      GoalsCompanion(
+        deletedAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Insert milestone
+  Future<int> insertNewMilestone(MilestonesCompanion milestone) async {
+    return into(milestones).insert(milestone);
+  }
+
+  /// Update milestone
+  Future<void> updateMilestoneData(MilestonesCompanion milestone) async {
+    await (update(milestones)..where((m) => m.id.equals(milestone.id.value))).write(milestone);
+  }
+
+  /// Toggle milestone pending / done
+  Future<void> toggleMilestoneStatus(int milestoneId, bool isDone) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(milestones)..where((m) => m.id.equals(milestoneId))).write(
+      MilestonesCompanion(
+        status: Value(isDone ? 'done' : 'pending'),
+        completedAt: isDone ? Value(now) : const Value(null),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Delete milestone (soft delete)
+  Future<void> deleteMilestoneSoft(int milestoneId) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(milestones)..where((m) => m.id.equals(milestoneId))).write(
+      MilestonesCompanion(
+        deletedAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Log numeric goal progress (valueDelta + optional note) and update goal's currentValue
+  Future<void> logGoalProgress(
+    int goalId,
+    double delta, {
+    String? note,
+  }) async {
+    return transaction(() async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final goal = await getGoalById(goalId);
+      if (goal == null) return;
+
+      final newCurrent = (goal.currentValue ?? 0.0) + delta;
+
+      // 1. Update goal currentValue
+      await (update(goals)..where((g) => g.id.equals(goalId))).write(
+        GoalsCompanion(
+          currentValue: Value(newCurrent),
+          updatedAt: Value(now),
+        ),
+      );
+
+      // 2. Insert goal_updates entry
+      await into(goalUpdates).insert(
+        GoalUpdatesCompanion.insert(
+          goalId: goalId,
+          at: now,
+          note: note != null ? Value(note) : const Value.absent(),
+          valueDelta: Value(delta),
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    });
   }
 }
 

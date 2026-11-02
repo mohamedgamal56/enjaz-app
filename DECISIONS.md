@@ -51,3 +51,13 @@
   - History screen leverages Drift reactive streaming with SQL `LIKE` queries across title, notes, and reasonText, coupled with dynamic status and kind filters.
   - Reason management respects the strict audit rule: reasons can be archived or edited, but never hard deleted if attached to historical events.
   - Soft-delete trash management provides safe recovery and optional permanent purge.
+
+## Decision 8: Phase 3 Goals, Milestones & Dual Progress Tracking
+- **Context**: Spec Section 4, 6.6, and 6.7 define Life Goals with two distinct tracking modes: Milestones (weighted steps) and Numeric targets (current vs target with units and update logs), with lifecycle management (Active, Paused, Done, Abandoned) and task linking.
+- **Decision**:
+  - Isolated progress logic in `GoalProgressService`: calculates weighted milestones completion `(sum(done_weights) / sum(total_weights)) * 100` and numeric progress `(current / target) * 100` clamped to 100%, alongside target date proximity and overdue calculations.
+  - Ticking the last pending milestone triggers an explicit user prompt: "خلص؟ الهدف / Mark goal as completed?".
+  - Numeric progress changes are recorded atomically: updating `goals.current_value` and appending an audit record in `goal_updates`.
+  - Status changes to `paused` and `abandoned` mandate specifying a reason.
+  - Main navigation FAB contextually launches `AddGoalSheet` when on the Goals tab and `QuickAddSheet` when on other tabs.
+  - Tasks can be linked directly to goals via `goal_id` foreign key.
