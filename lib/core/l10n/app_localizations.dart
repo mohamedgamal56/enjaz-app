@@ -120,11 +120,54 @@ class AppLocalizations {
       'outcomeNoteLabel': 'إزاي خلصت؟',
       'outcomeNoteHint': 'سجل كلمة أو ملاحظة عن النتيجة...',
       'historyLog': 'سجل النشاط والتغييرات',
+      'duplicateTask': 'تكرار المهمة',
       'deleteTask': 'حذف المهمة',
       'deleteTaskConfirm': 'هل أنت متأكد من حذف هذه المهمة؟',
       'taskDeleted': 'تم نقل المهمة لسلة المحذوفات',
       'minute': 'دقيقة',
       'hour': 'ساعة',
+
+      'multiLinePasteTitle': 'تحويل الملاحظات لمهام',
+      'multiLinePastePrompt': 'تم اكتشاف أسطر متعددة، تحويلها لمهام منفصلة؟',
+      'importNotes': 'استيراد ملاحظات',
+      'pasteNotesHint': 'الصق ملاحظاتك أو قائمتك هنا (كل سطر هيكون مهمة منفصلة)...',
+      'convert': 'تحويل لمهام',
+      'tasksCreatedSuccess': 'تم إنشاء المهام بنجاح',
+
+      'historyTitle': 'سجل المهام',
+      'searchHint': 'ابحث في المهام، الملاحظات، أو الأسباب...',
+      'filterAll': 'الكل',
+      'filterKind': 'النوع',
+      'filterStatus': 'الحالة',
+      'sortNewest': 'الأحدث أولاً',
+      'sortOldest': 'الأقدم أولاً',
+      'noHistoryFound': 'مفيش نتائج مطابقة للبحث',
+      'clearFilters': 'إعادة ضبط الفلاتر',
+
+      'reasonsManager': 'إدارة أسباب التأجيل',
+      'addReason': 'إضافة سبب جديد',
+      'editReason': 'تعديل السبب',
+      'reasonLabelAr': 'نص السبب (عربي)',
+      'reasonLabelEn': 'نص السبب (إنجليزي - اختياري)',
+      'reasonCategory': 'التصنيف',
+      'categoryPostpone': 'تأجيل',
+      'categoryWaiting': 'انتظار',
+      'categoryStopped': 'توقف',
+      'categoryPartial': 'إنجاز جزئي',
+      'categoryAny': 'عام / أي حالة',
+      'archive': 'أرشفة',
+      'archiveReasonConfirm': 'هل تريد أرشفة هذا السبب؟ لن يظهر في القوائم الجديدة ولكن سيبقى في السجلات القديمة.',
+      'usageCountLabel': 'مرات الاستخدام',
+      'reasonAddedSuccess': 'تمت إضافة السبب بنجاح',
+      'reasonUpdatedSuccess': 'تم تعديل السبب بنجاح',
+      'reasonArchivedSuccess': 'تمت أرشفة السبب',
+
+      'trash': 'سلة المحذوفات',
+      'emptyTrash': 'سلة المحذوفات فارغة',
+      'purgeTrash': 'تفريغ السلة نهائياً',
+      'purgeTrashConfirm': 'هل أنت متأكد من تفريغ سلة المحذوفات نهائياً؟ لا يمكن التراجع عن هذا الإجراء.',
+      'restore': 'استعادة',
+      'taskRestored': 'تمت استعادة المهمة',
     },
     'en': {
       'appName': 'Enjaz',
@@ -227,11 +270,54 @@ class AppLocalizations {
       'outcomeNoteLabel': 'How did it end?',
       'outcomeNoteHint': 'Write a note about the outcome...',
       'historyLog': 'Activity & History Log',
+      'duplicateTask': 'Duplicate task',
       'deleteTask': 'Delete task',
       'deleteTaskConfirm': 'Are you sure you want to delete this task?',
       'taskDeleted': 'Task moved to trash',
       'minute': 'min',
       'hour': 'hr',
+
+      'multiLinePasteTitle': 'Convert notes to tasks',
+      'multiLinePastePrompt': 'Found multiple lines, create separate tasks?',
+      'importNotes': 'Import notes',
+      'pasteNotesHint': 'Paste your notes or list here (each line a task)...',
+      'convert': 'Convert to tasks',
+      'tasksCreatedSuccess': 'Tasks created successfully',
+
+      'historyTitle': 'Task History',
+      'searchHint': 'Search tasks, notes, or reasons...',
+      'filterAll': 'All',
+      'filterKind': 'Kind',
+      'filterStatus': 'Status',
+      'sortNewest': 'Newest first',
+      'sortOldest': 'Oldest first',
+      'noHistoryFound': 'No matching history found',
+      'clearFilters': 'Reset filters',
+
+      'reasonsManager': 'Reasons Manager',
+      'addReason': 'Add New Reason',
+      'editReason': 'Edit Reason',
+      'reasonLabelAr': 'Reason label (Arabic)',
+      'reasonLabelEn': 'Reason label (English - optional)',
+      'reasonCategory': 'Category',
+      'categoryPostpone': 'Postpone',
+      'categoryWaiting': 'Waiting',
+      'categoryStopped': 'Stopped',
+      'categoryPartial': 'Partial',
+      'categoryAny': 'Any status',
+      'archive': 'Archive',
+      'archiveReasonConfirm': 'Archive this reason? It won't appear in new lists but remains in old records.',
+      'usageCountLabel': 'Usage count',
+      'reasonAddedSuccess': 'Reason added successfully',
+      'reasonUpdatedSuccess': 'Reason updated successfully',
+      'reasonArchivedSuccess': 'Reason archived',
+
+      'trash': 'Trash',
+      'emptyTrash': 'Trash is empty',
+      'purgeTrash': 'Purge trash permanently',
+      'purgeTrashConfirm': 'Permanently purge all items in trash? This cannot be undone.',
+      'restore': 'Restore',
+      'taskRestored': 'Task restored',
     },
   };
 
@@ -346,6 +432,48 @@ class AppLocalizations {
   String get taskDeleted => _get('taskDeleted');
   String get minute => _get('minute');
   String get hour => _get('hour');
+
+  String get multiLinePasteTitle => _get('multiLinePasteTitle');
+  String get multiLinePastePrompt => _get('multiLinePastePrompt');
+  String get importNotes => _get('importNotes');
+  String get pasteNotesHint => _get('pasteNotesHint');
+  String get convert => _get('convert');
+  String get tasksCreatedSuccess => _get('tasksCreatedSuccess');
+
+  String get historyTitle => _get('historyTitle');
+  String get searchHint => _get('searchHint');
+  String get filterAll => _get('filterAll');
+  String get filterKind => _get('filterKind');
+  String get filterStatus => _get('filterStatus');
+  String get sortNewest => _get('sortNewest');
+  String get sortOldest => _get('sortOldest');
+  String get noHistoryFound => _get('noHistoryFound');
+  String get clearFilters => _get('clearFilters');
+
+  String get reasonsManager => _get('reasonsManager');
+  String get addReason => _get('addReason');
+  String get editReason => _get('editReason');
+  String get reasonLabelAr => _get('reasonLabelAr');
+  String get reasonLabelEn => _get('reasonLabelEn');
+  String get reasonCategory => _get('reasonCategory');
+  String get categoryPostpone => _get('categoryPostpone');
+  String get categoryWaiting => _get('categoryWaiting');
+  String get categoryStopped => _get('categoryStopped');
+  String get categoryPartial => _get('categoryPartial');
+  String get categoryAny => _get('categoryAny');
+  String get archive => _get('archive');
+  String get archiveReasonConfirm => _get('archiveReasonConfirm');
+  String get usageCountLabel => _get('usageCountLabel');
+  String get reasonAddedSuccess => _get('reasonAddedSuccess');
+  String get reasonUpdatedSuccess => _get('reasonUpdatedSuccess');
+  String get reasonArchivedSuccess => _get('reasonArchivedSuccess');
+
+  String get trash => _get('trash');
+  String get emptyTrash => _get('emptyTrash');
+  String get purgeTrash => _get('purgeTrash');
+  String get purgeTrashConfirm => _get('purgeTrashConfirm');
+  String get restore => _get('restore');
+  String get taskRestored => _get('taskRestored');
 
   String getStatusLabel(String status) {
     switch (status) {

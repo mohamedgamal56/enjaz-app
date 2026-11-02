@@ -572,7 +572,7 @@
     <header>
       <div class="header-title" id="pageTitle">إنجاز</div>
       <div class="header-actions">
-        <button class="icon-btn" id="btnHistory" title="السجل" onclick="showToast(currentLang === 'ar' ? 'السجل (المرحلة ٢)' : 'History (Phase 2)')">
+        <button class="icon-btn" id="btnHistory" title="السجل" onclick="openHistory()">
           <span class="material-symbols-rounded">history</span>
         </button>
         <button class="icon-btn" id="btnSettings" title="الإعدادات" onclick="openSettings()">
@@ -764,6 +764,14 @@
           </button>
         </div>
 
+        <!-- Multi-line Import Button -->
+        <div style="display: flex; justify-content: flex-end;">
+          <button type="button" class="chip" onclick="openMultiLineImport()" style="background: none; border-color: var(--accent); color: var(--accent);">
+            <span class="material-symbols-rounded" style="font-size: 16px;">playlist_add</span>
+            <span>استيراد ملاحظات (متعدد الأسطر)</span>
+          </button>
+        </div>
+
         <!-- Title Input -->
         <input type="text" id="qaTitleInput" class="form-input" placeholder="عنوان المهمة..." autofocus />
 
@@ -794,6 +802,90 @@
           <button class="primary-btn" style="flex: 1; justify-content: center;" onclick="saveTask(false)">حفظ</button>
           <button class="primary-btn" style="flex: 1; justify-content: center; background: none; border: 1px solid var(--border); color: var(--text);" onclick="saveTask(true)">حفظ وإضافة آخر</button>
         </div>
+        <!-- Management Links -->
+        <div class="card" style="margin-bottom: 8px;">
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">الإدارة / Management</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="chip" onclick="openReasonsManager()" style="justify-content: space-between; border-radius: 12px; width: 100%;">
+              <span>إدارة أسباب التأجيل (Reasons Manager)</span>
+              <span class="material-symbols-rounded">chevron_left</span>
+            </div>
+            <div class="chip" onclick="openTrash()" style="justify-content: space-between; border-radius: 12px; width: 100%; color: var(--color-stopped);">
+              <span>سلة المحذوفات (Trash)</span>
+              <span class="material-symbols-rounded">delete</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History Bottom Sheet (Spec 6.5) -->
+    <div class="sheet-overlay" id="historySheet" onclick="closeSheet('historySheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title">سجل المهام (Task History)</div>
+          <button class="icon-btn" onclick="closeSheetDirect('historySheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <input type="text" id="historySearchInput" class="form-input" placeholder="ابحث في المهام، الملاحظات، أو الأسباب..." oninput="renderHistory()" />
+        <div class="chips-row" style="flex-wrap: wrap; margin-top: 4px;">
+          <div class="chip active" id="histSortBtn" onclick="toggleHistorySort()">الأحدث أولاً</div>
+          <div class="chip" onclick="filterHistoryStatus('done')">تمت فقط</div>
+          <div class="chip" onclick="filterHistoryStatus('all')">الكل</div>
+        </div>
+        <div id="historyListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
+      </div>
+    </div>
+
+    <!-- Multi-line Import Sheet (Spec 6.2) -->
+    <div class="sheet-overlay" id="multiLineSheet" onclick="closeSheet('multiLineSheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title">تحويل الملاحظات لمهام</div>
+          <button class="icon-btn" onclick="closeSheetDirect('multiLineSheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted);">الصق قائمتك هنا (كل سطر هيكون مهمة منفصلة):</div>
+        <textarea id="multiLineInput" class="form-input" rows="6" placeholder="مهمة 1&#10;مشوار 2&#10;مهمة 3..."></textarea>
+        <button class="primary-btn" style="justify-content: center;" onclick="confirmMultiLineImport()">تحويل لمهام</button>
+      </div>
+    </div>
+
+    <!-- Reasons Manager Sheet (Spec 6.10) -->
+    <div class="sheet-overlay" id="reasonsSheet" onclick="closeSheet('reasonsSheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title">إدارة أسباب التأجيل</div>
+          <button class="icon-btn" onclick="closeSheetDirect('reasonsSheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="newReasonInput" class="form-input" placeholder="اكتب سبب جديد..." />
+          <button class="primary-btn" onclick="addCustomReason()">إضافة</button>
+        </div>
+        <div id="reasonsListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
+      </div>
+    </div>
+
+    <!-- Trash Sheet (Spec 6.10) -->
+    <div class="sheet-overlay" id="trashSheet" onclick="closeSheet('trashSheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title">سلة المحذوفات (Trash)</div>
+          <button class="icon-btn" onclick="closeSheetDirect('trashSheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div style="display: flex; justify-content: flex-end;">
+          <button class="chip" onclick="purgeTrashItems()" style="color: var(--color-stopped); border-color: var(--color-stopped);">
+            <span class="material-symbols-rounded" style="font-size: 16px;">delete_forever</span>
+            <span>تفريغ السلة نهائياً</span>
+          </button>
+        </div>
+        <div id="trashListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
       </div>
     </div>
 
@@ -844,6 +936,90 @@
         </div>
 
         <button class="primary-btn" style="margin-top: 12px; justify-content: center;" onclick="confirmStatusChange()">تأكيد الحالة</button>
+        <!-- Management Links -->
+        <div class="card" style="margin-bottom: 8px;">
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">الإدارة / Management</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="chip" onclick="openReasonsManager()" style="justify-content: space-between; border-radius: 12px; width: 100%;">
+              <span>إدارة أسباب التأجيل (Reasons Manager)</span>
+              <span class="material-symbols-rounded">chevron_left</span>
+            </div>
+            <div class="chip" onclick="openTrash()" style="justify-content: space-between; border-radius: 12px; width: 100%; color: var(--color-stopped);">
+              <span>سلة المحذوفات (Trash)</span>
+              <span class="material-symbols-rounded">delete</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History Bottom Sheet (Spec 6.5) -->
+    <div class="sheet-overlay" id="historySheet" onclick="closeSheet('historySheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title">سجل المهام (Task History)</div>
+          <button class="icon-btn" onclick="closeSheetDirect('historySheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <input type="text" id="historySearchInput" class="form-input" placeholder="ابحث في المهام، الملاحظات، أو الأسباب..." oninput="renderHistory()" />
+        <div class="chips-row" style="flex-wrap: wrap; margin-top: 4px;">
+          <div class="chip active" id="histSortBtn" onclick="toggleHistorySort()">الأحدث أولاً</div>
+          <div class="chip" onclick="filterHistoryStatus('done')">تمت فقط</div>
+          <div class="chip" onclick="filterHistoryStatus('all')">الكل</div>
+        </div>
+        <div id="historyListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
+      </div>
+    </div>
+
+    <!-- Multi-line Import Sheet (Spec 6.2) -->
+    <div class="sheet-overlay" id="multiLineSheet" onclick="closeSheet('multiLineSheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title">تحويل الملاحظات لمهام</div>
+          <button class="icon-btn" onclick="closeSheetDirect('multiLineSheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted);">الصق قائمتك هنا (كل سطر هيكون مهمة منفصلة):</div>
+        <textarea id="multiLineInput" class="form-input" rows="6" placeholder="مهمة 1&#10;مشوار 2&#10;مهمة 3..."></textarea>
+        <button class="primary-btn" style="justify-content: center;" onclick="confirmMultiLineImport()">تحويل لمهام</button>
+      </div>
+    </div>
+
+    <!-- Reasons Manager Sheet (Spec 6.10) -->
+    <div class="sheet-overlay" id="reasonsSheet" onclick="closeSheet('reasonsSheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title">إدارة أسباب التأجيل</div>
+          <button class="icon-btn" onclick="closeSheetDirect('reasonsSheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="newReasonInput" class="form-input" placeholder="اكتب سبب جديد..." />
+          <button class="primary-btn" onclick="addCustomReason()">إضافة</button>
+        </div>
+        <div id="reasonsListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
+      </div>
+    </div>
+
+    <!-- Trash Sheet (Spec 6.10) -->
+    <div class="sheet-overlay" id="trashSheet" onclick="closeSheet('trashSheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title">سلة المحذوفات (Trash)</div>
+          <button class="icon-btn" onclick="closeSheetDirect('trashSheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div style="display: flex; justify-content: flex-end;">
+          <button class="chip" onclick="purgeTrashItems()" style="color: var(--color-stopped); border-color: var(--color-stopped);">
+            <span class="material-symbols-rounded" style="font-size: 16px;">delete_forever</span>
+            <span>تفريغ السلة نهائياً</span>
+          </button>
+        </div>
+        <div id="trashListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
       </div>
     </div>
 
@@ -883,6 +1059,90 @@
             <div class="chip" id="optNumArabic" onclick="setNumerals('arabic')">١٢٣</div>
           </div>
         </div>
+        <!-- Management Links -->
+        <div class="card" style="margin-bottom: 8px;">
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">الإدارة / Management</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="chip" onclick="openReasonsManager()" style="justify-content: space-between; border-radius: 12px; width: 100%;">
+              <span>إدارة أسباب التأجيل (Reasons Manager)</span>
+              <span class="material-symbols-rounded">chevron_left</span>
+            </div>
+            <div class="chip" onclick="openTrash()" style="justify-content: space-between; border-radius: 12px; width: 100%; color: var(--color-stopped);">
+              <span>سلة المحذوفات (Trash)</span>
+              <span class="material-symbols-rounded">delete</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History Bottom Sheet (Spec 6.5) -->
+    <div class="sheet-overlay" id="historySheet" onclick="closeSheet('historySheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title">سجل المهام (Task History)</div>
+          <button class="icon-btn" onclick="closeSheetDirect('historySheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <input type="text" id="historySearchInput" class="form-input" placeholder="ابحث في المهام، الملاحظات، أو الأسباب..." oninput="renderHistory()" />
+        <div class="chips-row" style="flex-wrap: wrap; margin-top: 4px;">
+          <div class="chip active" id="histSortBtn" onclick="toggleHistorySort()">الأحدث أولاً</div>
+          <div class="chip" onclick="filterHistoryStatus('done')">تمت فقط</div>
+          <div class="chip" onclick="filterHistoryStatus('all')">الكل</div>
+        </div>
+        <div id="historyListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
+      </div>
+    </div>
+
+    <!-- Multi-line Import Sheet (Spec 6.2) -->
+    <div class="sheet-overlay" id="multiLineSheet" onclick="closeSheet('multiLineSheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title">تحويل الملاحظات لمهام</div>
+          <button class="icon-btn" onclick="closeSheetDirect('multiLineSheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted);">الصق قائمتك هنا (كل سطر هيكون مهمة منفصلة):</div>
+        <textarea id="multiLineInput" class="form-input" rows="6" placeholder="مهمة 1&#10;مشوار 2&#10;مهمة 3..."></textarea>
+        <button class="primary-btn" style="justify-content: center;" onclick="confirmMultiLineImport()">تحويل لمهام</button>
+      </div>
+    </div>
+
+    <!-- Reasons Manager Sheet (Spec 6.10) -->
+    <div class="sheet-overlay" id="reasonsSheet" onclick="closeSheet('reasonsSheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title">إدارة أسباب التأجيل</div>
+          <button class="icon-btn" onclick="closeSheetDirect('reasonsSheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="newReasonInput" class="form-input" placeholder="اكتب سبب جديد..." />
+          <button class="primary-btn" onclick="addCustomReason()">إضافة</button>
+        </div>
+        <div id="reasonsListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
+      </div>
+    </div>
+
+    <!-- Trash Sheet (Spec 6.10) -->
+    <div class="sheet-overlay" id="trashSheet" onclick="closeSheet('trashSheet', event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title">سلة المحذوفات (Trash)</div>
+          <button class="icon-btn" onclick="closeSheetDirect('trashSheet')">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div style="display: flex; justify-content: flex-end;">
+          <button class="chip" onclick="purgeTrashItems()" style="color: var(--color-stopped); border-color: var(--color-stopped);">
+            <span class="material-symbols-rounded" style="font-size: 16px;">delete_forever</span>
+            <span>تفريغ السلة نهائياً</span>
+          </button>
+        </div>
+        <div id="trashListContainer" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
       </div>
     </div>
 
@@ -1231,6 +1491,153 @@
       updateDateDisplay();
       renderTasks();
       closeSheetDirect('settingsSheet');
+    }
+
+    // Phase 2 Interactive Handlers
+    let historyFilterStatus = 'all';
+    let historySortOldest = false;
+
+    function openHistory() {
+      renderHistory();
+      document.getElementById('historySheet').classList.add('active');
+    }
+
+    function toggleHistorySort() {
+      historySortOldest = !historySortOldest;
+      document.getElementById('histSortBtn').innerText = historySortOldest ? 'الأقدم أولاً' : 'الأحدث أولاً';
+      renderHistory();
+    }
+
+    function filterHistoryStatus(st) {
+      historyFilterStatus = st;
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const q = (document.getElementById('historySearchInput').value || '').toLowerCase().trim();
+      const container = document.getElementById('historyListContainer');
+
+      let list = tasks.filter(t => !t.deleted);
+      if (q) {
+        list = list.filter(t => (t.title && t.title.toLowerCase().includes(q)) || (t.reason && t.reason.toLowerCase().includes(q)));
+      }
+      if (historyFilterStatus === 'done') {
+        list = list.filter(t => t.status === 'done');
+      }
+
+      list.sort((a,b) => historySortOldest ? a.id - b.id : b.id - a.id);
+
+      if (list.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">مفيش نتائج مطابقة للبحث</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(t => createTaskCardHtml(t)).join('');
+    }
+
+    function openMultiLineImport() {
+      document.getElementById('multiLineInput').value = '';
+      document.getElementById('multiLineSheet').classList.add('active');
+    }
+
+    function confirmMultiLineImport() {
+      const val = document.getElementById('multiLineInput').value;
+      const lines = val.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length === 0) return;
+
+      lines.forEach(line => {
+        tasks.unshift({
+          id: Date.now() + Math.random(),
+          title: line,
+          kind: 'task',
+          date: 'today',
+          time: null,
+          location: null,
+          priority: 'normal',
+          status: 'todo',
+          progress: 0,
+          reason: null
+        });
+      });
+
+      saveTasksToStorage();
+      closeSheetDirect('multiLineSheet');
+      closeSheetDirect('quickAddSheet');
+      showToast(`تم إنشاء ${lines.length} مهام بنجاح 🎉`);
+    }
+
+    // Reasons Store
+    let customReasons = JSON.parse(localStorage.getItem('enjaz_reasons') || '["مفيش فلوس", "مستني حد", "مفيش وقت", "مفيش طاقة أو مود", "ظرف طارئ"]');
+
+    function openReasonsManager() {
+      renderReasons();
+      document.getElementById('reasonsSheet').classList.add('active');
+    }
+
+    function renderReasons() {
+      const container = document.getElementById('reasonsListContainer');
+      container.innerHTML = customReasons.map((r, i) => `
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px;">
+          <span style="font-weight:600;">${r}</span>
+          <button class="icon-btn" onclick="archiveReason(${i})"><span class="material-symbols-rounded">archive</span></button>
+        </div>
+      `).join('');
+    }
+
+    function addCustomReason() {
+      const input = document.getElementById('newReasonInput');
+      const val = input.value.trim();
+      if (!val) return;
+      customReasons.push(val);
+      localStorage.setItem('enjaz_reasons', JSON.stringify(customReasons));
+      input.value = '';
+      renderReasons();
+      showToast('تمت إضافة السبب بنجاح');
+    }
+
+    function archiveReason(idx) {
+      customReasons.splice(idx, 1);
+      localStorage.setItem('enjaz_reasons', JSON.stringify(customReasons));
+      renderReasons();
+      showToast('تمت أرشفة السبب');
+    }
+
+    // Trash Store
+    let trashTasks = JSON.parse(localStorage.getItem('enjaz_trash') || '[]');
+
+    function openTrash() {
+      renderTrash();
+      document.getElementById('trashSheet').classList.add('active');
+    }
+
+    function renderTrash() {
+      const container = document.getElementById('trashListContainer');
+      if (trashTasks.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">سلة المحذوفات فارغة</div>';
+        return;
+      }
+      container.innerHTML = trashTasks.map((t, idx) => `
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px;">
+          <span>${t.title}</span>
+          <button class="chip" onclick="restoreTrash(${idx})"><span class="material-symbols-rounded">restore</span> استعادة</button>
+        </div>
+      `).join('');
+    }
+
+    function restoreTrash(idx) {
+      const item = trashTasks.splice(idx, 1)[0];
+      tasks.unshift(item);
+      localStorage.setItem('enjaz_trash', JSON.stringify(trashTasks));
+      saveTasksToStorage();
+      renderTrash();
+      showToast('تمت استعادة المهمة');
+    }
+
+    function purgeTrashItems() {
+      trashTasks = [];
+      localStorage.setItem('enjaz_trash', JSON.stringify(trashTasks));
+      renderTrash();
+      showToast('تم تفريغ سلة المحذوفات نهائياً');
     }
 
     // Initialize

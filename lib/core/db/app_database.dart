@@ -176,6 +176,60 @@ class AppDatabase extends _$AppDatabase {
     return query.watch();
   }
 
+  /// Watch all reasons for Reasons Manager
+  Stream<List<Reason>> watchAllReasons({bool includeArchived = false}) {
+    final q = select(reasons);
+    if (!includeArchived) {
+      q.where((r) => r.archived.equals(false));
+    }
+    q.orderBy([
+      (r) => OrderingTerm(expression: r.category, mode: OrderingMode.asc),
+      (r) => OrderingTerm(expression: r.usageCount, mode: OrderingMode.desc),
+      (r) => OrderingTerm(expression: r.id, mode: OrderingMode.asc),
+    ]);
+    return q.watch();
+  }
+
+  /// Watch tasks for History Screen with search and multi-criteria filters
+  Stream<List<Task>> watchHistoryTasks({
+    String? query,
+    List<String>? statusFilter,
+    String? kindFilter,
+    bool oldestFirst = false,
+  }) {
+    final q = select(tasks)..where((t) => t.deletedAt.isNull());
+    if (query != null && query.trim().isNotEmpty) {
+      final pattern = '%${query.trim()}%';
+      q.where((t) => t.title.like(pattern) | t.notes.like(pattern) | t.reasonText.like(pattern));
+    }
+    if (statusFilter != null && statusFilter.isNotEmpty) {
+      q.where((t) => t.status.isIn(statusFilter));
+    }
+    if (kindFilter != null && kindFilter.isNotEmpty) {
+      q.where((t) => t.kind.equals(kindFilter));
+    }
+    q.orderBy([
+      (t) => OrderingTerm(
+            expression: t.createdAt,
+            mode: oldestFirst ? OrderingMode.asc : OrderingMode.desc,
+          ),
+    ]);
+    return q.watch();
+  }
+
+  /// Watch soft-deleted tasks for Trash Screen
+  Stream<List<Task>> watchTrashTasks() {
+    return (select(tasks)
+          ..where((t) => t.deletedAt.isNotNull())
+          ..orderBy([
+            (t) => OrderingTerm(
+                  expression: t.deletedAt,
+                  mode: OrderingMode.desc,
+                ),
+          ]))
+        .watch();
+  }
+
   // -------------------------------------------------------------
   // MUTATIONS & TRANSACTIONS
   // -------------------------------------------------------------
@@ -351,6 +405,90 @@ class AppDatabase extends _$AppDatabase {
   /// Update task general fields (title, notes, priority, time, location)
   Future<void> updateTaskFields(TasksCompanion task) async {
     await (update(tasks)..where((t) => t.id.equals(task.id.value))).write(task);
+  }
+
+  /// Multi-line paste import: inserts multiple tasks in a single atomic transaction
+  Future<int> insertBatchTasks({
+    required List<String> titles,
+    String kind = 'task',
+    String? dueDate,
+  }) async {
+    return transaction(() async {
+      int count = 0;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      for (final raw in titles) {
+        final trimmed = raw.trim();
+        if (trimmed.isEmpty) continue;
+
+        final companion = TasksCompanion.insert(
+          title: trimmed,
+          kind: Value(kind),
+          dueDate: dueDate != null ? Value(dueDate) : const Value.absent(),
+          createdAt: now,
+          updatedAt: now,
+          status: const Value('todo'),
+          progress: const Value(0),
+        );
+        await insertNewTask(companion);
+        count++;
+      }
+      return count;
+    });
+  }
+
+  /// Add custom reason
+  Future<int> insertCustomReason({
+    required String labelAr,
+    String? labelEn,
+    required String category,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return into(reasons).insert(
+      ReasonsCompanion.insert(
+        labelAr: labelAr,
+        labelEn: Value(labelEn),
+        category: category,
+        isDefault: const Value(false),
+        usageCount: const Value(0),
+        archived: const Value(false),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+
+  /// Update existing reason
+  Future<void> updateReasonData({
+    required int id,
+    required String labelAr,
+    String? labelEn,
+    required String category,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(reasons)..where((r) => r.id.equals(id))).write(
+      ReasonsCompanion(
+        labelAr: Value(labelAr),
+        labelEn: Value(labelEn),
+        category: Value(category),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Archive reason (Spec Section 4: reasons are archived, never hard deleted)
+  Future<void> archiveReason(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(reasons)..where((r) => r.id.equals(id))).write(
+      ReasonsCompanion(
+        archived: const Value(true),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Permanently purge soft-deleted trash tasks
+  Future<void> purgeTrash() async {
+    await (delete(tasks)..where((t) => t.deletedAt.isNotNull())).go();
   }
 }
 

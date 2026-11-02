@@ -99,9 +99,24 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                         children: [
                           Text(
                             l10n.noDateInbox,
-                            style: Theme.of(context).textTheme.titleMedium,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          Text('${tasks.length}'),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              AppFormatter.formatNumber(tasks.length, format: numeralsFormat),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                       const Divider(),
@@ -110,13 +125,34 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                           ? Center(
                               child: Text(
                                 l10n.noDateInbox,
-                                style: Theme.of(context).textTheme.bodyMedium,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.outline,
+                                ),
                               ),
                             )
                           : ListView.builder(
                               controller: scrollController,
                               itemCount: tasks.length,
-                              itemBuilder: (_, i) => TaskCard(task: tasks[i]),
+                              itemBuilder: (_, i) {
+                                final t = tasks[i];
+                                return Column(
+                                  children: [
+                                    TaskCard(task: t),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: TextButton.icon(
+                                        icon: const Icon(Icons.today_rounded, size: 16),
+                                        label: Text(l10n.moveToToday),
+                                        onPressed: () async {
+                                          final now = DateTime.now();
+                                          final todayStr = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+                                          await db.moveTaskToDate(t.id, todayStr);
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                       ),
                     ],

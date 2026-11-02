@@ -43,3 +43,11 @@
   - Status changes write atomic transactions in Drift: updating `tasks`, logging `task_events`, and incrementing reason usage counts.
   - Quick checkbox on task card marks done immediately with an 8-second SnackBar with Undo action.
   - Long press opens the comprehensive `StatusSheet` supporting the 7 statuses, reason chips, partial slider (1-99%), postpone date picker, and confirm button.
+
+## Decision 7: Phase 2 Organization, History Search & Soft-Delete Trash Management
+- **Context**: Spec Section 6.1, 6.2, 6.5, and 6.10 require organized task sections, undated inbox, multi-line notes paste import, full history search, and reason management.
+- **Decision**:
+  - Implemented multi-line note parsing: both automated on paste and via explicit import action, utilizing Drift's batch insert transaction for maximum SQLite write throughput.
+  - History screen leverages Drift reactive streaming with SQL `LIKE` queries across title, notes, and reasonText, coupled with dynamic status and kind filters.
+  - Reason management respects the strict audit rule: reasons can be archived or edited, but never hard deleted if attached to historical events.
+  - Soft-delete trash management provides safe recovery and optional permanent purge.

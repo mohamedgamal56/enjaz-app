@@ -8,6 +8,7 @@ import '../../ideas/presentation/ideas_screen.dart';
 import '../../stats/presentation/stats_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
 import '../../tasks/presentation/quick_add_sheet.dart';
+import '../../history/presentation/history_screen.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
@@ -60,13 +61,8 @@ class _MainShellState extends ConsumerState<MainShell> {
               icon: const Icon(Icons.history_rounded),
               tooltip: l10n.history,
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      isArabic ? 'السجل (المرحلة ٢)' : 'History (Phase 2)',
-                    ),
-                    duration: const Duration(seconds: 2),
-                  ),
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const HistoryScreen()),
                 );
               },
             ),

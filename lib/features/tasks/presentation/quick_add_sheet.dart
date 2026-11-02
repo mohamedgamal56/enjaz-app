@@ -112,6 +112,123 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     }
   }
 
+  void _checkMultiLinePaste(String text) {
+    if (!text.contains('\n')) return;
+    final lines = text
+        .split('\n')
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .toList();
+    if (lines.length > 1) {
+      _showMultiLineImportDialog(lines);
+    }
+  }
+
+  void _showMultiLineImportDialog([List<String>? initialLines]) async {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final pasteController = TextEditingController(
+      text: initialLines != null ? initialLines.join('\n') : '',
+    );
+
+    final confirmedLines = await showDialog<List<String>>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final lines = pasteController.text
+              .split('\n')
+              .map((l) => l.trim())
+              .where((l) => l.isNotEmpty)
+              .toList();
+
+          return AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.playlist_add_rounded,
+                    color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.multiLinePasteTitle,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    lines.length > 1
+                        ? (isArabic
+                            ? 'تحويلها إلى ${lines.length} مهام منفصلة؟'
+                            : 'Create ${lines.length} separate tasks?')
+                        : l10n.pasteNotesHint,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: pasteController,
+                    maxLines: 6,
+                    autofocus: initialLines == null,
+                    decoration: InputDecoration(
+                      hintText: l10n.pasteNotesHint,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onChanged: (_) => setDialogState(() {}),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(null),
+                child: Text(l10n.cancel),
+              ),
+              FilledButton(
+                onPressed: lines.isNotEmpty
+                    ? () => Navigator.of(ctx).pop(lines)
+                    : null,
+                child: Text(
+                  isArabic
+                      ? 'إنشاء ${lines.length} مهام'
+                      : 'Create ${lines.length} tasks',
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (confirmedLines != null && confirmedLines.isNotEmpty) {
+      final db = ref.read(databaseProvider);
+      final count = await db.insertBatchTasks(
+        titles: confirmedLines,
+        kind: _selectedKind,
+        dueDate: _selectedDate,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isArabic
+                ? 'تم إنشاء $count مهام بنجاح 🎉'
+                : '$count tasks created successfully 🎉',
+          ),
+        ),
+      );
+      Navigator.of(context).pop();
+    }
+  }
+
   Future<bool> _saveTask() async {
     final title = _titleController.text.trim();
     if (title.isEmpty) return false;
@@ -269,11 +386,12 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
             ),
             const SizedBox(height: 16),
 
-            // Title Input
+            // Title Input with multi-line paste & import action
             TextField(
               controller: _titleController,
               focusNode: _titleFocusNode,
               textInputAction: TextInputAction.done,
+              onChanged: _checkMultiLinePaste,
               onSubmitted: (_) => _onSave(addAnother: false),
               decoration: InputDecoration(
                 hintText: _selectedKind == 'errand'
@@ -295,6 +413,11 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                               ? Icons.lightbulb_rounded
                               : Icons.task_alt_rounded,
                   color: theme.colorScheme.primary,
+                ),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.playlist_add_rounded),
+                  tooltip: l10n.importNotes,
+                  onPressed: () => _showMultiLineImportDialog(),
                 ),
               ),
             ),
@@ -452,7 +575,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
-                      onPressed: null, // Tap handled by PopupMenuButton
+                      onPressed: null, // Handled by PopupMenuButton
                     ),
                   ),
                 ],

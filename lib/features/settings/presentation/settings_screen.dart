@@ -5,6 +5,8 @@ import '../../../core/l10n/app_localizations.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/utils/date_formatter.dart';
+import 'reasons_manager_screen.dart';
+import 'trash_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -162,6 +164,36 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ],
               ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Section: Management (Reasons & Trash)
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: Icon(Icons.schedule_rounded, color: theme.colorScheme.primary),
+                  title: Text(l10n.reasonsManager),
+                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ReasonsManagerScreen()),
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: Icon(Icons.delete_outline_rounded, color: theme.colorScheme.error),
+                  title: Text(l10n.trash),
+                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const TrashScreen()),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
