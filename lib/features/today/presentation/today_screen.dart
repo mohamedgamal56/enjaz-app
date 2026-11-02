@@ -60,6 +60,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   void _openInboxSheet() {
     final db = ref.read(databaseProvider);
     final l10n = AppLocalizations.of(context);
+    final numeralsFormat = ref.read(numeralsProvider);
 
     showModalBottomSheet(
       context: context,

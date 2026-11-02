@@ -306,7 +306,7 @@ class AppLocalizations {
       'categoryPartial': 'Partial',
       'categoryAny': 'Any status',
       'archive': 'Archive',
-      'archiveReasonConfirm': 'Archive this reason? It won't appear in new lists but remains in old records.',
+      'archiveReasonConfirm': "Archive this reason? It won't appear in new lists but remains in old records.",
       'usageCountLabel': 'Usage count',
       'reasonAddedSuccess': 'Reason added successfully',
       'reasonUpdatedSuccess': 'Reason updated successfully',
