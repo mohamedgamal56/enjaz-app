@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>إنجاز - Enjaz (Phase 0 Web Preview)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+  <style>
+    :root {
+      /* Light Tokens (from Spec Section 3) */
+      --bg: #FAFAF9;
+      --surface: #FFFFFF;
+      --surface-variant: #F5F5F4;
+      --text: #1C1917;
+      --text-muted: #78716C;
+      --border: #E7E5E4;
+      --accent: #0D9488;
+      --accent-alpha: rgba(13, 148, 136, 0.12);
+
+      --font-family: 'Cairo', sans-serif;
+      --app-radius: 16px;
+      --chip-radius: 999px;
+      --sheet-radius: 24px;
+    }
+
+    [data-theme="dark"] {
+      /* Dark Tokens (from Spec Section 3) */
+      --bg: #0F1412;
+      --surface: #1A1F1E;
+      --surface-variant: #232928;
+      --text: #F5F5F4;
+      --text-muted: #A8A29E;
+      --border: #2F3534;
+      --accent: #2DD4BF;
+      --accent-alpha: rgba(45, 212, 191, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background-color: #e5e5e5;
+      font-family: var(--font-family);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    /* Mobile container frame */
+    .phone-container {
+      width: 100%;
+      max-width: 440px;
+      height: 100vh;
+      max-height: 920px;
+      background-color: var(--bg);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      overflow: hidden;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    @media (max-width: 480px) {
+      .phone-container {
+        height: 100vh;
+        max-height: 100vh;
+        box-shadow: none;
+        border-radius: 0;
+      }
+    }
+
+    /* Top Bar */
+    header {
+      height: 60px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background-color: var(--bg);
+      z-index: 10;
+    }
+
+    .header-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .icon-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .icon-btn:active {
+      background-color: var(--surface-variant);
+    }
+
+    /* Content Area */
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--app-radius);
+      padding: 16px;
+      transition: all 0.2s;
+    }
+
+    /* Date Switcher */
+    .date-switcher {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .date-info {
+      text-align: center;
+    }
+
+    .date-weekday {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .date-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Chips Row */
+    .chips-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .chip {
+      background-color: var(--surface-variant);
+      border: 1px solid var(--border);
+      border-radius: var(--chip-radius);
+      padding: 6px 14px;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text);
+    }
+
+    .chip.active {
+      background-color: var(--accent-alpha);
+      color: var(--accent);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Empty State */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 32px 16px;
+    }
+
+    .empty-icon-circle {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background-color: var(--surface-variant);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      color: var(--accent);
+    }
+
+    .empty-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .empty-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .empty-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      max-width: 260px;
+    }
+
+    /* Primary Button */
+    .primary-btn {
+      margin-top: 20px;
+      height: 48px;
+      padding: 0 24px;
+      background-color: var(--accent);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-family: inherit;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: none;
+    }
+
+    .primary-btn:active {
+      opacity: 0.9;
+    }
+
+    /* Floating Action Button */
+    .fab {
+      position: absolute;
+      bottom: 84px;
+      left: 20px; /* In RTL it's left, in LTR it flips */
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background-color: var(--accent);
+      color: #FFFFFF;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      cursor: pointer;
+      z-index: 20;
+    }
+
+    html[dir="ltr"] .fab {
+      left: auto;
+      right: 20px;
+    }
+
+    .fab:active {
+      transform: scale(0.95);
+    }
+
+    /* Bottom Navigation Bar */
+    nav {
+      height: 72px;
+      background-color: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 10;
+    }
+
+    .nav-item {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .nav-item.active {
+      color: var(--accent);
+    }
+
+    .nav-icon-container {
+      width: 52px;
+      height: 28px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-item.active .nav-icon-container {
+      background-color: var(--accent-alpha);
+    }
+
+    .nav-label {
+      font-size: 11px;
+      line-height: 1.1;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .nav-item.active .nav-label {
+      font-weight: 600;
+    }
+
+    .nav-sub {
+      font-size: 9px;
+      opacity: 0.8;
+      display: block;
+    }
+
+    /* Modal / Settings Sheet */
+    .sheet-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.4);
+      z-index: 100;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .sheet-overlay.active {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      opacity: 1;
+    }
+
+    .sheet-content {
+      background-color: var(--surface);
+      border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+      padding: 20px;
+      max-height: 85vh;
+      overflow-y: auto;
+      border-top: 1px solid var(--border);
+    }
+
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .sheet-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .setting-group {
+      margin-bottom: 20px;
+    }
+
+    .setting-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .option-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background-color: var(--surface-variant);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .option-row.selected {
+      border-color: var(--accent);
+      background-color: var(--accent-alpha);
+    }
+
+    .option-label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .toast {
+      position: absolute;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #1C1917;
+      color: #FFFFFF;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 150;
+      white-space: nowrap;
+    }
+
+    [data-theme="dark"] .toast {
+      background-color: #F5F5F4;
+      color: #1C1917;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body data-theme="light">
+
+  <div class="phone-container" id="app">
+    <!-- Header -->
+    <header>
+      <div class="header-title" id="pageTitle">إنجاز</div>
+      <div class="header-actions">
+        <button class="icon-btn" id="btnHistory" title="السجل" onclick="showToast(currentLang === 'ar' ? 'السجل (المرحلة ٢)' : 'History (Phase 2)')">
+          <span class="material-symbols-rounded">history</span>
+        </button>
+        <button class="icon-btn" id="btnSettings" title="الإعدادات" onclick="openSettings()">
+          <span class="material-symbols-rounded">settings</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Screens -->
+    <main id="mainContent">
+      <!-- Screen 0: Today -->
+      <div id="screenToday" class="screen-panel" style="display: flex; flex-direction: column; gap: 16px; flex: 1;">
+        <div class="card date-switcher">
+          <button class="icon-btn" onclick="prevDay()">
+            <span class="material-symbols-rounded">chevron_right</span>
+          </button>
+          <div class="date-info">
+            <div class="date-weekday" id="currentWeekday">الاثنين</div>
+            <div class="date-sub" id="currentFullDate">٢ نوفمبر ٢٠٢٦</div>
+          </div>
+          <button class="icon-btn" onclick="nextDay()">
+            <span class="material-symbols-rounded">chevron_left</span>
+          </button>
+        </div>
+
+        <div class="chips-row">
+          <div class="chip">
+            <span class="material-symbols-rounded" style="font-size: 16px;">inbox</span>
+            <span id="labelInbox">بدون تاريخ (٠)</span>
+          </div>
+          <div class="chip">
+            <span class="material-symbols-rounded" style="font-size: 16px;">check_circle</span>
+            <span id="labelProgress">٠ من ٠ تمت • 0 of 0 done</span>
+          </div>
+        </div>
+
+        <div class="empty-state">
+          <div class="empty-icon-circle">
+            <span class="material-symbols-rounded" style="font-size: 36px;">task_alt</span>
+          </div>
+          <div class="empty-title" id="todayEmptyTitle">مفيش حاجة مخططة النهارده</div>
+          <div class="empty-subtitle" id="todayEmptySub">Nothing planned today</div>
+          <div class="empty-desc" id="todayEmptyDesc">ابدأ يومك بإضافة أول مهمة أو مشوار</div>
+          <button class="primary-btn" onclick="showToast(currentLang === 'ar' ? 'نموذج الإضافة السريعة سيعمل في المرحلة ١' : 'Quick add form in Phase 1')">
+            <span class="material-symbols-rounded">add</span>
+            <span id="todayAddBtn">أضف مهمة</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Screen 1: Goals -->
+      <div id="screenGoals" class="screen-panel" style="display: none; flex-direction: column; gap: 16px; flex: 1;">
+        <div class="chips-row" style="justify-content: center;">
+          <div class="chip active" id="goalChipActive">نشطة • Active</div>
+          <div class="chip" id="goalChipPaused">متوقفة • Paused</div>
+          <div class="chip" id="goalChipDone">مكتملة • Done</div>
+        </div>
+        <div class="empty-state">
+          <div class="empty-icon-circle">
+            <span class="material-symbols-rounded" style="font-size: 36px;">flag</span>
+          </div>
+          <div class="empty-title" id="goalsEmptyTitle">مفيش أهداف مسجلة حالياً</div>
+          <div class="empty-subtitle" id="goalsEmptySub">No goals recorded yet</div>
+          <button class="primary-btn" onclick="showToast(currentLang === 'ar' ? 'إضافة هدف ستعمل في المرحلة ٣' : 'Add goal in Phase 3')">
+            <span class="material-symbols-rounded">add</span>
+            <span id="goalsAddBtn">أضف هدف</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Screen 2: Ideas -->
+      <div id="screenIdeas" class="screen-panel" style="display: none; flex-direction: column; gap: 16px; flex: 1;">
+        <div class="chips-row" style="overflow-x: auto; padding-bottom: 4px;">
+          <div class="chip active">جديدة (New)</div>
+          <div class="chip">بتتدرس (Exploring)</div>
+          <div class="chip">اتحولت (Converted)</div>
+          <div class="chip">مؤرشفة (Archived)</div>
+        </div>
+        <div class="empty-state">
+          <div class="empty-icon-circle">
+            <span class="material-symbols-rounded" style="font-size: 36px;">lightbulb</span>
+          </div>
+          <div class="empty-title" id="ideasEmptyTitle">مفيش أفكار مسجلة</div>
+          <div class="empty-subtitle" id="ideasEmptySub">No ideas recorded</div>
+          <button class="primary-btn" onclick="showToast(currentLang === 'ar' ? 'إضافة فكرة ستعمل في المرحلة ٤' : 'Add idea in Phase 4')">
+            <span class="material-symbols-rounded">add</span>
+            <span id="ideasAddBtn">أضف فكرة</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Screen 3: Stats -->
+      <div id="screenStats" class="screen-panel" style="display: none; flex-direction: column; gap: 16px; flex: 1;">
+        <div class="chips-row" style="justify-content: center;">
+          <div class="chip active" id="statChipWeek">أسبوع • Week</div>
+          <div class="chip" id="statChipMonth">شهر • Month</div>
+          <div class="chip" id="statChipYear">سنة • Year</div>
+        </div>
+        <div class="empty-state">
+          <div class="empty-icon-circle">
+            <span class="material-symbols-rounded" style="font-size: 36px;">insights</span>
+          </div>
+          <div class="empty-title" id="statsEmptyTitle">مفيش بيانات كافية للفترة دي</div>
+          <div class="empty-subtitle" id="statsEmptySub">Not enough data for this period</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Floating Action Button -->
+    <button class="fab" id="mainFab" onclick="showToast(currentLang === 'ar' ? 'الإضافة السريعة جاهزة للتفعيل في المرحلة ١' : 'Quick add ready for Phase 1')">
+      <span class="material-symbols-rounded">add</span>
+    </button>
+
+    <!-- Bottom Navigation Bar -->
+    <nav>
+      <button class="nav-item active" onclick="switchTab(0)">
+        <div class="nav-icon-container">
+          <span class="material-symbols-rounded">today</span>
+        </div>
+        <div class="nav-label">
+          <span id="navToday">اليوم</span>
+          <span class="nav-sub" id="subToday">Today</span>
+        </div>
+      </button>
+
+      <button class="nav-item" onclick="switchTab(1)">
+        <div class="nav-icon-container">
+          <span class="material-symbols-rounded">flag</span>
+        </div>
+        <div class="nav-label">
+          <span id="navGoals">الأهداف</span>
+          <span class="nav-sub" id="subGoals">Goals</span>
+        </div>
+      </button>
+
+      <button class="nav-item" onclick="switchTab(2)">
+        <div class="nav-icon-container">
+          <span class="material-symbols-rounded">lightbulb</span>
+        </div>
+        <div class="nav-label">
+          <span id="navIdeas">الأفكار</span>
+          <span class="nav-sub" id="subIdeas">Ideas</span>
+        </div>
+      </button>
+
+      <button class="nav-item" onclick="switchTab(3)">
+        <div class="nav-icon-container">
+          <span class="material-symbols-rounded">bar_chart</span>
+        </div>
+        <div class="nav-label">
+          <span id="navStats">الإحصائيات</span>
+          <span class="nav-sub" id="subStats">Stats</span>
+        </div>
+      </button>
+    </nav>
+
+    <!-- Settings Bottom Sheet -->
+    <div class="sheet-overlay" id="settingsSheet" onclick="closeSettings(event)">
+      <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div class="sheet-title" id="settingsTitle">الإعدادات • Settings</div>
+          <button class="icon-btn" onclick="closeSettingsDirect()">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+
+        <!-- Language Group -->
+        <div class="setting-group">
+          <div class="setting-title">
+            <span class="material-symbols-rounded" style="font-size: 18px;">language</span>
+            <span id="settingsLangTitle">اللغة / Language</span>
+          </div>
+          <div class="option-row selected" id="optLangAr" onclick="setLanguage('ar')">
+            <span class="option-label">العربية (Arabic - RTL)</span>
+            <span class="material-symbols-rounded" id="chkLangAr" style="color: var(--accent);">check_circle</span>
+          </div>
+          <div class="option-row" id="optLangEn" onclick="setLanguage('en')">
+            <span class="option-label">English (LTR)</span>
+            <span class="material-symbols-rounded" id="chkLangEn" style="display:none; color: var(--accent);">check_circle</span>
+          </div>
+        </div>
+
+        <!-- Theme Group -->
+        <div class="setting-group">
+          <div class="setting-title">
+            <span class="material-symbols-rounded" style="font-size: 18px;">palette</span>
+            <span id="settingsThemeTitle">المظهر / Theme</span>
+          </div>
+          <div class="option-row selected" id="optThemeLight" onclick="setTheme('light')">
+            <span class="option-label" id="lblThemeLight">فاتح (Light)</span>
+            <span class="material-symbols-rounded" id="chkThemeLight" style="color: var(--accent);">check_circle</span>
+          </div>
+          <div class="option-row" id="optThemeDark" onclick="setTheme('dark')">
+            <span class="option-label" id="lblThemeDark">داكن (Dark)</span>
+            <span class="material-symbols-rounded" id="chkThemeDark" style="display:none; color: var(--accent);">check_circle</span>
+          </div>
+        </div>
+
+        <!-- Numerals Group -->
+        <div class="setting-group">
+          <div class="setting-title">
+            <span class="material-symbols-rounded" style="font-size: 18px;">tag</span>
+            <span id="settingsNumTitle">صيغة الأرقام / Numerals</span>
+          </div>
+          <div class="option-row selected" id="optNumWestern" onclick="setNumerals('western')">
+            <span class="option-label">أرقام إنجليزية (123)</span>
+            <span class="material-symbols-rounded" id="chkNumWestern" style="color: var(--accent);">check_circle</span>
+          </div>
+          <div class="option-row" id="optNumArabic" onclick="setNumerals('arabic')">
+            <span class="option-label">أرقام مشرقية (١٢٣)</span>
+            <span class="material-symbols-rounded" id="chkNumArabic" style="display:none; color: var(--accent);">check_circle</span>
+          </div>
+        </div>
+
+        <!-- About Group -->
+        <div class="setting-group" style="margin-bottom: 0;">
+          <div class="setting-title">
+            <span class="material-symbols-rounded" style="font-size: 18px;">info</span>
+            <span>عن إنجاز • About</span>
+          </div>
+          <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+            تطبيق إنجاز - الإصدار 1.0.0 (Phase 0 Foundation)<br>
+            Offline-first SQLite Drift Architecture • Material 3
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">تمت العملية</div>
+  </div>
+
+  <script>
+    let currentTab = 0;
+    let currentLang = 'ar';
+    let currentTheme = 'light';
+    let currentNumerals = 'western';
+    let currentDateOffset = 0;
+
+    const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+
+    function toArabicDigits(str) {
+      return String(str).replace(/[0-9]/g, function(d) {
+        return arabicDigits[d];
+      });
+    }
+
+    function switchTab(index) {
+      currentTab = index;
+      document.querySelectorAll('.screen-panel').forEach(p => p.style.display = 'none');
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+
+      const panels = ['screenToday', 'screenGoals', 'screenIdeas', 'screenStats'];
+      document.getElementById(panels[index]).style.display = 'flex';
+      document.querySelectorAll('.nav-item')[index].classList.add('active');
+
+      const fab = document.getElementById('mainFab');
+      // Stats has no button
+      if (index === 3) {
+        fab.style.display = 'none';
+      } else {
+        fab.style.display = 'flex';
+      }
+
+      updateHeaderTitle();
+    }
+
+    function updateHeaderTitle() {
+      const titlesAr = ['إنجاز', 'الأهداف', 'الأفكار', 'الإحصائيات'];
+      const titlesEn = ['Enjaz', 'Goals', 'Ideas', 'Stats'];
+      const title = currentLang === 'ar' ? titlesAr[currentTab] : titlesEn[currentTab];
+      document.getElementById('pageTitle').innerText = title;
+    }
+
+    function openSettings() {
+      const sheet = document.getElementById('settingsSheet');
+      sheet.classList.add('active');
+    }
+
+    function closeSettings(e) {
+      if (e.target.id === 'settingsSheet') {
+        closeSettingsDirect();
+      }
+    }
+
+    function closeSettingsDirect() {
+      document.getElementById('settingsSheet').classList.remove('active');
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      const html = document.documentElement;
+
+      if (lang === 'ar') {
+        html.setAttribute('lang', 'ar');
+        html.setAttribute('dir', 'rtl');
+        document.body.style.fontFamily = "'Cairo', sans-serif";
+
+        document.getElementById('optLangAr').classList.add('selected');
+        document.getElementById('chkLangAr').style.display = 'inline-block';
+        document.getElementById('optLangEn').classList.remove('selected');
+        document.getElementById('chkLangEn').style.display = 'none';
+
+        // Subtitles visible in Arabic mode
+        document.querySelectorAll('.nav-sub').forEach(s => s.style.display = 'block');
+        document.getElementById('todayEmptySub').style.display = 'block';
+        document.getElementById('goalsEmptySub').style.display = 'block';
+        document.getElementById('ideasEmptySub').style.display = 'block';
+        document.getElementById('statsEmptySub').style.display = 'block';
+
+        document.getElementById('todayEmptyTitle').innerText = 'مفيش حاجة مخططة النهارده';
+        document.getElementById('todayEmptyDesc').innerText = 'ابدأ يومك بإضافة أول مهمة أو مشوار';
+        document.getElementById('todayAddBtn').innerText = 'أضف مهمة';
+        document.getElementById('goalsEmptyTitle').innerText = 'مفيش أهداف مسجلة حالياً';
+        document.getElementById('goalsAddBtn').innerText = 'أضف هدف';
+        document.getElementById('ideasEmptyTitle').innerText = 'مفيش أفكار مسجلة';
+        document.getElementById('ideasAddBtn').innerText = 'أضف فكرة';
+        document.getElementById('statsEmptyTitle').innerText = 'مفيش بيانات كافية للفترة دي';
+      } else {
+        html.setAttribute('lang', 'en');
+        html.setAttribute('dir', 'ltr');
+        document.body.style.fontFamily = "'Inter', sans-serif";
+
+        document.getElementById('optLangEn').classList.add('selected');
+        document.getElementById('chkLangEn').style.display = 'inline-block';
+        document.getElementById('optLangAr').classList.remove('selected');
+        document.getElementById('chkLangAr').style.display = 'none';
+
+        // In English mode show English only (hide subtitles)
+        document.querySelectorAll('.nav-sub').forEach(s => s.style.display = 'none');
+        document.getElementById('todayEmptySub').style.display = 'none';
+        document.getElementById('goalsEmptySub').style.display = 'none';
+        document.getElementById('ideasEmptySub').style.display = 'none';
+        document.getElementById('statsEmptySub').style.display = 'none';
+
+        document.getElementById('todayEmptyTitle').innerText = 'Nothing planned today';
+        document.getElementById('todayEmptyDesc').innerText = 'Start your day by adding your first task or errand';
+        document.getElementById('todayAddBtn').innerText = 'Add task';
+        document.getElementById('goalsEmptyTitle').innerText = 'No goals recorded yet';
+        document.getElementById('goalsAddBtn').innerText = 'Add goal';
+        document.getElementById('ideasEmptyTitle').innerText = 'No ideas recorded';
+        document.getElementById('ideasAddBtn').innerText = 'Add idea';
+        document.getElementById('statsEmptyTitle').innerText = 'Not enough data for this period';
+      }
+
+      updateDateDisplay();
+      updateHeaderTitle();
+      showToast(lang === 'ar' ? 'تم تحويل اللغة إلى العربية' : 'Switched to English');
+    }
+
+    function setTheme(theme) {
+      currentTheme = theme;
+      document.body.setAttribute('data-theme', theme);
+
+      if (theme === 'light') {
+        document.getElementById('optThemeLight').classList.add('selected');
+        document.getElementById('chkThemeLight').style.display = 'inline-block';
+        document.getElementById('optThemeDark').classList.remove('selected');
+        document.getElementById('chkThemeDark').style.display = 'none';
+      } else {
+        document.getElementById('optThemeDark').classList.add('selected');
+        document.getElementById('chkThemeDark').style.display = 'inline-block';
+        document.getElementById('optThemeLight').classList.remove('selected');
+        document.getElementById('chkThemeLight').style.display = 'none';
+      }
+      showToast(currentLang === 'ar' ? (theme === 'light' ? 'المظهر الفاتح' : 'المظهر الداكن') : (theme === 'light' ? 'Light Theme' : 'Dark Theme'));
+    }
+
+    function setNumerals(num) {
+      currentNumerals = num;
+      if (num === 'western') {
+        document.getElementById('optNumWestern').classList.add('selected');
+        document.getElementById('chkNumWestern').style.display = 'inline-block';
+        document.getElementById('optNumArabic').classList.remove('selected');
+        document.getElementById('chkNumArabic').style.display = 'none';
+      } else {
+        document.getElementById('optNumArabic').classList.add('selected');
+        document.getElementById('chkNumArabic').style.display = 'inline-block';
+        document.getElementById('optNumWestern').classList.remove('selected');
+        document.getElementById('chkNumWestern').style.display = 'none';
+      }
+      updateDateDisplay();
+      showToast(currentLang === 'ar' ? 'تم ضبط الأرقام' : 'Numerals updated');
+    }
+
+    function updateDateDisplay() {
+      const d = new Date();
+      d.setDate(d.getDate() + currentDateOffset);
+
+      const optionsWeekday = { weekday: 'long' };
+      const optionsFull = { year: 'numeric', month: 'long', day: 'numeric' };
+      const locale = currentLang === 'ar' ? 'ar-EG' : 'en-US';
+
+      let weekdayStr = d.toLocaleDateString(locale, optionsWeekday);
+      let fullDateStr = d.toLocaleDateString(locale, optionsFull);
+
+      if (currentNumerals === 'arabic') {
+        fullDateStr = toArabicDigits(fullDateStr);
+        document.getElementById('labelInbox').innerText = currentLang === 'ar' ? 'بدون تاريخ (٠)' : 'No date (0)';
+      } else {
+        document.getElementById('labelInbox').innerText = currentLang === 'ar' ? 'بدون تاريخ (0)' : 'No date (0)';
+      }
+
+      document.getElementById('currentWeekday').innerText = weekdayStr;
+      document.getElementById('currentFullDate').innerText = fullDateStr;
+    }
+
+    function prevDay() {
+      currentDateOffset--;
+      updateDateDisplay();
+    }
+
+    function nextDay() {
+      currentDateOffset++;
+      updateDateDisplay();
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.classList.add('show');
+      setTimeout(() => {
+        t.classList.remove('show');
+      }, 2200);
+    }
+
+    // Initialize
+    updateDateDisplay();
+  </script>
+</body>
+</html>

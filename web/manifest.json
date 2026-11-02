@@ -1,0 +1,13 @@
+{
+  "name": "إنجاز - Enjaz",
+  "short_name": "إنجاز",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FAFAF9",
+  "theme_color": "#0D9488",
+  "description": "تطبيقك الشخصي لإدارة المهام والأهداف الحياتية أوفلاين بالكامل",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "dir": "rtl",
+  "lang": "ar"
+}
