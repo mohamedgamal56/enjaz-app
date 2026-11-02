@@ -824,6 +824,7 @@ class _GoalDetailsScreenState extends ConsumerState<GoalDetailsScreen> {
     final l10n = AppLocalizations.of(context);
     final db = ref.watch(databaseProvider);
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final numeralsFormat = ref.watch(numeralsProvider);
 
     final current = goal.currentValue ?? 0.0;
     final target = goal.targetValue ?? 1.0;
