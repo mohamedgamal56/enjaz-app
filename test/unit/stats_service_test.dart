@@ -155,7 +155,7 @@ void main() {
         Task(
           id: 1,
           title: 'T1',
-          type: 'task',
+          kind: 'task',
           status: 'done',
           progress: 100,
           priority: 'normal',
@@ -168,7 +168,7 @@ void main() {
         Task(
           id: 2,
           title: 'T2',
-          type: 'task',
+          kind: 'task',
           status: 'todo',
           progress: 0,
           priority: 'normal',
@@ -181,7 +181,7 @@ void main() {
         Task(
           id: 3,
           title: 'T3',
-          type: 'task',
+          kind: 'task',
           status: 'todo',
           progress: 0,
           priority: 'normal',
@@ -238,7 +238,7 @@ void main() {
         Task(
           id: 1,
           title: 'Task 1',
-          type: 'task',
+          kind: 'task',
           status: 'done',
           progress: 100,
           priority: 'normal',
@@ -251,7 +251,7 @@ void main() {
         Task(
           id: 2,
           title: 'Task 2',
-          type: 'task',
+          kind: 'task',
           status: 'done',
           progress: 100,
           priority: 'normal',

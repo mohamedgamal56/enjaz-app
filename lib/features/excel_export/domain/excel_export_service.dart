@@ -229,7 +229,7 @@ class ExcelExportService {
       sheet.appendRow([
         IntCellValue(t.id),
         TextCellValue(t.title),
-        TextCellValue(t.type),
+        TextCellValue(t.kind),
         TextCellValue(_translateStatus(t.status, isAr)),
         TextCellValue(t.status),
         TextCellValue(t.priority),
