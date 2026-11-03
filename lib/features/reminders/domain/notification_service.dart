@@ -17,19 +17,10 @@ void notificationTapBackground(NotificationResponse notificationResponse) async 
     final taskId = int.tryParse(payload);
     if (taskId != null) {
       final db = AppDatabase();
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await db.updateTaskStatus(taskId, 'done');
-      await db.insertTaskEvent(
-        TaskEventsCompanion.insert(
-          taskId: taskId,
-          at: now,
-          fromStatus: 'todo',
-          toStatus: 'done',
-          progress: 100,
-          createdAt: now,
-          updatedAt: now,
-        ),
-      );
+      final task = await db.getTaskById(taskId);
+      if (task != null) {
+        await db.updateTaskStatus(task: task, newStatus: 'done');
+      }
       await db.close();
     }
   }
@@ -73,19 +64,10 @@ class NotificationService {
           final taskId = int.tryParse(response.payload!);
           if (taskId != null) {
             final db = AppDatabase();
-            final now = DateTime.now().millisecondsSinceEpoch;
-            await db.updateTaskStatus(taskId, 'done');
-            await db.insertTaskEvent(
-              TaskEventsCompanion.insert(
-                taskId: taskId,
-                at: now,
-                fromStatus: 'todo',
-                toStatus: 'done',
-                progress: 100,
-                createdAt: now,
-                updatedAt: now,
-              ),
-            );
+            final task = await db.getTaskById(taskId);
+            if (task != null) {
+              await db.updateTaskStatus(task: task, newStatus: 'done');
+            }
             await db.close();
           }
         } else if (onSelectNotification != null) {
