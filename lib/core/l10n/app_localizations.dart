@@ -347,6 +347,50 @@ class AppLocalizations {
       'deleteRecurringThisOnly': 'حذف هذه المهمة فقط',
       'deleteRecurringAllFuture': 'إلغاء التكرار وحذف كل القادمة',
       'recurrenceGenerated': 'مهمة متكررة',
+      'backupAndSecurity': 'النسخ الاحتياطي والأمان',
+      'fullBackupTitle': 'نسخة احتياطية شاملة (.zip)',
+      'fullBackupDescription': 'تصدير كامل بيانات التطبيق والتسجيلات الصوتية في ملف مضغوط واحد مشفر بترميز SHA-256',
+      'includeVoiceNotesToggle': 'تضمين التسجيلات الصوتية',
+      'includeVoiceNotesSub': 'تضمين جميع الملفات الصوتية المسجلة داخل ملف النسخة',
+      'withoutVoiceNotesSub': 'تصدير نسخة خفيفة للبيانات فقط بدون التسجيلات الصوتية',
+      'exportBackupButton': 'تصدير النسخة الاحتياطية (.zip)',
+      'exportingBackup': 'جاري تجهيز النسخة الاحتياطية...',
+      'errorExportingBackup': 'حدث خطأ أثناء تصدير النسخة',
+      'restoreBackupTitle': 'استرجاع نسخة احتياطية (.zip)',
+      'restoreBackupDescription': 'استعادة بيانات التطبيق من ملف نسخة احتياطية سابق. يتم حفظ نسخة أمان تلقائية قبل الاستبدال.',
+      'selectBackupFileButton': 'اختيار ملف نسخة احتياطية (.zip)',
+      'inspectingBackup': 'جاري فحص ملف النسخة...',
+      'restoringBackup': 'جاري استرجاع البيانات...',
+      'restoreBackupSuccess': 'تم استرجاع النسخة الاحتياطية بنجاح!',
+      'errorRestoringBackup': 'حدث خطأ أثناء استرجاع النسخة',
+      'invalidBackupFile': 'ملف غير صالح',
+      'invalidBackupFileDetails': 'الملف المحدد لا يطابق بنية نسخ إنجاز الاحتياطية.',
+      'restoreConfirmTitle': 'تأكيد استرجاع البيانات',
+      'restoreConfirmMessage': 'سيتم استبدال جميع البيانات الحالية بالبيانات الموجودة في ملف النسخة الاحتياطية. هل أنت متأكد؟',
+      'backupDate': 'تاريخ النسخة',
+      'safetyCopyNotice': 'ملاحظة أمان: تم أخذ نسخة احتياطية تلقائية من بياناتك الحالية قبل بدء الاسترجاع لحمايتها.',
+      'restoreReplaceButton': 'استبدال واسترجاع',
+      'csvExportTitle': 'تصدير ملفات CSV',
+      'csvExportDescription': 'تصدير الجداول بصيغة CSV القياسية بترميز UTF-8 مع BOM لقراءة الأرقام والنصوص العربية بشكل مثالي',
+      'tasksCsvTitle': 'ملف المهام (tasks.csv)',
+      'tasksCsvSubtitle': 'يشمل جميع الحقول وتاريخ الإنشاء وعدد التسجيلات الصوتية',
+      'exportTasksCsvTooltip': 'تصدير ومشاركة ملف tasks.csv',
+      'eventsCsvTitle': 'ملف سجل العمليات (events.csv)',
+      'eventsCsvSubtitle': 'سجل التغييرات الكامل للحالات والتأجيلات وأسبابها',
+      'exportEventsCsvTooltip': 'تصدير ومشاركة ملف events.csv',
+      'exportingCsv': 'جاري تصدير ملف CSV...',
+      'errorExportingCsv': 'حدث خطأ أثناء تصدير ملف CSV',
+      'unknownDate': 'غير معروف',
+      'appLockTitle': 'إنجاز - تطبيق مؤمّن',
+      'appLockSubtitle': 'يرجى تأكيد الهوية بواسطة البصمة أو رمز قفل الشاشة لمتابعة استخدام التطبيق',
+      'appLockReason': 'يرجى تأكيد هويتك للوصول لتطبيق إنجاز',
+      'unlockApp': 'فتح القفل',
+      'authenticating': 'جاري التحقق...',
+      'authFailedMessage': 'فشل التحقق من الهوية',
+      'appLockSettingTitle': 'قفل التطبيق والأمان',
+      'appLockSettingSubtitle': 'حماية التطبيق بالبصمة وإخفاء الشاشة في قائمة التطبيقات الحديثة',
+      'trashPurgedSuccess': 'تم تفريغ سلة المحذوفات نهائياً',
+      'trashPurgedDetails': 'تم حذف العناصر وتنظيف الملفات الصوتية',
     },
     'en': {
       'appName': 'Enjaz',
@@ -676,6 +720,50 @@ class AppLocalizations {
       'deleteRecurringThisOnly': 'Delete this one only',
       'deleteRecurringAllFuture': 'Cancel series & delete all future',
       'recurrenceGenerated': 'Recurring',
+      'backupAndSecurity': 'Backup & Security',
+      'fullBackupTitle': 'Full Backup Archive (.zip)',
+      'fullBackupDescription': 'Export all application data and audio recordings into a single zip archive verified with SHA-256',
+      'includeVoiceNotesToggle': 'Include Voice Notes',
+      'includeVoiceNotesSub': 'Include all recorded audio files in archive',
+      'withoutVoiceNotesSub': 'Export lightweight backup of data only without audio',
+      'exportBackupButton': 'Export Backup (.zip)',
+      'exportingBackup': 'Preparing backup archive...',
+      'errorExportingBackup': 'Error exporting backup',
+      'restoreBackupTitle': 'Restore Backup (.zip)',
+      'restoreBackupDescription': 'Restore application data from a previous backup file. An automatic safety snapshot is saved before replacement.',
+      'selectBackupFileButton': 'Select Backup File (.zip)',
+      'inspectingBackup': 'Inspecting backup file...',
+      'restoringBackup': 'Restoring backup data...',
+      'restoreBackupSuccess': 'Backup restored successfully!',
+      'errorRestoringBackup': 'Error restoring backup',
+      'invalidBackupFile': 'Invalid Backup File',
+      'invalidBackupFileDetails': 'The selected file does not match Enjaz backup structure.',
+      'restoreConfirmTitle': 'Confirm Data Restore',
+      'restoreConfirmMessage': 'All current data will be replaced by the data in this backup file. Are you sure?',
+      'backupDate': 'Backup Date',
+      'safetyCopyNotice': 'Safety Notice: An automatic safety copy of current data is saved before restoration begins.',
+      'restoreReplaceButton': 'Replace & Restore',
+      'csvExportTitle': 'Export CSV Files',
+      'csvExportDescription': 'Export tables in standard UTF-8 BOM CSV format for perfect Arabic text compatibility',
+      'tasksCsvTitle': 'Tasks Table (tasks.csv)',
+      'tasksCsvSubtitle': 'Includes all fields, timestamps and voice notes count',
+      'exportTasksCsvTooltip': 'Export and share tasks.csv',
+      'eventsCsvTitle': 'Events History (events.csv)',
+      'eventsCsvSubtitle': 'Full audit trail of status changes, postponements and reasons',
+      'exportEventsCsvTooltip': 'Export and share events.csv',
+      'exportingCsv': 'Exporting CSV file...',
+      'errorExportingCsv': 'Error exporting CSV',
+      'unknownDate': 'Unknown',
+      'appLockTitle': 'Enjaz - Protected',
+      'appLockSubtitle': 'Please authenticate using fingerprint or device screen lock to continue',
+      'appLockReason': 'Please authenticate to access Enjaz app',
+      'unlockApp': 'Unlock',
+      'authenticating': 'Authenticating...',
+      'authFailedMessage': 'Authentication failed',
+      'appLockSettingTitle': 'App Lock & Security',
+      'appLockSettingSubtitle': 'Protect app with biometrics and obscure preview in recent apps',
+      'trashPurgedSuccess': 'Trash permanently emptied',
+      'trashPurgedDetails': 'Items purged and audio files cleaned',
     },
   };
 
@@ -1013,6 +1101,51 @@ class AppLocalizations {
   String get deleteRecurringThisOnly => _get('deleteRecurringThisOnly');
   String get deleteRecurringAllFuture => _get('deleteRecurringAllFuture');
   String get recurrenceGenerated => _get('recurrenceGenerated');
+
+  String get backupAndSecurity => _get('backupAndSecurity');
+  String get fullBackupTitle => _get('fullBackupTitle');
+  String get fullBackupDescription => _get('fullBackupDescription');
+  String get includeVoiceNotesToggle => _get('includeVoiceNotesToggle');
+  String get includeVoiceNotesSub => _get('includeVoiceNotesSub');
+  String get withoutVoiceNotesSub => _get('withoutVoiceNotesSub');
+  String get exportBackupButton => _get('exportBackupButton');
+  String get exportingBackup => _get('exportingBackup');
+  String get errorExportingBackup => _get('errorExportingBackup');
+  String get restoreBackupTitle => _get('restoreBackupTitle');
+  String get restoreBackupDescription => _get('restoreBackupDescription');
+  String get selectBackupFileButton => _get('selectBackupFileButton');
+  String get inspectingBackup => _get('inspectingBackup');
+  String get restoringBackup => _get('restoringBackup');
+  String get restoreBackupSuccess => _get('restoreBackupSuccess');
+  String get errorRestoringBackup => _get('errorRestoringBackup');
+  String get invalidBackupFile => _get('invalidBackupFile');
+  String get invalidBackupFileDetails => _get('invalidBackupFileDetails');
+  String get restoreConfirmTitle => _get('restoreConfirmTitle');
+  String get restoreConfirmMessage => _get('restoreConfirmMessage');
+  String get backupDate => _get('backupDate');
+  String get safetyCopyNotice => _get('safetyCopyNotice');
+  String get restoreReplaceButton => _get('restoreReplaceButton');
+  String get csvExportTitle => _get('csvExportTitle');
+  String get csvExportDescription => _get('csvExportDescription');
+  String get tasksCsvTitle => _get('tasksCsvTitle');
+  String get tasksCsvSubtitle => _get('tasksCsvSubtitle');
+  String get exportTasksCsvTooltip => _get('exportTasksCsvTooltip');
+  String get eventsCsvTitle => _get('eventsCsvTitle');
+  String get eventsCsvSubtitle => _get('eventsCsvSubtitle');
+  String get exportEventsCsvTooltip => _get('exportEventsCsvTooltip');
+  String get exportingCsv => _get('exportingCsv');
+  String get errorExportingCsv => _get('errorExportingCsv');
+  String get unknownDate => _get('unknownDate');
+  String get appLockTitle => _get('appLockTitle');
+  String get appLockSubtitle => _get('appLockSubtitle');
+  String get appLockReason => _get('appLockReason');
+  String get unlockApp => _get('unlockApp');
+  String get authenticating => _get('authenticating');
+  String get authFailedMessage => _get('authFailedMessage');
+  String get appLockSettingTitle => _get('appLockSettingTitle');
+  String get appLockSettingSubtitle => _get('appLockSettingSubtitle');
+  String get trashPurgedSuccess => _get('trashPurgedSuccess');
+  String get trashPurgedDetails => _get('trashPurgedDetails');
 
   String getStatusLabel(String status) {
     switch (status) {

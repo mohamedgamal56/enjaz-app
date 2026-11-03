@@ -11,6 +11,8 @@ import '../../excel_export/presentation/excel_export_sheet.dart';
 import '../../reminders/presentation/reminders_settings_card.dart';
 import 'reasons_manager_screen.dart';
 import 'trash_screen.dart';
+import '../../security/domain/app_lock_provider.dart';
+import '../../backup/presentation/backup_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -22,6 +24,7 @@ class SettingsScreen extends ConsumerWidget {
     final currentLocale = ref.watch(localeProvider);
     final currentThemeMode = ref.watch(themeModeProvider);
     final currentNumerals = ref.watch(numeralsProvider);
+    final appLockState = ref.watch(appLockProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -263,6 +266,67 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
+          // Section: App Lock & Security (Phase 7)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.security_rounded, color: theme.colorScheme.primary),
+                      const SizedBox(width: 12),
+                      Text(
+                        l10n.appLockSettingTitle,
+                        style: theme.textTheme.titleMedium,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.appLockTitle),
+                    subtitle: Text(
+                      l10n.appLockSettingSubtitle,
+                      style: TextStyle(fontSize: 12, color: theme.colorScheme.outline),
+                    ),
+                    value: appLockState.isEnabled,
+                    onChanged: (val) async {
+                      final notifier = ref.read(appLockProvider.notifier);
+                      final success = await notifier.setLockEnabled(
+                        val,
+                        localizedReason: l10n.appLockReason,
+                      );
+                      if (!success && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(l10n.authFailedMessage)),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Section: Backup & Restore (Phase 7)
+          Card(
+            child: ListTile(
+              leading: Icon(Icons.backup_outlined, color: theme.colorScheme.primary),
+              title: Text(l10n.backupAndSecurity),
+              subtitle: Text(l10n.fullBackupDescription),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const BackupScreen()),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // Section: About
           Card(
             child: Padding(
@@ -287,7 +351,7 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    '${l10n.version}: 1.0.0 (Phase 6)',
+                    '${l10n.version}: 1.0.0 (Phase 7 - Final)',
                     style: theme.textTheme.labelSmall,
                   ),
                 ],

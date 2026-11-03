@@ -552,7 +552,57 @@ class AppDatabase extends _$AppDatabase {
 
   /// Permanently purge soft-deleted trash tasks
   Future<void> purgeTrash() async {
-    await (delete(tasks)..where((t) => t.deletedAt.isNotNull())).go();
+    await purgeTrashDetailed();
+  }
+
+  /// Permanently purge soft-deleted records from tasks, goals, milestones, ideas, voice notes
+  /// AND deletes orphaned audio files from disk.
+  /// Returns (itemsCount, filesCount, bytesFreed).
+  Future<(int, int, int)> purgeTrashDetailed() async {
+    final deletedTaskIds = (await (select(tasks)..where((t) => t.deletedAt.isNotNull())).get()).map((t) => t.id).toSet();
+    final deletedGoalIds = (await (select(goals)..where((g) => g.deletedAt.isNotNull())).get()).map((g) => g.id).toSet();
+    final deletedIdeaIds = (await (select(ideas)..where((i) => i.deletedAt.isNotNull())).get()).map((i) => i.id).toSet();
+
+    final allVoiceNotes = await select(voiceNotes).get();
+    final toDeleteVoiceNotes = allVoiceNotes.where((v) {
+      if (v.deletedAt != null) return true;
+      if (v.parentType == 'task' && deletedTaskIds.contains(v.parentId)) return true;
+      if (v.parentType == 'goal' && deletedGoalIds.contains(v.parentId)) return true;
+      if (v.parentType == 'idea' && deletedIdeaIds.contains(v.parentId)) return true;
+      return false;
+    }).toList();
+
+    int filesDeleted = 0;
+    int bytesFreed = 0;
+
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      for (final vn in toDeleteVoiceNotes) {
+        bytesFreed += vn.sizeBytes;
+        final filePath = p.join(appDir.path, vn.fileName);
+        final file = File(filePath);
+        if (await file.exists()) {
+          try {
+            await file.delete();
+            filesDeleted++;
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
+
+    int itemsPurged = 0;
+    await transaction(() async {
+      final deletedVoiceIds = toDeleteVoiceNotes.map((v) => v.id).toSet();
+      if (deletedVoiceIds.isNotEmpty) {
+        itemsPurged += await (delete(voiceNotes)..where((v) => v.id.isIn(deletedVoiceIds))).go();
+      }
+      itemsPurged += await (delete(tasks)..where((t) => t.deletedAt.isNotNull())).go();
+      itemsPurged += await (delete(goals)..where((g) => g.deletedAt.isNotNull())).go();
+      itemsPurged += await (delete(milestones)..where((m) => m.deletedAt.isNotNull())).go();
+      itemsPurged += await (delete(ideas)..where((i) => i.deletedAt.isNotNull())).go();
+    });
+
+    return (itemsPurged, filesDeleted, bytesFreed);
   }
 
   // -------------------------------------------------------------
@@ -1103,6 +1153,146 @@ class AppDatabase extends _$AppDatabase {
               t.status.isNotValue('done') &
               t.deletedAt.isNull()))
         .get();
+  }
+
+
+  // -------------------------------------------------------------
+  // PHASE 7: SETTINGS, BACKUP & RESTORE
+  // -------------------------------------------------------------
+
+  /// Get setting by key
+  Future<String?> getSetting(String key) async {
+    final row = await (select(settings)..where((s) => s.key.equals(key))).getSingleOrNull();
+    return row?.value;
+  }
+
+  /// Set setting value
+  Future<void> setSetting(String key, String value) async {
+    await into(settings).insertOnConflictUpdate(
+      SettingsCompanion.insert(key: key, value: value),
+    );
+  }
+
+  /// Get map of task id to voice notes count for tasks.csv
+  Future<Map<int, int>> getTaskVoiceNotesCounts() async {
+    final vns = await (select(voiceNotes)..where((v) => v.parentType.equals('task') & v.deletedAt.isNull())).get();
+    final map = <int, int>{};
+    for (final vn in vns) {
+      map[vn.parentId] = (map[vn.parentId] ?? 0) + 1;
+    }
+    return map;
+  }
+
+  /// Export all database tables to a single JSON map
+  Future<Map<String, dynamic>> exportAllData() async {
+    final tasksList = await select(tasks).get();
+    final eventsList = await select(taskEvents).get();
+    final reasonsList = await select(reasons).get();
+    final goalsList = await select(goals).get();
+    final milestonesList = await select(milestones).get();
+    final goalUpdatesList = await select(goalUpdates).get();
+    final ideasList = await select(ideas).get();
+    final tagsList = await select(tags).get();
+    final ideaTagsList = await select(ideaTags).get();
+    final recurrencesList = await select(recurrences).get();
+    final settingsList = await select(settings).get();
+    final voiceNotesList = await select(voiceNotes).get();
+
+    return {
+      'schema_version': schemaVersion,
+      'exported_at': DateTime.now().toIso8601String(),
+      'tasks': tasksList.map((e) => e.toJson()).toList(),
+      'task_events': eventsList.map((e) => e.toJson()).toList(),
+      'reasons': reasonsList.map((e) => e.toJson()).toList(),
+      'goals': goalsList.map((e) => e.toJson()).toList(),
+      'milestones': milestonesList.map((e) => e.toJson()).toList(),
+      'goal_updates': goalUpdatesList.map((e) => e.toJson()).toList(),
+      'ideas': ideasList.map((e) => e.toJson()).toList(),
+      'tags': tagsList.map((e) => e.toJson()).toList(),
+      'idea_tags': ideaTagsList.map((e) => e.toJson()).toList(),
+      'recurrences': recurrencesList.map((e) => e.toJson()).toList(),
+      'settings': settingsList.map((e) => e.toJson()).toList(),
+      'voice_notes': voiceNotesList.map((e) => e.toJson()).toList(),
+    };
+  }
+
+  /// Import and replace all database tables from a JSON map in a transaction
+  Future<void> importAllData(Map<String, dynamic> data) async {
+    await transaction(() async {
+      await delete(ideaTags).go();
+      await delete(tags).go();
+      await delete(voiceNotes).go();
+      await delete(taskEvents).go();
+      await delete(tasks).go();
+      await delete(recurrences).go();
+      await delete(goalUpdates).go();
+      await delete(milestones).go();
+      await delete(goals).go();
+      await delete(reasons).go();
+      await delete(ideas).go();
+      await delete(settings).go();
+
+      if (data['reasons'] is List) {
+        for (final item in (data['reasons'] as List)) {
+          await into(reasons).insert(Reason.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['goals'] is List) {
+        for (final item in (data['goals'] as List)) {
+          await into(goals).insert(Goal.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['milestones'] is List) {
+        for (final item in (data['milestones'] as List)) {
+          await into(milestones).insert(Milestone.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['goal_updates'] is List) {
+        for (final item in (data['goal_updates'] as List)) {
+          await into(goalUpdates).insert(GoalUpdate.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['recurrences'] is List) {
+        for (final item in (data['recurrences'] as List)) {
+          await into(recurrences).insert(Recurrence.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['tasks'] is List) {
+        for (final item in (data['tasks'] as List)) {
+          await into(tasks).insert(Task.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['task_events'] is List) {
+        for (final item in (data['task_events'] as List)) {
+          await into(taskEvents).insert(TaskEvent.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['ideas'] is List) {
+        for (final item in (data['ideas'] as List)) {
+          await into(ideas).insert(Idea.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['tags'] is List) {
+        for (final item in (data['tags'] as List)) {
+          await into(tags).insert(Tag.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['idea_tags'] is List) {
+        for (final item in (data['idea_tags'] as List)) {
+          await into(ideaTags).insert(IdeaTag.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['voice_notes'] is List) {
+        for (final item in (data['voice_notes'] as List)) {
+          await into(voiceNotes).insert(VoiceNote.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['settings'] is List) {
+        for (final item in (data['settings'] as List)) {
+          await into(settings).insert(Setting.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+    });
   }
 }
 

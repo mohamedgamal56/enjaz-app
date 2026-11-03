@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>إنجاز - Enjaz (Phase 1 Tasks Core Preview)</title>
+  <title>إنجاز - Enjaz (Phase 7 Final Release Preview)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1249,6 +1249,56 @@
             <div class="chip" onclick="openTrash()" style="justify-content: space-between; border-radius: 12px; width: 100%; color: var(--color-stopped);">
               <span>سلة المحذوفات (Trash)</span>
               <span class="material-symbols-rounded">delete</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phase 7: App Lock & Privacy -->
+        <div class="card" style="margin-bottom: 8px;">
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px; display:flex; align-items:center; gap:6px;">
+            <span class="material-symbols-rounded" style="color:var(--accent);">security</span>
+            <span>قفل التطبيق والأمان (App Lock)</span>
+          </div>
+          <div style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">
+            حماية بالبصمة / رمز القفل، وإخفاء الشاشة في قائمة التطبيقات الحديثة عبر FLAG_SECURE.
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px; font-weight:600;">تفعيل قفل التطبيق</span>
+            <input type="checkbox" id="appLockToggle" onchange="toggleAppLockPreview(this.checked)" style="transform:scale(1.3); cursor:pointer;">
+          </div>
+          <button class="chip" onclick="triggerAppLockScreen()" style="margin-top:10px; width:100%; justify-content:center; background:var(--accent-alpha); color:var(--accent); font-weight:600;">
+            <span class="material-symbols-rounded">lock</span>
+            <span>تجربة شاشة القفل فوراً</span>
+          </button>
+        </div>
+
+        <!-- Phase 7: Backup & Restore -->
+        <div class="card" style="margin-bottom: 8px;">
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px; display:flex; align-items:center; gap:6px;">
+            <span class="material-symbols-rounded" style="color:var(--accent);">archive</span>
+            <span>النسخ الاحتياطي والأمان (Backup & Restore)</span>
+          </div>
+          <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
+            تصدير واسترجاع كامل البيانات كملف مضغوط .zip يشمل التسجيلات الصوتية وmanifest.json والتحقق بـ SHA-256.
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button class="chip active" onclick="simulateFullBackupExport()" style="width:100%; justify-content:center; background:var(--accent); color:white;">
+              <span class="material-symbols-rounded">file_upload</span>
+              <span>تصدير نسخة كاملة (.zip)</span>
+            </button>
+            <button class="chip" onclick="simulateBackupRestore()" style="width:100%; justify-content:center;">
+              <span class="material-symbols-rounded">file_download</span>
+              <span>استرجاع نسخة احتياطية (.zip)</span>
+            </button>
+            <div style="display:flex; gap:8px; margin-top:4px;">
+              <button class="chip" onclick="simulateTasksCsvExport()" style="flex:1; justify-content:center; font-size:12px;">
+                <span class="material-symbols-rounded" style="font-size:16px;">table_rows</span>
+                <span>tasks.csv</span>
+              </button>
+              <button class="chip" onclick="simulateEventsCsvExport()" style="flex:1; justify-content:center; font-size:12px;">
+                <span class="material-symbols-rounded" style="font-size:16px;">history</span>
+                <span>events.csv</span>
+              </button>
             </div>
           </div>
         </div>
@@ -3190,6 +3240,65 @@
       }, 7000);
     }
 
+    
+    // =============================================================
+    // Phase 7: App Lock & Backup Functions
+    // =============================================================
+    let isAppLockActive = false;
+
+    function toggleAppLockPreview(enabled) {
+      isAppLockActive = enabled;
+      showToast(enabled ? 'تم تفعيل قفل التطبيق ووضع الخصوصية (FLAG_SECURE) 🔒' : 'تم تعطيل قفل التطبيق 🔓');
+    }
+
+    function triggerAppLockScreen() {
+      const overlay = document.getElementById('appLockOverlay');
+      if (overlay) {
+        overlay.style.display = 'flex';
+      }
+    }
+
+    function unlockAppPreview() {
+      const overlay = document.getElementById('appLockOverlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+        showToast('تم التحقق من البصمة وفتح التطبيق بنجاح ✅');
+      }
+    }
+
+    function simulateFullBackupExport() {
+      showToast('جاري تجميع البيانات والملفات وحساب SHA-256...');
+      setTimeout(() => {
+        showToast('تم تصدير النسخة بنجاح: Enjaz_Backup_20261103_0200.zip (شامل data.json و voice/) 📦');
+      }, 1000);
+    }
+
+    function simulateBackupRestore() {
+      const confirmed = confirm(
+        'تأكيد استرجاع النسخة الاحتياطية:\n\n' +
+        '• تاريخ النسخة: 3 نوفمبر 2026\n' +
+        '• عدد المهام: ' + tasks.length + '\n' +
+        '• عدد الأهداف: ' + (typeof goals !== 'undefined' ? goals.length : 3) + '\n' +
+        '• عدد الأفكار: ' + (typeof ideas !== 'undefined' ? ideas.length : 4) + '\n' +
+        '• عدد التسجيلات الصوتية: ' + voiceNotes.length + '\n\n' +
+        'سيتم أخذ نسخة أمان تلقائية قبل الاسترجاع. هل تريد المتابعة؟'
+      );
+      if (confirmed) {
+        showToast('جاري استرجاع النسخة الاحتياطية وإعادة جدولة التنبيهات...');
+        setTimeout(() => {
+          showToast('تم استرجاع النسخة بنجاح وتحديث كافة البيانات! 🎉');
+        }, 1200);
+      }
+    }
+
+    function simulateTasksCsvExport() {
+      showToast('تم تصدير tasks.csv بترميز UTF-8 مع عمود voice_note_count 📄');
+    }
+
+    function simulateEventsCsvExport() {
+      showToast('تم تصدير events.csv بكامل سجل التغييرات والتأجيلات 📄');
+    }
+
     // Phase 5: Stats Dashboard & Excel Export v1.2 Logic
     // =============================================================
     let statsRange = 'week'; // 'week', 'month', 'year'
@@ -3475,5 +3584,19 @@
     renderTasks();
     renderGoals();
   </script>
+
+    <!-- App Lock Overlay (Phase 7) -->
+    <div id="appLockOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:999999; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center;">
+      <div style="width:80px; height:80px; border-radius:50%; background:var(--accent-alpha); display:flex; align-items:center; justify-content:center; margin-bottom:24px;">
+        <span class="material-symbols-rounded" style="font-size:44px; color:var(--accent);">lock</span>
+      </div>
+      <h2 style="font-size:22px; font-weight:700; margin-bottom:8px;">إنجاز — تطبيق مؤمّن</h2>
+      <p style="font-size:14px; color:var(--text-muted); max-width:280px; margin-bottom:32px;">يرجى تأكيد الهوية بواسطة البصمة أو رمز قفل الشاشة لمتابعة استخدام التطبيق</p>
+      <button onclick="unlockAppPreview()" style="background:var(--accent); color:white; border:none; padding:12px 28px; border-radius:12px; font-family:Cairo; font-size:16px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:8px;">
+        <span class="material-symbols-rounded">fingerprint</span>
+        <span>فتح القفل (بصمة / PIN)</span>
+      </button>
+    </div>
+
 </body>
 </html>

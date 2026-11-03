@@ -27,6 +27,10 @@ dependencies:
   share_plus: ^9.0.0
   flutter_local_notifications: ^17.2.2
   timezone: ^0.9.4
+  local_auth: ^2.2.0
+  archive: ^3.6.1
+  file_picker: ^8.1.4
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:

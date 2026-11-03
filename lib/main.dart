@@ -7,6 +7,8 @@ import 'core/l10n/l10n.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/navigation/presentation/main_shell.dart';
+import 'features/security/domain/app_lock_provider.dart';
+import 'features/security/presentation/app_lock_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +44,13 @@ class EnjazApp extends ConsumerWidget {
       theme: AppTheme.light(activeLocale.languageCode),
       darkTheme: AppTheme.dark(activeLocale.languageCode),
       themeMode: themeMode,
+      builder: (context, child) {
+        final lockState = ref.watch(appLockProvider);
+        if (lockState.isEnabled && lockState.isLocked) {
+          return const AppLockScreen();
+        }
+        return child ?? const SizedBox.shrink();
+      },
       home: const MainShell(),
     );
   }

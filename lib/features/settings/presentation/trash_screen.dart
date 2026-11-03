@@ -33,7 +33,15 @@ class TrashScreen extends ConsumerWidget {
 
     if (confirmed == true) {
       final db = ref.read(databaseProvider);
-      await db.purgeTrash();
+      final stats = await db.purgeTrashDetailed();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${l10n.trashPurgedSuccess}: ${stats.$1} items (${stats.$2} audio files)',
+          ),
+        ),
+      );
     }
   }
 

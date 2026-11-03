@@ -119,3 +119,21 @@
       - Each instance has independent status, history, and postponement reasons.
       - Series editing & deletion: provides user choice between 'This one only' (detaches recurrence) and 'All future' (updates series and upcoming uncompleted tasks).
       - Fully unit tested in `test/unit/recurrence_service_test.dart`.
+
+## Decision 12: Phase 7 Backup & Restore Architecture, App Lock & Privacy Strategy
+- **Context**: Spec Section 9, Addendum v1.1, and Addendum v1.2 require a complete, rock-solid offline backup and restore system, privacy protection (app lock + task switcher blackout), CSV exports with voice note count, and physical cleanup of orphaned audio files.
+- **Decision**:
+  - Archive Format & Integrity:
+    - Standard `.zip` format using `archive: ^3.6.1`.
+    - Every backup contains `manifest.json` (schema version, app version, entity counts, and SHA-256 hashes of all bundled files), `data.json` (full serialization of Drift database tables), and `voice/` (actual audio recordings).
+    - Lightweight toggle allows excluding audio files when only database records are desired.
+  - Restoration Safety:
+    - Before wiping or replacing the local SQLite database, the system automatically creates a local safety snapshot (`safety_pre_restore_*.zip`) in the app documents directory to protect user data against accidental restoration of incorrect files.
+    - Database replacement occurs inside a single atomic Drift `transaction()`, followed by audio files extraction and reminder rescheduling via `NotificationService.instance.rescheduleAll(db)`.
+  - App Lock & Task-Switcher Privacy (`FLAG_SECURE`):
+    - Biometrics and PIN authentication via `local_auth: ^2.2.0`.
+    - Integrated with Android native window flags through a Kotlin `MethodChannel` (`com.enjaz.app/privacy`) toggling `WindowManager.LayoutParams.FLAG_SECURE`.
+    - When App Lock is active, `FLAG_SECURE` prevents screenshots, screen recording, and blacks out the app preview in Android's recent apps switcher.
+    - `AppLockNotifier` observes `WidgetsBindingObserver` lifecycle: when app is paused/backgrounded, it locks immediately, showing `AppLockScreen` upon resumption.
+  - Trash Physical File Cleanup:
+    - `db.purgeTrashDetailed()` identifies all voice notes that were soft-deleted or whose parent task/goal/idea was soft-deleted, deletes the SQLite records, and permanently deletes the `.m4a` files from device storage via `File.delete()`.
