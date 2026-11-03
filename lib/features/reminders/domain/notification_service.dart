@@ -29,6 +29,7 @@ void notificationTapBackground(NotificationResponse notificationResponse) async 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
+  static NotificationService get instance => _instance;
   NotificationService._internal();
 
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();

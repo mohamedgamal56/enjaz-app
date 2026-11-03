@@ -391,6 +391,11 @@ class AppLocalizations {
       'appLockSettingSubtitle': 'حماية التطبيق بالبصمة وإخفاء الشاشة في قائمة التطبيقات الحديثة',
       'trashPurgedSuccess': 'تم تفريغ سلة المحذوفات نهائياً',
       'trashPurgedDetails': 'تم حذف العناصر وتنظيف الملفات الصوتية',
+      'ok': 'حسناً',
+      'tasksCountLabel': 'عدد المهام',
+      'goalsCountLabel': 'عدد الأهداف',
+      'ideasCountLabel': 'عدد الأفكار',
+      'fileSizeLabel': 'حجم الملف',
     },
     'en': {
       'appName': 'Enjaz',
@@ -764,6 +769,11 @@ class AppLocalizations {
       'appLockSettingSubtitle': 'Protect app with biometrics and obscure preview in recent apps',
       'trashPurgedSuccess': 'Trash permanently emptied',
       'trashPurgedDetails': 'Items purged and audio files cleaned',
+      'ok': 'OK',
+      'tasksCountLabel': 'Tasks Count',
+      'goalsCountLabel': 'Goals Count',
+      'ideasCountLabel': 'Ideas Count',
+      'fileSizeLabel': 'File Size',
     },
   };
 
@@ -1146,6 +1156,11 @@ class AppLocalizations {
   String get appLockSettingSubtitle => _get('appLockSettingSubtitle');
   String get trashPurgedSuccess => _get('trashPurgedSuccess');
   String get trashPurgedDetails => _get('trashPurgedDetails');
+  String get ok => _get('ok');
+  String get tasksCountLabel => _get('tasksCountLabel');
+  String get goalsCountLabel => _get('goalsCountLabel');
+  String get ideasCountLabel => _get('ideasCountLabel');
+  String get fileSizeLabel => _get('fileSizeLabel');
 
   String getStatusLabel(String status) {
     switch (status) {

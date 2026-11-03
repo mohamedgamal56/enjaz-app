@@ -223,7 +223,7 @@ class BackupService {
     }
 
     // 4. Reschedule reminders
-    await NotificationService.instance.rescheduleAll(db);
+    await NotificationService().rescheduleAll(db);
 
     return true;
   }
