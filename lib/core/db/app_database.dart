@@ -152,6 +152,11 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// Get single task by ID
+  /// Insert a task event into the append-only log
+  Future<int> insertTaskEvent(TaskEventsCompanion companion) {
+    return into(taskEvents).insert(companion);
+  }
+
   Future<Task?> getTaskById(int id) {
     return (select(tasks)..where((t) => t.id.equals(id))).getSingleOrNull();
   }
