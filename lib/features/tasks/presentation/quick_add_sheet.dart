@@ -7,6 +7,9 @@ import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../voice_notes/domain/voice_note_service.dart';
 import '../../voice_notes/presentation/voice_recorder_sheet.dart';
+import '../../recurrence/domain/recurrence_service.dart';
+import '../../reminders/domain/notification_service.dart';
+import '../../reminders/presentation/notification_permission_sheet.dart';
 
 class QuickAddSheet extends ConsumerStatefulWidget {
   final String? initialDate; // YYYY-MM-DD
@@ -57,6 +60,13 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   String _selectedPriority = 'normal'; // low | normal | high
   VoiceRecordingResult? _recordedVoiceNote;
 
+  int? _selectedReminderOffset;
+  String _selectedRecurrenceRule = 'none'; // 'none' | 'daily' | 'weekly' | 'monthly'
+  int _selectedWeekdaysBitmask = 0;
+  int _selectedDayOfMonth = 1;
+  String? _selectedRecurrenceEndDate;
+  bool _showRecurrencePanel = false;
+
   Future<void> _recordVoiceNote() async {
     final result = await VoiceRecorderSheet.show(context);
     if (result != null) {
@@ -72,6 +82,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     _selectedKind = widget.initialKind;
     // Default date is today unless provided
     final now = DateTime.now();
+    _selectedDayOfMonth = now.day;
+    _selectedWeekdaysBitmask = 1 << now.weekday;
     _selectedDate = widget.initialDate ??
         '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
@@ -263,7 +275,40 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
 
     if (_selectedKind == 'task' || _selectedKind == 'errand') {
       parentType = 'task';
-      final companion = TasksCompanion.insert(
+
+      if (_selectedRecurrenceRule != 'none') {
+        final recCompanion = RecurrencesCompanion.insert(
+          rule: _selectedRecurrenceRule,
+          weekdays: drift.Value(_selectedWeekdaysBitmask),
+          dayOfMonth: _selectedRecurrenceRule == 'monthly'
+              ? drift.Value(_selectedDayOfMonth)
+              : const drift.Value.absent(),
+          startsOn: _selectedDate ?? _formatTodayDate(),
+          endsOn: _selectedRecurrenceEndDate != null
+              ? drift.Value(_selectedRecurrenceEndDate)
+              : const drift.Value.absent(),
+          title: title,
+          kind: _selectedKind,
+          dueTime: _selectedTime != null
+              ? drift.Value(_selectedTime)
+              : const drift.Value.absent(),
+          notes: _notesController.text.trim().isNotEmpty
+              ? drift.Value(_notesController.text.trim())
+              : const drift.Value.absent(),
+          priority: drift.Value(_selectedPriority),
+          reminderOffsetMinutes: _selectedReminderOffset != null
+              ? drift.Value(_selectedReminderOffset)
+              : const drift.Value.absent(),
+          createdAt: now,
+          updatedAt: now,
+        );
+
+        final recId = await db.insertRecurrence(recCompanion);
+        await RecurrenceService.generateAllUpcomingInstances(db);
+        await NotificationService().rescheduleAll(db);
+        insertedId = recId;
+      } else {
+        final companion = TasksCompanion.insert(
         title: title,
         notes: _notesController.text.trim().isNotEmpty
             ? drift.Value(_notesController.text.trim())
@@ -275,6 +320,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
             : const drift.Value.absent(),
         dueTime: _selectedTime != null
             ? drift.Value(_selectedTime)
+            : const drift.Value.absent(),
+        reminderOffsetMinutes: _selectedReminderOffset != null
+            ? drift.Value(_selectedReminderOffset)
             : const drift.Value.absent(),
         locationText: _selectedKind == 'errand' &&
                 _locationController.text.trim().isNotEmpty
@@ -290,6 +338,14 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       );
 
       insertedId = await db.insertNewTask(companion);
+
+        if (_selectedReminderOffset != null) {
+          final task = await (db.select(db.tasks)..where((t) => t.id.equals(insertedId!))).getSingleOrNull();
+          if (task != null) {
+            await NotificationService().scheduleTaskReminder(task: task);
+          }
+        }
+      }
     } else if (_selectedKind == 'goal') {
       parentType = 'goal';
       insertedId = await db.into(db.goals).insert(
@@ -363,6 +419,24 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
         Navigator.of(context).pop();
       }
     }
+  }
+
+
+  Widget _buildWeekdayChip(int weekday, String label) {
+    final isSelected = RecurrenceService.isWeekdaySelected(_selectedWeekdaysBitmask, weekday);
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (val) {
+        setState(() {
+          _selectedWeekdaysBitmask = RecurrenceService.setWeekday(
+            _selectedWeekdaysBitmask,
+            weekday,
+            val,
+          );
+        });
+      },
+    );
   }
 
   @override
@@ -673,6 +747,313 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                 ],
               ),
               const SizedBox(height: 12),
+            ],
+
+            // Reminders & Recurrence Controls (For Task & Errand)
+            if (_selectedKind == 'task' || _selectedKind == 'errand') ...[
+              Row(
+                children: [
+                  // Reminder Selector
+                  Expanded(
+                    child: PopupMenuButton<int?>(
+                      initialValue: _selectedReminderOffset,
+                      onSelected: (val) async {
+                        if (val != null) {
+                          await NotificationPermissionSheet.show(context);
+                        }
+                        setState(() {
+                          _selectedReminderOffset = val;
+                        });
+                      },
+                      itemBuilder: (ctx) => [
+                        PopupMenuItem(
+                          value: null,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.notifications_off_outlined, size: 18),
+                              const SizedBox(width: 8),
+                              Text(l10n.noReminder),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 0,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.notifications_active_outlined, size: 18),
+                              const SizedBox(width: 8),
+                              Text(l10n.reminderAtDueTime),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 10,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.timer_outlined, size: 18),
+                              const SizedBox(width: 8),
+                              Text(l10n.reminder10MinBefore),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 30,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.timer_outlined, size: 18),
+                              const SizedBox(width: 8),
+                              Text(l10n.reminder30MinBefore),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 60,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.hourglass_bottom_rounded, size: 18),
+                              const SizedBox(width: 8),
+                              Text(l10n.reminder1HourBefore),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 1440,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.today_rounded, size: 18),
+                              const SizedBox(width: 8),
+                              Text(l10n.reminder1DayBefore),
+                            ],
+                          ),
+                        ),
+                      ],
+                      child: OutlinedButton.icon(
+                        icon: Icon(
+                          _selectedReminderOffset != null
+                              ? Icons.notifications_active_rounded
+                              : Icons.notifications_outlined,
+                          size: 18,
+                          color: _selectedReminderOffset != null
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurfaceVariant,
+                        ),
+                        label: Text(
+                          _selectedReminderOffset == null
+                              ? l10n.noReminder
+                              : _selectedReminderOffset == 0
+                                  ? l10n.reminderAtDueTime
+                                  : _selectedReminderOffset == 10
+                                      ? l10n.reminder10MinBefore
+                                      : _selectedReminderOffset == 30
+                                          ? l10n.reminder30MinBefore
+                                          : _selectedReminderOffset == 60
+                                              ? l10n.reminder1HourBefore
+                                              : l10n.reminder1DayBefore,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: _selectedReminderOffset != null
+                                ? theme.colorScheme.primary
+                                : null,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                        ),
+                        onPressed: null,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Recurrence Toggle Button
+                  OutlinedButton.icon(
+                    icon: Icon(
+                      Icons.repeat_rounded,
+                      size: 18,
+                      color: _selectedRecurrenceRule != 'none'
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                    label: Text(
+                      _selectedRecurrenceRule == 'none'
+                          ? l10n.recurrenceNone
+                          : _selectedRecurrenceRule == 'daily'
+                              ? l10n.recurrenceDaily
+                              : _selectedRecurrenceRule == 'weekly'
+                                  ? l10n.recurrenceWeekly
+                                  : l10n.recurrenceMonthly,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: _selectedRecurrenceRule != 'none'
+                            ? theme.colorScheme.primary
+                            : null,
+                        fontWeight: _selectedRecurrenceRule != 'none'
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _showRecurrencePanel = !_showRecurrencePanel;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Recurrence Options Expandable Panel
+              if (_showRecurrencePanel) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: theme.colorScheme.outlineVariant),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.recurrence,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          ChoiceChip(
+                            label: Text(l10n.recurrenceNone),
+                            selected: _selectedRecurrenceRule == 'none',
+                            onSelected: (_) => setState(() => _selectedRecurrenceRule = 'none'),
+                          ),
+                          ChoiceChip(
+                            label: Text(l10n.recurrenceDaily),
+                            selected: _selectedRecurrenceRule == 'daily',
+                            onSelected: (_) => setState(() => _selectedRecurrenceRule = 'daily'),
+                          ),
+                          ChoiceChip(
+                            label: Text(l10n.recurrenceWeekly),
+                            selected: _selectedRecurrenceRule == 'weekly',
+                            onSelected: (_) => setState(() => _selectedRecurrenceRule = 'weekly'),
+                          ),
+                          ChoiceChip(
+                            label: Text(l10n.recurrenceMonthly),
+                            selected: _selectedRecurrenceRule == 'monthly',
+                            onSelected: (_) => setState(() => _selectedRecurrenceRule = 'monthly'),
+                          ),
+                        ],
+                      ),
+
+                      // Weekly Days Selector
+                      if (_selectedRecurrenceRule == 'weekly') ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          l10n.repeatOnDays,
+                          style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            _buildWeekdayChip(DateTime.saturday, isArabic ? 'سبت' : 'Sat'),
+                            _buildWeekdayChip(DateTime.sunday, isArabic ? 'أحد' : 'Sun'),
+                            _buildWeekdayChip(DateTime.monday, isArabic ? 'إثنين' : 'Mon'),
+                            _buildWeekdayChip(DateTime.tuesday, isArabic ? 'ثلاثاء' : 'Tue'),
+                            _buildWeekdayChip(DateTime.wednesday, isArabic ? 'أربعاء' : 'Wed'),
+                            _buildWeekdayChip(DateTime.thursday, isArabic ? 'خميس' : 'Thu'),
+                            _buildWeekdayChip(DateTime.friday, isArabic ? 'جمعة' : 'Fri'),
+                          ],
+                        ),
+                      ],
+
+                      // Monthly Day Selector
+                      if (_selectedRecurrenceRule == 'monthly') ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Text(
+                              ': ',
+                              style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            DropdownButton<int>(
+                              value: _selectedDayOfMonth,
+                              items: List.generate(31, (i) => i + 1)
+                                  .map((d) => DropdownMenuItem(value: d, child: Text('')))
+                                  .toList(),
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() => _selectedDayOfMonth = val);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+
+                      // Recurrence End Date
+                      if (_selectedRecurrenceRule != 'none') ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.event_busy_rounded, size: 16, color: theme.colorScheme.onSurfaceVariant),
+                            const SizedBox(width: 8),
+                            Text(
+                              ': ',
+                              style: theme.textTheme.bodySmall,
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                final now = DateTime.now();
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: now.add(const Duration(days: 30)),
+                                  firstDate: now,
+                                  lastDate: now.add(const Duration(days: 3650)),
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    _selectedRecurrenceEndDate =
+                                        '--';
+                                  });
+                                }
+                              },
+                              child: Text(
+                                _selectedRecurrenceEndDate ?? l10n.recurrenceEndsNever,
+                                style: TextStyle(
+                                  color: _selectedRecurrenceEndDate != null
+                                      ? theme.colorScheme.primary
+                                      : theme.colorScheme.onSurfaceVariant,
+                                  fontWeight: _selectedRecurrenceEndDate != null
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                            if (_selectedRecurrenceEndDate != null)
+                              IconButton(
+                                icon: const Icon(Icons.clear_rounded, size: 16),
+                                onPressed: () => setState(() => _selectedRecurrenceEndDate = null),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
             ],
 
             // Notes / details field

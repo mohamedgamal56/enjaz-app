@@ -239,6 +239,22 @@ class TaskCard extends ConsumerWidget {
                                     ),
                                   ),
                                 ],
+                                if (task.reminderOffsetMinutes != null) ...[
+                                  Icon(
+                                    Icons.alarm_rounded,
+                                    size: 13,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
+                                if (task.recurrenceId != null) ...[
+                                  Icon(
+                                    Icons.repeat_rounded,
+                                    size: 13,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
                               ],
                             ),
                           ],

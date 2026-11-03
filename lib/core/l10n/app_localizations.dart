@@ -313,6 +313,40 @@ class AppLocalizations {
       'sheetReasons': 'الأسباب',
       'sheetGoals': 'الأهداف',
       'sheetIdeas': 'الأفكار',
+      'remindersAndNotifications': 'التنبيهات والإشعارات',
+      'dailySummary': 'الموجز الصباحي',
+      'dailySummarySubtitle': 'إشعار صباحي (08:00) بعدد مهام ومشاوير اليوم',
+      'eveningReview': 'المراجعة المسائية',
+      'eveningReviewSubtitle': 'إشعار مسائي (21:00) لمراجعة إنجازاتك وتحديث الحالات',
+      'weeklyExcelReminder': 'تذكير تقرير الإكسيل الأسبوعي',
+      'weeklyExcelReminderSubtitle': 'تذكير كل جمعة (18:00) لمراجعة وتصدير تقرير الإنجاز',
+      'defaultReminderTime': 'وقت التنبيه الافتراضي',
+      'defaultReminderTimeSubtitle': 'للمهام المحددة بتاريخ فقط وبدون وقت',
+      'permissionGranted': 'مفعل',
+      'permissionDenied': 'غير مفعل - اضغط للطلب',
+      'reminderAtDueTime': 'في الموعد المحدد',
+      'reminder10MinBefore': 'قبل 10 دقائق',
+      'reminder30MinBefore': 'قبل 30 دقيقة',
+      'reminder1HourBefore': 'قبل ساعة',
+      'reminder1DayBefore': 'قبل يوم واحد',
+      'noReminder': 'بدون تنبيه',
+      'taskReminder': 'تنبيه المهمة',
+      'recurrence': 'التكرار',
+      'recurrenceNone': 'بدون تكرار',
+      'recurrenceDaily': 'يومياً',
+      'recurrenceWeekly': 'أسبوعياً',
+      'recurrenceMonthly': 'شهرياً',
+      'recurrenceEndDate': 'تاريخ انتهاء التكرار',
+      'recurrenceEndsNever': 'مستمر دائماً',
+      'repeatOnDays': 'التكرار في أيام',
+      'repeatDayOfMonth': 'يوم من الشهر',
+      'editRecurringTitle': 'تعديل المهمة المتكررة',
+      'editRecurringThisOnly': 'هذه المهمة فقط',
+      'editRecurringAllFuture': 'كل المهام القادمة وقاعدة التكرار',
+      'deleteRecurringTitle': 'حذف المهمة المتكررة',
+      'deleteRecurringThisOnly': 'حذف هذه المهمة فقط',
+      'deleteRecurringAllFuture': 'إلغاء التكرار وحذف كل القادمة',
+      'recurrenceGenerated': 'مهمة متكررة',
     },
     'en': {
       'appName': 'Enjaz',
@@ -608,6 +642,40 @@ class AppLocalizations {
       'sheetReasons': 'Reasons',
       'sheetGoals': 'Goals',
       'sheetIdeas': 'Ideas',
+      'remindersAndNotifications': 'Reminders & Notifications',
+      'dailySummary': 'Daily Summary',
+      'dailySummarySubtitle': 'Morning notification (08:00) with today\'s task count',
+      'eveningReview': 'Evening Review',
+      'eveningReviewSubtitle': 'Evening notification (21:00) to review and update your day',
+      'weeklyExcelReminder': 'Weekly Excel Reminder',
+      'weeklyExcelReminderSubtitle': 'Reminder every Friday (18:00) to export weekly report',
+      'defaultReminderTime': 'Default Reminder Time',
+      'defaultReminderTimeSubtitle': 'For tasks with date only and no specific time',
+      'permissionGranted': 'Enabled',
+      'permissionDenied': 'Disabled - Tap to enable',
+      'reminderAtDueTime': 'At due time',
+      'reminder10MinBefore': '10 minutes before',
+      'reminder30MinBefore': '30 minutes before',
+      'reminder1HourBefore': '1 hour before',
+      'reminder1DayBefore': '1 day before',
+      'noReminder': 'No reminder',
+      'taskReminder': 'Task Reminder',
+      'recurrence': 'Repeat',
+      'recurrenceNone': 'Does not repeat',
+      'recurrenceDaily': 'Daily',
+      'recurrenceWeekly': 'Weekly',
+      'recurrenceMonthly': 'Monthly',
+      'recurrenceEndDate': 'Repeat end date',
+      'recurrenceEndsNever': 'Repeats forever',
+      'repeatOnDays': 'Repeat on days',
+      'repeatDayOfMonth': 'Day of month',
+      'editRecurringTitle': 'Edit Recurring Task',
+      'editRecurringThisOnly': 'This one only',
+      'editRecurringAllFuture': 'All future instances & rule',
+      'deleteRecurringTitle': 'Delete Recurring Task',
+      'deleteRecurringThisOnly': 'Delete this one only',
+      'deleteRecurringAllFuture': 'Cancel series & delete all future',
+      'recurrenceGenerated': 'Recurring',
     },
   };
 
@@ -910,6 +978,41 @@ class AppLocalizations {
   String get sheetReasons => _get('sheetReasons');
   String get sheetGoals => _get('sheetGoals');
   String get sheetIdeas => _get('sheetIdeas');
+
+  String get remindersAndNotifications => _get('remindersAndNotifications');
+  String get dailySummary => _get('dailySummary');
+  String get dailySummarySubtitle => _get('dailySummarySubtitle');
+  String get eveningReview => _get('eveningReview');
+  String get eveningReviewSubtitle => _get('eveningReviewSubtitle');
+  String get weeklyExcelReminder => _get('weeklyExcelReminder');
+  String get weeklyExcelReminderSubtitle => _get('weeklyExcelReminderSubtitle');
+  String get defaultReminderTime => _get('defaultReminderTime');
+  String get defaultReminderTimeSubtitle => _get('defaultReminderTimeSubtitle');
+  String get permissionGranted => _get('permissionGranted');
+  String get permissionDenied => _get('permissionDenied');
+  String get reminderAtDueTime => _get('reminderAtDueTime');
+  String get reminder10MinBefore => _get('reminder10MinBefore');
+  String get reminder30MinBefore => _get('reminder30MinBefore');
+  String get reminder1HourBefore => _get('reminder1HourBefore');
+  String get reminder1DayBefore => _get('reminder1DayBefore');
+  String get noReminder => _get('noReminder');
+  String get taskReminder => _get('taskReminder');
+  String get recurrence => _get('recurrence');
+  String get recurrenceNone => _get('recurrenceNone');
+  String get recurrenceDaily => _get('recurrenceDaily');
+  String get recurrenceWeekly => _get('recurrenceWeekly');
+  String get recurrenceMonthly => _get('recurrenceMonthly');
+  String get recurrenceEndDate => _get('recurrenceEndDate');
+  String get recurrenceEndsNever => _get('recurrenceEndsNever');
+  String get repeatOnDays => _get('repeatOnDays');
+  String get repeatDayOfMonth => _get('repeatDayOfMonth');
+  String get editRecurringTitle => _get('editRecurringTitle');
+  String get editRecurringThisOnly => _get('editRecurringThisOnly');
+  String get editRecurringAllFuture => _get('editRecurringAllFuture');
+  String get deleteRecurringTitle => _get('deleteRecurringTitle');
+  String get deleteRecurringThisOnly => _get('deleteRecurringThisOnly');
+  String get deleteRecurringAllFuture => _get('deleteRecurringAllFuture');
+  String get recurrenceGenerated => _get('recurrenceGenerated');
 
   String getStatusLabel(String status) {
     switch (status) {

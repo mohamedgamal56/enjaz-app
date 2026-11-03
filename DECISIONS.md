@@ -102,3 +102,20 @@
       - Denominator for completion rate strictly excludes future scheduled tasks.
       - Streak engine accounts for continuous active days, allowing today's task completion or yesterday's ongoing streak without penalty.
       - Unit tests verified in `test/unit/stats_service_test.dart`.
+
+## Decision 11: Phase 6 Reminders, Notifications & Recurring Tasks Architecture
+- **Context**: Spec Section 8 and Addendum v1.2 require local notifications for task deadlines, morning summary (08:00), evening review (21:00), and weekly Friday Excel report reminder (18:00), along with full recurrence rules (daily, weekly, monthly with short-month clamping, and end dates).
+- **Decision**:
+  - Local Notification Framework (`flutter_local_notifications: ^17.2.2` & `timezone: ^0.9.4`):
+    - Completely offline notification scheduling using Android `AlarmManager`.
+    - Notification Action Buttons: includes 'تمت / Done' (marks task done in Drift database and writes event directly in background without opening full app UI) and 'فتح / Open' (navigates to task or Today screen).
+    - Respects Android 13+ permission requirements (`POST_NOTIFICATIONS`) with a polite explanatory sheet before system dialog prompt.
+    - Fallback architecture: schedules exact alarms when granted (`SCHEDULE_EXACT_ALARM`), gracefully falling back to inexact alarms otherwise.
+    - Reboot Resilience: declared `RECEIVE_BOOT_COMPLETED` receiver in `AndroidManifest.xml` and automated `NotificationService.rescheduleAll(db)` on device startup and app launch.
+  - Recurring Task Instance Generation:
+    - Pure Dart domain service `RecurrenceService`:
+      - Rules: `daily`, `weekly` (multi-day selection via bitmask), `monthly` (with day clamping for months with fewer days such as Feb 28/29 and Apr 30).
+      - Generates real task instances in `tasks` table for today + 7 upcoming days on app launch and midnight crossover.
+      - Each instance has independent status, history, and postponement reasons.
+      - Series editing & deletion: provides user choice between 'This one only' (detaches recurrence) and 'All future' (updates series and upcoming uncompleted tasks).
+      - Fully unit tested in `test/unit/recurrence_service_test.dart`.

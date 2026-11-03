@@ -1000,6 +1000,105 @@ class AppDatabase extends _$AppDatabase {
   Future<List<Reason>> getAllReasonsList() {
     return (select(reasons)..where((r) => r.deletedAt.isNull())).get();
   }
+
+  // -------------------------------------------------------------
+  // RECURRENCES & REMINDERS QUERIES (Phase 6)
+  // -------------------------------------------------------------
+
+  /// Get all active recurrence rules
+  Future<List<Recurrence>> getAllActiveRecurrences() {
+    return (select(recurrences)..where((r) => r.deletedAt.isNull())).get();
+  }
+
+  /// Get recurrence rule by ID
+  Future<Recurrence?> getRecurrenceById(int id) {
+    return (select(recurrences)..where((r) => r.id.equals(id))).getSingleOrNull();
+  }
+
+  /// Insert new recurrence rule
+  Future<int> insertRecurrence(RecurrencesCompanion entry) {
+    return into(recurrences).insert(entry);
+  }
+
+  /// Update recurrence rule
+  Future<void> updateRecurrence(RecurrencesCompanion entry) {
+    return (update(recurrences)..where((r) => r.id.equals(entry.id.value))).write(entry);
+  }
+
+  /// Soft delete recurrence rule
+  Future<void> softDeleteRecurrence(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(recurrences)..where((r) => r.id.equals(id))).write(
+      RecurrencesCompanion(
+        deletedAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Get existing tasks for a recurrence rule
+  Future<List<Task>> getTasksForRecurrence(int recurrenceId) {
+    return (select(tasks)..where((t) => t.recurrenceId.equals(recurrenceId) & t.deletedAt.isNull())).get();
+  }
+
+  /// Delete future uncompleted tasks for a recurrence rule starting from a specific date
+  Future<int> deleteFutureTasksForRecurrence(int recurrenceId, String fromDate) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(tasks)
+          ..where((t) =>
+              t.recurrenceId.equals(recurrenceId) &
+              t.dueDate.isBiggerOrEqualValue(fromDate) &
+              t.status.equals('todo') &
+              t.deletedAt.isNull()))
+        .write(
+      TasksCompanion(
+        deletedAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Update future uncompleted tasks for a recurrence rule starting from a specific date
+  Future<int> updateFutureTasksForRecurrence(
+    int recurrenceId,
+    String fromDate, {
+    required String title,
+    String? kind,
+    String? dueTime,
+    String? priority,
+    String? notes,
+    int? reminderOffsetMinutes,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(tasks)
+          ..where((t) =>
+              t.recurrenceId.equals(recurrenceId) &
+              t.dueDate.isBiggerOrEqualValue(fromDate) &
+              t.status.isNotValue('done') &
+              t.deletedAt.isNull()))
+        .write(
+      TasksCompanion(
+        title: Value(title),
+        kind: kind != null ? Value(kind) : const Value.absent(),
+        dueTime: Value(dueTime),
+        priority: priority != null ? Value(priority) : const Value.absent(),
+        notes: Value(notes),
+        reminderOffsetMinutes: Value(reminderOffsetMinutes),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Get all upcoming uncompleted tasks with reminders
+  Future<List<Task>> getUpcomingTasksWithReminders(String minDueDate) {
+    return (select(tasks)
+          ..where((t) =>
+              t.reminderOffsetMinutes.isNotNull() &
+              t.dueDate.isBiggerOrEqualValue(minDueDate) &
+              t.status.isNotValue('done') &
+              t.deletedAt.isNull()))
+        .get();
+  }
 }
 
 LazyDatabase _openConnection() {

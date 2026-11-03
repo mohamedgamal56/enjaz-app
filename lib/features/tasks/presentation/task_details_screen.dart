@@ -7,6 +7,8 @@ import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../voice_notes/presentation/widgets/voice_notes_section.dart';
+import '../../reminders/domain/notification_service.dart';
+import '../../reminders/presentation/notification_permission_sheet.dart';
 import 'status_sheet.dart';
 
 class TaskDetailsScreen extends ConsumerStatefulWidget {
@@ -113,6 +115,47 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
 
   void _deleteTask(Task task) async {
     final l10n = AppLocalizations.of(context);
+    final isRecurring = task.recurrenceId != null;
+
+    if (isRecurring) {
+      final choice = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.deleteRecurringTitle),
+          content: Text(l10n.deleteTaskConfirm),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(null),
+              child: Text(l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop('this_only'),
+              child: Text(l10n.deleteRecurringThisOnly),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop('all_future'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: Text(l10n.deleteRecurringAllFuture),
+            ),
+          ],
+        ),
+      );
+
+      if (choice == null) return;
+      final db = ref.read(databaseProvider);
+      if (choice == 'all_future') {
+        await db.deleteFutureTasksForRecurrence(task.recurrenceId!, task.dueDate ?? '');
+        await db.softDeleteRecurrence(task.recurrenceId!);
+      }
+      await db.softDeleteTask(task.id);
+      await NotificationService().cancelTaskReminder(task.id);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -137,6 +180,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
     if (confirmed == true) {
       final db = ref.read(databaseProvider);
       await db.softDeleteTask(task.id);
+      await NotificationService().cancelTaskReminder(task.id);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -146,6 +190,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
             label: l10n.undo,
             onPressed: () async {
               await db.restoreTask(task.id);
+              await NotificationService().scheduleTaskReminder(task: task);
             },
           ),
         ),

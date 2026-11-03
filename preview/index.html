@@ -3143,6 +3143,53 @@
 
     
     // =============================================================
+    
+    // Phase 6: Notification Simulation
+    function toggleRecurrenceDays(val) {
+      const row = document.getElementById('qaWeeklyDaysRow');
+      if (row) {
+        row.style.display = val === 'weekly' ? 'block' : 'none';
+      }
+    }
+
+    function simulateNotification() {
+      // Create a floating notification banner resembling an Android 14 notification
+      const notif = document.createElement('div');
+      notif.style.position = 'fixed';
+      notif.style.top = '16px';
+      notif.style.left = '50%';
+      notif.style.transform = 'translateX(-50%)';
+      notif.style.width = 'calc(100% - 32px)';
+      notif.style.maxWidth = '380px';
+      notif.style.backgroundColor = '#1E293B';
+      notif.style.color = '#FFFFFF';
+      notif.style.padding = '14px 16px';
+      notif.style.borderRadius = '16px';
+      notif.style.boxShadow = '0 10px 25px rgba(0,0,0,0.3)';
+      notif.style.zIndex = '99999';
+      notif.style.direction = 'rtl';
+      notif.style.fontFamily = 'Cairo, sans-serif';
+      notif.style.animation = 'slideDown 0.3s ease';
+
+      notif.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span class="material-symbols-rounded" style="color:#2DD4BF; font-size:20px;">check_circle</span>
+          <span style="font-size:12px; font-weight:700; color:#2DD4BF;">إنجاز • الآن</span>
+        </div>
+        <div style="font-weight:700; font-size:14px; margin-bottom:4px;">تنبيه: شراء مستلزمات المكتب</div>
+        <div style="font-size:12px; color:#CBD5E1; margin-bottom:12px;">حان موعد المشوار الآن في مكتبة سمير وعلي</div>
+        <div style="display:flex; gap:10px;">
+          <button style="flex:1; background:#10B981; border:none; color:white; padding:6px 12px; border-radius:8px; font-weight:700; cursor:pointer;" onclick="this.closest('div').parentElement.remove(); showToast('تم تعليم المهمة كمنجزة مباشرة من الإشعار ✅')">تمت</button>
+          <button style="flex:1; background:#334155; border:none; color:white; padding:6px 12px; border-radius:8px; font-weight:700; cursor:pointer;" onclick="this.closest('div').parentElement.remove(); showToast('تم فتح تفاصيل المهمة')">فتح</button>
+        </div>
+      `;
+
+      document.body.appendChild(notif);
+      setTimeout(() => {
+        if (notif.parentElement) notif.remove();
+      }, 7000);
+    }
+
     // Phase 5: Stats Dashboard & Excel Export v1.2 Logic
     // =============================================================
     let statsRange = 'week'; // 'week', 'month', 'year'

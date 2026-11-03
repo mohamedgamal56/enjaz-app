@@ -7,6 +7,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../tasks/presentation/quick_add_sheet.dart';
 import '../../tasks/presentation/widgets/task_card.dart';
+import '../../recurrence/domain/recurrence_service.dart';
+import '../../reminders/domain/notification_service.dart';
 
 class TodayScreen extends ConsumerStatefulWidget {
   const TodayScreen({super.key});
@@ -25,6 +27,17 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     super.initState();
     final now = DateTime.now();
     _selectedDate = DateTime(now.year, now.month, now.day);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final db = ref.read(databaseProvider);
+      await RecurrenceService.generateAllUpcomingInstances(db);
+      if (mounted) {
+        await NotificationService().rescheduleAll(
+          db,
+          languageCode: Localizations.localeOf(context).languageCode,
+        );
+      }
+    });
   }
 
   String _formatDateString(DateTime dt) {

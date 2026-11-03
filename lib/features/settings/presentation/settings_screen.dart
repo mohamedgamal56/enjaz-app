@@ -8,6 +8,7 @@ import '../../../core/utils/date_formatter.dart';
 import '../../../core/db/app_database.dart';
 import '../../voice_notes/domain/voice_note_service.dart';
 import '../../excel_export/presentation/excel_export_sheet.dart';
+import '../../reminders/presentation/reminders_settings_card.dart';
 import 'reasons_manager_screen.dart';
 import 'trash_screen.dart';
 
@@ -244,6 +245,10 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
+          // Section: Reminders & Notifications (Spec 8)
+          const RemindersSettingsCard(),
+          const SizedBox(height: 16),
+
           // Section: Excel Report Export (Spec 15.2)
           Card(
             child: ListTile(
@@ -282,7 +287,7 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    '${l10n.version}: 1.0.0 (Phase 5)',
+                    '${l10n.version}: 1.0.0 (Phase 6)',
                     style: theme.textTheme.labelSmall,
                   ),
                 ],
