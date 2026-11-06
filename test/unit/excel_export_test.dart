@@ -255,7 +255,6 @@ void main() {
           ideas: sampleIdeas,
           voiceNotes: sampleVoiceNotes,
           languageCode: 'ar',
-        outputDirectory: tempDir,
           outputDirectory: tempDir,
         );
 
