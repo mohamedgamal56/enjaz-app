@@ -272,6 +272,11 @@ class AppDatabase extends _$AppDatabase {
   // TASKS QUERIES
   // -------------------------------------------------------------
 
+  /// Get all active non-deleted tasks
+  Future<List<Task>> getAllActiveTasks() {
+    return (select(tasks)..where((t) => t.deletedAt.isNull())).get();
+  }
+
   /// Watch active tasks scheduled for a specific date (YYYY-MM-DD)
   Stream<List<Task>> watchTasksForDate(String date) {
     return (select(tasks)
