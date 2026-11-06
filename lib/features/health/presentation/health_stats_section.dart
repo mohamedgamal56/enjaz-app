@@ -96,7 +96,7 @@ class HealthStatsSection extends ConsumerWidget {
                     );
 
                     final adherenceRounded = metrics.overallTreatmentAdherence.round();
-                    final adherenceStr = '${NumeralsFormatter.format(adherenceRounded.toString(), numeralsFormat)}%';
+                    final adherenceStr = '${AppFormatter.formatStringDigits(adherenceRounded.toString(), format: numeralsFormat)}%';
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,21 +113,21 @@ class HealthStatsSection extends ConsumerWidget {
                             _buildKpiCard(
                               context,
                               title: isArabic ? 'فحوصات مطلوبة' : 'Needed Checkups',
-                              value: NumeralsFormatter.format(metrics.neededCount.toString(), numeralsFormat),
+                              value: AppFormatter.formatStringDigits(metrics.neededCount.toString(), format: numeralsFormat),
                               icon: Icons.assignment_late_outlined,
                               color: Colors.orange,
                             ),
                             _buildKpiCard(
                               context,
                               title: isArabic ? 'مواعيد مجدولة' : 'Scheduled Visits',
-                              value: NumeralsFormatter.format(metrics.scheduledCount.toString(), numeralsFormat),
+                              value: AppFormatter.formatStringDigits(metrics.scheduledCount.toString(), format: numeralsFormat),
                               icon: Icons.event_available_rounded,
                               color: Colors.blue,
                             ),
                             _buildKpiCard(
                               context,
                               title: isArabic ? 'أُنجزت هذا العام' : 'Done This Year',
-                              value: NumeralsFormatter.format(metrics.checkupsDoneThisYear.toString(), numeralsFormat),
+                              value: AppFormatter.formatStringDigits(metrics.checkupsDoneThisYear.toString(), format: numeralsFormat),
                               icon: Icons.check_circle_outline_rounded,
                               color: Colors.green,
                             ),

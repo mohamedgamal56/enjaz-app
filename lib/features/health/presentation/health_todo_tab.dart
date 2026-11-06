@@ -248,7 +248,7 @@ class HealthTodoTab extends ConsumerWidget {
         // find health category
         final cats = await db.getAllFinanceCategories();
         final healthCat = cats.firstWhere(
-          (c) => c.nameAr.contains('صحة') || c.nameEn.toLowerCase().contains('health'),
+          (c) => c.nameAr.contains('صحة') || (c.nameEn?.toLowerCase().contains('health') ?? false),
           orElse: () => cats.first,
         );
 
