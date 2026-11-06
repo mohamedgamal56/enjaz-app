@@ -366,8 +366,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
             await ReminderScheduler(db: db).scheduleReminder(
               reminder: savedRem,
               title: _titleController.text.trim(),
-              dueDate: finalDueDate,
-              dueTime: _selectedDueTime,
+              dueDate: _selectedDate,
+              dueTime: _selectedTime,
             );
           }
         }
