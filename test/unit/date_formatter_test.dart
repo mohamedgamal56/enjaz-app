@@ -1,7 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:enjaz/core/utils/date_formatter.dart';
 
 void main() {
+  setUpAll(() async {
+    await initializeDateFormatting('ar', null);
+    await initializeDateFormatting('en', null);
+  });
+
   group('AppFormatter Numerals Tests (Round 0)', () {
     test('Formats numbers with Western digits by default', () {
       expect(AppFormatter.formatNumber(0, format: NumeralsFormat.western), '0');
