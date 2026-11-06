@@ -5,7 +5,6 @@ import 'package:enjaz/features/finance/domain/finance_service.dart';
 import 'package:enjaz/features/health/domain/health_service.dart';
 import 'package:enjaz/features/timeline/domain/timeline_models.dart';
 import 'package:enjaz/core/utils/money_formatter.dart';
-import 'package:enjaz/core/utils/date_formatter.dart';
 import 'package:enjaz/core/db/app_database.dart';
 
 void main() {
@@ -103,15 +102,55 @@ void main() {
     test('Round 5 Acceptance: Finance calculations, essential vs side, savings rate & masking eye', () {
       const financeService = FinanceService();
 
-      // 1. Savings rate calculation
-      final savingsRate = financeService.calculateSavingsRate(
-        incomeMinor: 1000000, // 10,000 EGP
-        expensesMinor: 600000, // 6,000 EGP
-      );
-      expect(savingsRate, 40.0); // 40% saved
+      final txs = [
+        const Transaction(
+          id: 1,
+          kind: 'income',
+          amountMinor: 1000000, // 10,000 EGP
+          categoryId: 1,
+          nature: 'none',
+          occurredAt: 1730000000000,
+          localDate: '2026-11-01',
+          createdAt: 1730000000000,
+          updatedAt: 1730000000000,
+        ),
+        const Transaction(
+          id: 2,
+          kind: 'expense',
+          amountMinor: 600000, // 6,000 EGP
+          categoryId: 2,
+          nature: 'essential',
+          occurredAt: 1730001000000,
+          localDate: '2026-11-01',
+          createdAt: 1730001000000,
+          updatedAt: 1730001000000,
+        ),
+      ];
 
-      // Zero income shows 0.0
-      expect(financeService.calculateSavingsRate(incomeMinor: 0, expensesMinor: 50000), 0.0);
+      // 1. Savings rate calculation
+      final totals = financeService.calculateTotals(txs);
+      expect(totals.incomeMinor, 1000000);
+      expect(totals.expenseMinor, 600000);
+      expect(totals.savedMinor, 400000);
+      expect(totals.savingsRate, 0.4); // 40% saved
+
+      // Zero income shows null
+      expect(
+        financeService.calculateTotals([
+          const Transaction(
+            id: 3,
+            kind: 'expense',
+            amountMinor: 50000,
+            categoryId: 2,
+            nature: 'essential',
+            occurredAt: 1730002000000,
+            localDate: '2026-11-01',
+            createdAt: 1730002000000,
+            updatedAt: 1730002000000,
+          ),
+        ]).savingsRate,
+        isNull,
+      );
 
       // 2. MoneyFormatter with Masking Eye
       const amount = 2550; // 25.50 EGP
