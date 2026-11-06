@@ -336,5 +336,67 @@ class Budgets extends Table with CommonColumns {
   IntColumn get limitMinor => integer()(); // in piasters
 }
 
+// 26. Health Items (Checkups, Tests, Visits, Vaccinations) - Roadmap v2.0 Round 6
+@TableIndex(name: 'idx_health_items_status', columns: {#status})
+@TableIndex(name: 'idx_health_items_local_date', columns: {#localDate})
+@TableIndex(name: 'idx_health_items_deleted', columns: {#deletedAt})
+class HealthItems extends Table with CommonColumns {
+  TextColumn get title => text()();
+  TextColumn get kind => text()(); // checkup | test | specialist | dental | vaccination | other
+  TextColumn get status => text().withDefault(const Constant('needed'))(); // needed | scheduled | postponed | done | skipped
+  TextColumn get neededSince => text()(); // YYYY-MM-DD
+  TextColumn get dueBy => text().nullable()(); // YYYY-MM-DD
+  IntColumn get scheduledAt => integer().nullable()(); // UTC epoch ms
+  TextColumn get placeOrDoctor => text().nullable()();
+  IntColumn get doneAt => integer().nullable()(); // UTC epoch ms
+  TextColumn get resultNote => text().nullable()();
+  BoolColumn get followUpNeeded => boolean().withDefault(const Constant(false))();
+  IntColumn get postponeCount => integer().withDefault(const Constant(0))();
+  TextColumn get postponedReason => text().nullable()();
+  IntColumn get repeatEveryMonths => integer().nullable()(); // for recurring checkups
+  IntColumn get costMinor => integer().nullable()(); // in piasters, can create a finance transaction
+  IntColumn get occurredAt => integer()(); // UTC epoch ms for timeline
+  TextColumn get localDate => text()(); // YYYY-MM-DD for timeline
+}
+
+// 27. Health Events (Append-only history of item status transitions)
+@TableIndex(name: 'idx_health_events_item_id', columns: {#healthItemId})
+@TableIndex(name: 'idx_health_events_at', columns: {#at})
+class HealthEvents extends Table with CommonColumns {
+  IntColumn get healthItemId => integer().references(HealthItems, #id)();
+  IntColumn get at => integer()(); // UTC epoch ms
+  TextColumn get fromStatus => text()();
+  TextColumn get toStatus => text()();
+  TextColumn get note => text().nullable()();
+}
+
+// 28. Treatments (Medications, courses, physical therapy)
+@TableIndex(name: 'idx_treatments_adherence', columns: {#adherence})
+@TableIndex(name: 'idx_treatments_deleted', columns: {#deletedAt})
+class Treatments extends Table with CommonColumns {
+  IntColumn get healthItemId => integer().nullable().references(HealthItems, #id)();
+  TextColumn get name => text()();
+  TextColumn get instructionsNote => text().nullable()();
+  TextColumn get startDate => text()(); // YYYY-MM-DD
+  TextColumn get endDate => text().nullable()(); // YYYY-MM-DD
+  BoolColumn get purchased => boolean().withDefault(const Constant(false))();
+  IntColumn get purchasedAt => integer().nullable()(); // UTC epoch ms
+  IntColumn get purchaseCostMinor => integer().nullable()(); // in piasters
+  TextColumn get adherence => text().withDefault(const Constant('not_started'))(); // not_started | following | stopped | completed
+  TextColumn get stoppedReason => text().nullable()();
+  TextColumn get note => text().nullable()();
+  IntColumn get occurredAt => integer()(); // UTC epoch ms for timeline
+  TextColumn get localDate => text()(); // YYYY-MM-DD for timeline
+}
+
+// 29. Treatment Checks (Daily tick 'مشيت عليه النهارده')
+@TableIndex(name: 'idx_treatment_checks_treatment_date', columns: {#treatmentId, #checkDate})
+class TreatmentChecks extends Table with CommonColumns {
+  IntColumn get treatmentId => integer().references(Treatments, #id)();
+  TextColumn get checkDate => text()(); // YYYY-MM-DD
+  BoolColumn get taken => boolean().withDefault(const Constant(true))();
+}
+
+
 
 

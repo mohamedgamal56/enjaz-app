@@ -63,6 +63,10 @@ class ReminderScheduler {
         ? reminder.message!
         : title;
 
+    final isSensitive = reminder.ownerType == 'health_item' ||
+        reminder.ownerType == 'treatment' ||
+        reminder.ownerType == 'obligation';
+
     if (reminder.kind == 'alarm') {
       await _notificationService.scheduleAlarm(
         id: notifId,
@@ -71,6 +75,7 @@ class ReminderScheduler {
         scheduledDateTime: targetDateTime,
         payload: '${reminder.ownerType}:${reminder.ownerId}',
         languageCode: languageCode,
+        isSensitive: isSensitive,
       );
     } else {
       await _notificationService.scheduleNotification(
@@ -80,6 +85,7 @@ class ReminderScheduler {
         scheduledDateTime: targetDateTime,
         payload: '${reminder.ownerType}:${reminder.ownerId}',
         languageCode: languageCode,
+        isSensitive: isSensitive,
       );
     }
   }
@@ -193,6 +199,35 @@ class ReminderScheduler {
             reminder: r,
             title: ob.name,
             dueDate: ob.dueDate ?? ob.startDate,
+            dueTime: '09:00',
+            languageCode: languageCode,
+          );
+        }
+      } else if (r.ownerType == 'health_item') {
+        final item = await _db.getHealthItemById(r.ownerId);
+        if (item != null && item.deletedAt == null && item.status != 'done' && item.status != 'skipped') {
+          String? dueDate = item.dueBy ?? item.neededSince;
+          String? dueTime = '09:00';
+          if (item.scheduledAt != null) {
+            final dt = DateTime.fromMillisecondsSinceEpoch(item.scheduledAt!);
+            dueDate = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+            dueTime = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+          }
+          await scheduleReminder(
+            reminder: r,
+            title: item.title,
+            dueDate: dueDate,
+            dueTime: dueTime,
+            languageCode: languageCode,
+          );
+        }
+      } else if (r.ownerType == 'treatment') {
+        final tr = await _db.getTreatmentById(r.ownerId);
+        if (tr != null && tr.deletedAt == null && tr.adherence != 'completed' && tr.adherence != 'stopped') {
+          await scheduleReminder(
+            reminder: r,
+            title: tr.name,
+            dueDate: tr.startDate,
             dueTime: '09:00',
             languageCode: languageCode,
           );

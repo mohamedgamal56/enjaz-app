@@ -206,6 +206,78 @@ class TrashScreen extends ConsumerWidget {
     }
   }
 
+  void _permanentlyDeleteHealthItem(BuildContext context, WidgetRef ref, HealthItem item) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isArabic ? 'حذف نهائي' : 'Delete Permanently'),
+        content: Text(
+          isArabic
+              ? 'هل تريد حذف "${item.title}" وسجلاتها وتسجيلاتها الصوتية نهائياً؟ لا يمكن التراجع عن هذا الإجراء.'
+              : 'Permanently delete "${item.title}" and all its records? This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            child: Text(isArabic ? 'حذف نهائي' : 'Delete Permanently'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final db = ref.read(databaseProvider);
+      await db.permanentlyDeleteHealthItem(item.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(isArabic ? 'تم حذف الفحص نهائياً' : 'Health item permanently deleted')),
+      );
+    }
+  }
+
+  void _permanentlyDeleteTreatment(BuildContext context, WidgetRef ref, Treatment tr) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isArabic ? 'حذف نهائي' : 'Delete Permanently'),
+        content: Text(
+          isArabic
+              ? 'هل تريد حذف علاج "${tr.name}" وتأكيداته نهائياً؟ لا يمكن التراجع عن هذا الإجراء.'
+              : 'Permanently delete treatment "${tr.name}"? This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            child: Text(isArabic ? 'حذف نهائي' : 'Delete Permanently'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final db = ref.read(databaseProvider);
+      await db.permanentlyDeleteTreatment(tr.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(isArabic ? 'تم حذف العلاج نهائياً' : 'Treatment permanently deleted')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -215,16 +287,19 @@ class TrashScreen extends ConsumerWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           title: Text(isArabic ? 'سلة المحذوفات' : l10n.trash),
           bottom: TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
             tabs: [
               Tab(text: isArabic ? 'المهام' : 'Tasks'),
               Tab(text: isArabic ? 'الملاحظات' : 'Notes'),
               Tab(text: isArabic ? 'العادات' : 'Habits'),
               Tab(text: isArabic ? 'المال' : 'Finance'),
+              Tab(text: isArabic ? 'الصحة' : 'Health'),
             ],
           ),
           actions: [
@@ -638,6 +713,181 @@ class TrashScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+              );
+            },
+          );
+        },
+      ),
+
+      // 5. Health Tab
+      StreamBuilder<List<HealthItem>>(
+        stream: db.watchTrashHealthItems(),
+        builder: (context, healthSnap) {
+          final healthItems = healthSnap.data ?? [];
+
+          return StreamBuilder<List<Treatment>>(
+            stream: db.watchTrashTreatments(),
+            builder: (context, treatSnap) {
+              final treatments = treatSnap.data ?? [];
+
+              if (healthItems.isEmpty && treatments.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.delete_outline_rounded, size: 64, color: theme.colorScheme.outline),
+                      const SizedBox(height: 12),
+                      Text(
+                        isArabic ? 'سلة محذوفات الصحة فارغة' : 'Health trash is empty',
+                        style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.outline),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                children: [
+                  if (healthItems.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0, top: 4.0),
+                      child: Text(
+                        isArabic ? 'الفحوصات والكشوفات المحذوفة' : 'Deleted Checkups & Tests',
+                        style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    ...healthItems.map((item) {
+                      final deletedDateStr = item.deletedAt != null
+                          ? AppFormatter.formatDate(
+                              DateTime.fromMillisecondsSinceEpoch(item.deletedAt!),
+                              locale: Localizations.localeOf(context).toString(),
+                              format: numeralsFormat,
+                            )
+                          : '';
+
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8.0),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 18,
+                                backgroundColor: Colors.redAccent.withValues(alpha: 0.15),
+                                child: const Icon(Icons.medical_services_outlined, size: 18, color: Colors.redAccent),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${isArabic ? 'حُذف:' : 'Deleted:'} $deletedDateStr',
+                                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.restore_rounded, color: Colors.teal),
+                                tooltip: isArabic ? 'استرجاع' : 'Restore',
+                                onPressed: () async {
+                                  await db.restoreHealthItem(item.id);
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(isArabic ? 'تم استرجاع الفحص' : 'Item restored')),
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.delete_forever_rounded, color: theme.colorScheme.error),
+                                tooltip: isArabic ? 'حذف نهائي' : 'Delete Permanently',
+                                onPressed: () => _permanentlyDeleteHealthItem(context, ref, item),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                  if (treatments.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0, top: 12.0),
+                      child: Text(
+                        isArabic ? 'العلاجات المحذوفة' : 'Deleted Treatments',
+                        style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    ...treatments.map((tr) {
+                      final deletedDateStr = tr.deletedAt != null
+                          ? AppFormatter.formatDate(
+                              DateTime.fromMillisecondsSinceEpoch(tr.deletedAt!),
+                              locale: Localizations.localeOf(context).toString(),
+                              format: numeralsFormat,
+                            )
+                          : '';
+
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8.0),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 18,
+                                backgroundColor: Colors.purple.withValues(alpha: 0.15),
+                                child: const Icon(Icons.medication_outlined, size: 18, color: Colors.purple),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      tr.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${isArabic ? 'حُذف:' : 'Deleted:'} $deletedDateStr',
+                                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.restore_rounded, color: Colors.teal),
+                                tooltip: isArabic ? 'استرجاع' : 'Restore',
+                                onPressed: () async {
+                                  await db.restoreTreatment(tr.id);
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(isArabic ? 'تم استرجاع العلاج' : 'Treatment restored')),
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.delete_forever_rounded, color: theme.colorScheme.error),
+                                tooltip: isArabic ? 'حذف نهائي' : 'Delete Permanently',
+                                onPressed: () => _permanentlyDeleteTreatment(context, ref, tr),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                ],
               );
             },
           );

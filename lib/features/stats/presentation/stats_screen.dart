@@ -13,6 +13,7 @@ import '../../tasks/presentation/task_details_screen.dart';
 import '../domain/stats_service.dart';
 import '../../habits/presentation/habits_stats_section.dart';
 import '../../finance/presentation/finance_stats_section.dart';
+import '../../health/presentation/health_stats_section.dart';
 
 class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
@@ -185,6 +186,11 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                         label: Text(isAr ? 'المال والمصروفات' : 'Finance'),
                         icon: const Icon(Icons.account_balance_wallet_rounded, size: 16),
                       ),
+                      ButtonSegment<int>(
+                        value: 3,
+                        label: Text(isAr ? 'الصحة' : 'Health'),
+                        icon: const Icon(Icons.favorite_rounded, size: 16),
+                      ),
                     ],
                     selected: {_statsSection},
                     onSelectionChanged: (val) {
@@ -205,6 +211,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   HabitsStatsSection(range: stats.range),
                 ] else if (_statsSection == 2) ...[
                   FinanceStatsSection(referenceDate: _referenceDate),
+                ] else if (_statsSection == 3) ...[
+                  HealthStatsSection(referenceDate: _referenceDate),
                 ] else if (stats.isEmpty) ...[
                   _buildEmptyState(colors, l10n),
                 ] else ...[

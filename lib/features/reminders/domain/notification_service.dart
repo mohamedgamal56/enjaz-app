@@ -181,6 +181,7 @@ class NotificationService {
     String? payload,
     String? languageCode,
     int autoStopMinutes = 5,
+    bool isSensitive = false,
   }) async {
     await initialize();
     await cancelNotification(id);
@@ -206,6 +207,7 @@ class NotificationService {
       additionalFlags: Int32List.fromList([4]),
       icon: '@drawable/ic_stat_enjaz',
       timeoutAfter: autoStopMinutes * 60 * 1000,
+      visibility: isSensitive ? NotificationVisibility.private : NotificationVisibility.public,
       actions: <AndroidNotificationAction>[
         AndroidNotificationAction(
           'action_done',
@@ -264,6 +266,7 @@ class NotificationService {
     required DateTime scheduledDateTime,
     String? payload,
     String? languageCode,
+    bool isSensitive = false,
   }) async {
     await initialize();
     await cancelNotification(id);
@@ -281,6 +284,7 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
       icon: '@drawable/ic_stat_enjaz',
+      visibility: isSensitive ? NotificationVisibility.private : NotificationVisibility.public,
       actions: <AndroidNotificationAction>[
         AndroidNotificationAction(
           'action_done',

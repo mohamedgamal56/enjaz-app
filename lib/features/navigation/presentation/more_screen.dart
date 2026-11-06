@@ -8,6 +8,7 @@ import '../../settings/presentation/settings_screen.dart';
 import '../../backup/presentation/backup_screen.dart';
 import '../../habits/presentation/habits_screen.dart';
 import '../../finance/presentation/finance_screen.dart';
+import '../../health/presentation/health_screen.dart';
 
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -85,6 +86,21 @@ class MoreScreen extends ConsumerWidget {
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const HabitsScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: 10),
+
+        // 3. Health (Roadmap v2.0 Round 6)
+        _buildMenuCard(
+          context,
+          icon: Icons.favorite_rounded,
+          iconColor: Colors.redAccent,
+          title: isArabic ? 'الصحة والعلاج' : 'Health & Treatments',
+          subtitle: isArabic ? 'الفحوصات، التحاليل، مواعيد الكشوفات، ومتابعة الأدوية' : 'Checkups, lab tests, appointments & medication tracking',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const HealthScreen()),
             );
           },
         ),

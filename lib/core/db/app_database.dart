@@ -38,12 +38,16 @@ part 'app_database.g.dart';
   Obligations,
   ObligationInstances,
   Budgets,
+  HealthItems,
+  HealthEvents,
+  Treatments,
+  TreatmentChecks,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -190,6 +194,37 @@ class AppDatabase extends _$AppDatabase {
             );
 
             await _seedFinanceDefaults();
+          }
+          if (from < 7) {
+            await m.createTable(healthItems);
+            await m.createTable(healthEvents);
+            await m.createTable(treatments);
+            await m.createTable(treatmentChecks);
+
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_health_items_status ON health_items (status);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_health_items_local_date ON health_items (local_date);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_health_items_deleted ON health_items (deleted_at);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_health_events_item_id ON health_events (health_item_id);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_health_events_at ON health_events (at);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_treatments_adherence ON treatments (adherence);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_treatments_deleted ON treatments (deleted_at);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_treatment_checks_treatment_date ON treatment_checks (treatment_id, check_date);',
+            );
           }
         },
       );
@@ -733,6 +768,7 @@ class AppDatabase extends _$AppDatabase {
     final deletedGoalIds = (await (select(goals)..where((g) => g.deletedAt.isNotNull())).get()).map((g) => g.id).toSet();
     final deletedIdeaIds = (await (select(ideas)..where((i) => i.deletedAt.isNotNull())).get()).map((i) => i.id).toSet();
     final deletedNoteIds = (await (select(notes)..where((n) => n.deletedAt.isNotNull())).get()).map((n) => n.id).toSet();
+    final deletedHealthItemIds = (await (select(healthItems)..where((h) => h.deletedAt.isNotNull())).get()).map((h) => h.id).toSet();
 
     final allVoiceNotes = await select(voiceNotes).get();
     final toDeleteVoiceNotes = allVoiceNotes.where((v) {
@@ -741,6 +777,7 @@ class AppDatabase extends _$AppDatabase {
       if (v.parentType == 'goal' && deletedGoalIds.contains(v.parentId)) return true;
       if (v.parentType == 'idea' && deletedIdeaIds.contains(v.parentId)) return true;
       if (v.parentType == 'note' && deletedNoteIds.contains(v.parentId)) return true;
+      if (v.parentType == 'health_item' && deletedHealthItemIds.contains(v.parentId)) return true;
       return false;
     }).toList();
 
@@ -780,6 +817,10 @@ class AppDatabase extends _$AppDatabase {
       itemsPurged += await (delete(transactions)..where((t) => t.deletedAt.isNotNull())).go();
       itemsPurged += await (delete(wishlistItems)..where((w) => w.deletedAt.isNotNull())).go();
       itemsPurged += await (delete(obligations)..where((o) => o.deletedAt.isNotNull())).go();
+      itemsPurged += await (delete(healthEvents)..where((e) => e.deletedAt.isNotNull())).go();
+      itemsPurged += await (delete(healthItems)..where((h) => h.deletedAt.isNotNull())).go();
+      itemsPurged += await (delete(treatmentChecks)..where((c) => c.deletedAt.isNotNull())).go();
+      itemsPurged += await (delete(treatments)..where((t) => t.deletedAt.isNotNull())).go();
     });
 
     return (itemsPurged, filesDeleted, bytesFreed);
@@ -1420,6 +1461,10 @@ class AppDatabase extends _$AppDatabase {
     final obligationsList = await select(obligations).get();
     final obligationInstancesList = await select(obligationInstances).get();
     final budgetsList = await select(budgets).get();
+    final healthItemsList = await select(healthItems).get();
+    final healthEventsList = await select(healthEvents).get();
+    final treatmentsList = await select(treatments).get();
+    final treatmentChecksList = await select(treatmentChecks).get();
 
     return {
       'schema_version': schemaVersion,
@@ -1449,12 +1494,20 @@ class AppDatabase extends _$AppDatabase {
       'obligations': obligationsList.map((e) => e.toJson()).toList(),
       'obligation_instances': obligationInstancesList.map((e) => e.toJson()).toList(),
       'budgets': budgetsList.map((e) => e.toJson()).toList(),
+      'health_items': healthItemsList.map((e) => e.toJson()).toList(),
+      'health_events': healthEventsList.map((e) => e.toJson()).toList(),
+      'treatments': treatmentsList.map((e) => e.toJson()).toList(),
+      'treatment_checks': treatmentChecksList.map((e) => e.toJson()).toList(),
     };
   }
 
   /// Import and replace all database tables from a JSON map in a transaction
   Future<void> importAllData(Map<String, dynamic> data) async {
     await transaction(() async {
+      await delete(treatmentChecks).go();
+      await delete(treatments).go();
+      await delete(healthEvents).go();
+      await delete(healthItems).go();
       await delete(budgets).go();
       await delete(obligationInstances).go();
       await delete(obligations).go();
@@ -1604,6 +1657,26 @@ class AppDatabase extends _$AppDatabase {
       if (data['budgets'] is List) {
         for (final item in (data['budgets'] as List)) {
           await into(budgets).insert(Budget.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['health_items'] is List) {
+        for (final item in (data['health_items'] as List)) {
+          await into(healthItems).insert(HealthItem.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['health_events'] is List) {
+        for (final item in (data['health_events'] as List)) {
+          await into(healthEvents).insert(HealthEvent.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['treatments'] is List) {
+        for (final item in (data['treatments'] as List)) {
+          await into(treatments).insert(Treatment.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['treatment_checks'] is List) {
+        for (final item in (data['treatment_checks'] as List)) {
+          await into(treatmentChecks).insert(TreatmentCheck.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
         }
       }
     });
@@ -1845,6 +1918,20 @@ class AppDatabase extends _$AppDatabase {
         .get();
     for (final o in oldObs) {
       await permanentlyDeleteObligation(o.id);
+      purged++;
+    }
+    final oldHealth = await (select(healthItems)
+          ..where((h) => h.deletedAt.isNotNull() & h.deletedAt.isSmallerOrEqualValue(thirtyDaysAgoMs)))
+        .get();
+    for (final h in oldHealth) {
+      await permanentlyDeleteHealthItem(h.id);
+      purged++;
+    }
+    final oldTreatments = await (select(treatments)
+          ..where((t) => t.deletedAt.isNotNull() & t.deletedAt.isSmallerOrEqualValue(thirtyDaysAgoMs)))
+        .get();
+    for (final t in oldTreatments) {
+      await permanentlyDeleteTreatment(t.id);
       purged++;
     }
     return purged;
@@ -2664,6 +2751,415 @@ class AppDatabase extends _$AppDatabase {
 
   Future<int> deleteBudget(int id) {
     return (delete(budgets)..where((b) => b.id.equals(id))).go();
+  }
+
+  // -------------------------------------------------------------
+  // ROADMAP V2.0 ROUND 6: HEALTH QUERIES & MUTATIONS
+  // -------------------------------------------------------------
+
+  Stream<List<HealthItem>> watchActiveHealthItems() {
+    return (select(healthItems)
+          ..where((h) =>
+              h.deletedAt.isNull() &
+              h.status.isNotIn(['done', 'skipped']))
+          ..orderBy([
+            (h) => OrderingTerm.asc(h.neededSince),
+            (h) => OrderingTerm.asc(h.id),
+          ]))
+        .watch();
+  }
+
+  Stream<List<HealthItem>> watchDoneHealthItems() {
+    return (select(healthItems)
+          ..where((h) => h.deletedAt.isNull() & h.status.equals('done'))
+          ..orderBy([(h) => OrderingTerm.desc(h.doneAt)]))
+        .watch();
+  }
+
+  Stream<List<HealthItem>> watchTrashHealthItems() {
+    return (select(healthItems)
+          ..where((h) => h.deletedAt.isNotNull())
+          ..orderBy([(h) => OrderingTerm.desc(h.deletedAt)]))
+        .watch();
+  }
+
+  Future<List<HealthItem>> getAllActiveHealthItems() {
+    return (select(healthItems)..where((h) => h.deletedAt.isNull())).get();
+  }
+
+  Future<HealthItem?> getHealthItemById(int id) {
+    return (select(healthItems)..where((h) => h.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<int> insertHealthItemWithEvent(
+    HealthItemsCompanion item, {
+    String? eventNote,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final insertedId = await into(healthItems).insert(item);
+    final targetStatus = item.status.present ? item.status.value : 'needed';
+    await into(healthEvents).insert(
+      HealthEventsCompanion.insert(
+        healthItemId: insertedId,
+        at: now,
+        fromStatus: 'none',
+        toStatus: targetStatus,
+        note: Value(eventNote ?? 'تمت الإضافة'),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+    return insertedId;
+  }
+
+  Future<bool> updateHealthItem(HealthItemsCompanion item) {
+    return update(healthItems).replace(item);
+  }
+
+  Future<void> scheduleHealthItem(
+    int id, {
+    required DateTime scheduledAt,
+    String? placeOrDoctor,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final item = await getHealthItemById(id);
+    if (item == null) return;
+
+    await (update(healthItems)..where((h) => h.id.equals(id))).write(
+      HealthItemsCompanion(
+        status: const Value('scheduled'),
+        scheduledAt: Value(scheduledAt.millisecondsSinceEpoch),
+        placeOrDoctor: placeOrDoctor != null ? Value(placeOrDoctor) : const Value.absent(),
+        updatedAt: Value(now),
+      ),
+    );
+
+    await into(healthEvents).insert(
+      HealthEventsCompanion.insert(
+        healthItemId: id,
+        at: now,
+        fromStatus: item.status,
+        toStatus: 'scheduled',
+        note: Value(placeOrDoctor != null ? 'تم تحديد موعد عند: $placeOrDoctor' : 'تم تحديد موعد'),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+
+  Future<void> postponeHealthItem(
+    int id, {
+    required String reason,
+    String? newDueBy,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final item = await getHealthItemById(id);
+    if (item == null) return;
+
+    await (update(healthItems)..where((h) => h.id.equals(id))).write(
+      HealthItemsCompanion(
+        status: const Value('postponed'),
+        postponedReason: Value(reason),
+        postponeCount: Value(item.postponeCount + 1),
+        dueBy: newDueBy != null ? Value(newDueBy) : const Value.absent(),
+        updatedAt: Value(now),
+      ),
+    );
+
+    await into(healthEvents).insert(
+      HealthEventsCompanion.insert(
+        healthItemId: id,
+        at: now,
+        fromStatus: item.status,
+        toStatus: 'postponed',
+        note: Value(reason),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+
+  Future<int?> completeHealthItem(
+    int id, {
+    required DateTime doneDate,
+    String? resultNote,
+    bool followUpNeeded = false,
+    int? costMinor,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final item = await getHealthItemById(id);
+    if (item == null) return null;
+
+    final doneMs = doneDate.millisecondsSinceEpoch;
+    await (update(healthItems)..where((h) => h.id.equals(id))).write(
+      HealthItemsCompanion(
+        status: const Value('done'),
+        doneAt: Value(doneMs),
+        resultNote: Value(resultNote),
+        followUpNeeded: Value(followUpNeeded),
+        costMinor: costMinor != null ? Value(costMinor) : const Value.absent(),
+        updatedAt: Value(now),
+      ),
+    );
+
+    await into(healthEvents).insert(
+      HealthEventsCompanion.insert(
+        healthItemId: id,
+        at: now,
+        fromStatus: item.status,
+        toStatus: 'done',
+        note: Value(resultNote ?? 'تم الإنجاز بنجاح'),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+
+    // If repeatEveryMonths is set, create the next needed item!
+    if (item.repeatEveryMonths != null && item.repeatEveryMonths! > 0) {
+      final months = item.repeatEveryMonths!;
+      final nextDate = DateTime(doneDate.year, doneDate.month + months, doneDate.day);
+      final nextDateStr = '${nextDate.year}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.day.toString().padLeft(2, '0')}';
+      final nextItemId = await into(healthItems).insert(
+        HealthItemsCompanion.insert(
+          title: item.title,
+          kind: item.kind,
+          status: const Value('needed'),
+          neededSince: nextDateStr,
+          dueBy: Value(nextDateStr),
+          placeOrDoctor: Value(item.placeOrDoctor),
+          repeatEveryMonths: Value(item.repeatEveryMonths),
+          occurredAt: nextDate.millisecondsSinceEpoch,
+          localDate: nextDateStr,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+      await into(healthEvents).insert(
+        HealthEventsCompanion.insert(
+          healthItemId: nextItemId,
+          at: now,
+          fromStatus: 'none',
+          toStatus: 'needed',
+          note: const Value('تكرار دوري تلقائي بعد الإنجاز'),
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+      return nextItemId;
+    }
+    return null;
+  }
+
+  Future<void> softDeleteHealthItem(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(healthItems)..where((h) => h.id.equals(id))).write(
+      HealthItemsCompanion(
+        deletedAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+    // Cancel reminders for this health item
+    await (delete(reminders)..where((r) => r.ownerType.equals('health_item') & r.ownerId.equals(id))).go();
+  }
+
+  Future<void> restoreHealthItem(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(healthItems)..where((h) => h.id.equals(id))).write(
+      HealthItemsCompanion(
+        deletedAt: const Value(null),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> permanentlyDeleteHealthItem(int id) async {
+    // 1. Delete cascaded voice notes
+    final vns = await (select(voiceNotes)
+          ..where((v) => v.parentType.equals('health_item') & v.parentId.equals(id)))
+        .get();
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      for (final vn in vns) {
+        final f = File(p.join(appDir.path, vn.fileName));
+        if (await f.exists()) await f.delete();
+      }
+    } catch (_) {}
+    await (delete(voiceNotes)
+          ..where((v) => v.parentType.equals('health_item') & v.parentId.equals(id)))
+        .go();
+
+    // 2. Delete reminders & events
+    await (delete(reminders)..where((r) => r.ownerType.equals('health_item') & r.ownerId.equals(id))).go();
+    await (delete(healthEvents)..where((e) => e.healthItemId.equals(id))).go();
+    await (delete(healthItems)..where((h) => h.id.equals(id))).go();
+  }
+
+  Stream<List<HealthEvent>> watchHealthEventsForItem(int healthItemId) {
+    return (select(healthEvents)
+          ..where((e) => e.healthItemId.equals(healthItemId))
+          ..orderBy([(e) => OrderingTerm.asc(e.at)]))
+        .watch();
+  }
+
+  Future<List<HealthEvent>> getHealthEventsForItem(int healthItemId) {
+    return (select(healthEvents)
+          ..where((e) => e.healthItemId.equals(healthItemId))
+          ..orderBy([(e) => OrderingTerm.asc(e.at)]))
+        .get();
+  }
+
+  // --- TREATMENTS ---
+
+  Stream<List<Treatment>> watchActiveTreatments() {
+    return (select(treatments)
+          ..where((t) => t.deletedAt.isNull())
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .watch();
+  }
+
+  Stream<List<Treatment>> watchTrashTreatments() {
+    return (select(treatments)
+          ..where((t) => t.deletedAt.isNotNull())
+          ..orderBy([(t) => OrderingTerm.desc(t.deletedAt)]))
+        .watch();
+  }
+
+  Future<List<Treatment>> getAllActiveTreatments() {
+    return (select(treatments)..where((t) => t.deletedAt.isNull())).get();
+  }
+
+  Future<Treatment?> getTreatmentById(int id) {
+    return (select(treatments)..where((t) => t.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<int> insertTreatment(TreatmentsCompanion treatment) {
+    return into(treatments).insert(treatment);
+  }
+
+  Future<bool> updateTreatment(TreatmentsCompanion treatment) {
+    return update(treatments).replace(treatment);
+  }
+
+  Future<void> updateTreatmentAdherence(
+    int id, {
+    required String adherence,
+    String? stoppedReason,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(treatments)..where((t) => t.id.equals(id))).write(
+      TreatmentsCompanion(
+        adherence: Value(adherence),
+        stoppedReason: stoppedReason != null ? Value(stoppedReason) : const Value.absent(),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> markTreatmentPurchased(int id, {int? purchaseCostMinor}) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(treatments)..where((t) => t.id.equals(id))).write(
+      TreatmentsCompanion(
+        purchased: const Value(true),
+        purchasedAt: Value(now),
+        purchaseCostMinor: purchaseCostMinor != null ? Value(purchaseCostMinor) : const Value.absent(),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> softDeleteTreatment(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(treatments)..where((t) => t.id.equals(id))).write(
+      TreatmentsCompanion(
+        deletedAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+    await (delete(reminders)..where((r) => r.ownerType.equals('treatment') & r.ownerId.equals(id))).go();
+  }
+
+  Future<void> restoreTreatment(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(treatments)..where((t) => t.id.equals(id))).write(
+      TreatmentsCompanion(
+        deletedAt: const Value(null),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> permanentlyDeleteTreatment(int id) async {
+    await (delete(reminders)..where((r) => r.ownerType.equals('treatment') & r.ownerId.equals(id))).go();
+    await (delete(treatmentChecks)..where((c) => c.treatmentId.equals(id))).go();
+    await (delete(treatments)..where((t) => t.id.equals(id))).go();
+  }
+
+  // --- TREATMENT CHECKS ---
+
+  Stream<List<TreatmentCheck>> watchTreatmentChecks(int treatmentId) {
+    return (select(treatmentChecks)
+          ..where((c) => c.treatmentId.equals(treatmentId))
+          ..orderBy([(c) => OrderingTerm.desc(c.checkDate)]))
+        .watch();
+  }
+
+  Future<List<TreatmentCheck>> getTreatmentChecksForRange(
+    int treatmentId,
+    String startDate,
+    String endDate,
+  ) {
+    return (select(treatmentChecks)
+          ..where((c) =>
+              c.treatmentId.equals(treatmentId) &
+              c.checkDate.isBiggerOrEqualValue(startDate) &
+              c.checkDate.isSmallerOrEqualValue(endDate)))
+        .get();
+  }
+
+  Future<void> toggleTreatmentCheck({
+    required int treatmentId,
+    required String checkDate,
+    required bool taken,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final existing = await (select(treatmentChecks)
+          ..where((c) =>
+              c.treatmentId.equals(treatmentId) & c.checkDate.equals(checkDate)))
+        .getSingleOrNull();
+
+    if (existing != null) {
+      if (!taken) {
+        // If unticked, remove check or set taken = false
+        await (delete(treatmentChecks)..where((c) => c.id.equals(existing.id))).go();
+      } else {
+        await (update(treatmentChecks)..where((c) => c.id.equals(existing.id))).write(
+          TreatmentChecksCompanion(
+            taken: const Value(true),
+            updatedAt: Value(now),
+          ),
+        );
+      }
+    } else if (taken) {
+      await into(treatmentChecks).insert(
+        TreatmentChecksCompanion.insert(
+          treatmentId: treatmentId,
+          checkDate: checkDate,
+          taken: const Value(true),
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    }
+  }
+
+  Future<bool> isTreatmentCheckedToday(int treatmentId, String todayDate) async {
+    final existing = await (select(treatmentChecks)
+          ..where((c) =>
+              c.treatmentId.equals(treatmentId) &
+              c.checkDate.equals(todayDate) &
+              c.taken.equals(true)))
+        .getSingleOrNull();
+    return existing != null;
   }
 }
 

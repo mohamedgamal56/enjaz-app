@@ -78,6 +78,10 @@ class BackupService {
       'finance': ((dataMap['transactions'] as List?)?.length ?? 0) +
           ((dataMap['wishlist_items'] as List?)?.length ?? 0) +
           ((dataMap['obligations'] as List?)?.length ?? 0),
+      'health_items': (dataMap['health_items'] as List?)?.length ?? 0,
+      'treatments': (dataMap['treatments'] as List?)?.length ?? 0,
+      'health': ((dataMap['health_items'] as List?)?.length ?? 0) +
+          ((dataMap['treatments'] as List?)?.length ?? 0),
     };
 
     final manifest = BackupManifest(
@@ -179,6 +183,11 @@ class BackupService {
               ((dataMap['wishlist_items'] as List?)?.length ?? 0) +
               ((dataMap['obligations'] as List?)?.length ?? 0)
           : (manifest?.counts['finance'] ?? 0);
+      final healthCount = ((dataMap['health_items'] as List?)?.length ?? 0) +
+              ((dataMap['treatments'] as List?)?.length ?? 0) != 0
+          ? ((dataMap['health_items'] as List?)?.length ?? 0) +
+              ((dataMap['treatments'] as List?)?.length ?? 0)
+          : (manifest?.counts['health'] ?? 0);
       final voiceNotesCount = (dataMap['voice_notes'] as List?)?.length ?? manifest?.counts['voice_notes'] ?? 0;
 
       DateTime? createdAt;
@@ -200,6 +209,7 @@ class BackupService {
         notesCount: notesCount,
         habitsCount: habitsCount,
         financeCount: financeCount,
+        healthCount: healthCount,
         voiceNotesCount: voiceNotesCount,
         fileSizeBytes: bytes.length,
       );

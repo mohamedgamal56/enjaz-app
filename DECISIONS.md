@@ -280,3 +280,34 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
     - Excel report extended with 4 dedicated sheets: `Transactions`, `Obligations`, `Wishlist`, and `Finance summary`, fully formatted with Western digits and RTL layout.
     - CSV export includes `transactions.csv`.
 
+## Decision 19: Round 6 Health Module (Drift v7), Checkups Lifecycle, Treatment Adherence, Medical Privacy & Stats Integration
+- **Context**: Roadmap v2.0 Section 10 specifies the Health module covering checkups, tests, specialist appointments, treatments adherence, reminders, and medical privacy.
+- **Decision & Implementation**:
+  - **Scope & Medical Disclaimer**:
+    - Pure tracking and reminders only: zero medical advice, zero diagnosis.
+    - Mandatory disclaimer banner prominently visible: "التطبيق للمتابعة والتذكير فقط ولا يغني عن الطبيب / For tracking and reminders only; it does not replace a doctor".
+  - **Medical Privacy & Lock-Screen Protection**:
+    - Covered by the App Lock and hidden from recent apps thumbnails.
+    - All appointment and treatment reminders use `NotificationVisibility.private`, ensuring sensitive medical details and drug names are masked on the device lock screen by default.
+  - **Drift Migration v7 (Health Schema)**:
+    - Added 4 tables:
+      1. `HealthItems`: tracks checkups, tests, visits, vaccinations, with status transitions (`needed`, `scheduled`, `postponed`, `done`, `skipped`), `needed_since`, `scheduled_at`, `place_or_doctor`, `done_at`, `result_note`, `follow_up_needed`, `postpone_count`, `postponed_reason`, `repeat_every_months`, `cost_minor`, `occurred_at`, `local_date`, and `CommonColumns`.
+      2. `HealthEvents`: append-only audit trail logging every status change with timestamp and note.
+      3. `Treatments`: tracks medications and courses with `name`, `instructions_note`, `start_date`, `end_date`, `purchased` flag & cost, `adherence` status (`not_started`, `following`, `stopped`, `completed`), and `stopped_reason`.
+      4. `TreatmentChecks`: daily tick ("مشيت عليه النهارده") feeding into adherence calculations.
+    - Soft delete to trash (5th tab in TrashScreen) with permanent delete cascaded to voice notes and reminders.
+    - AES-256-GCM encrypted backup includes all health tables and manifests.
+  - **Pure Dart Health Engine (`HealthService`)**:
+    - `calculateWaitingDuration`: calculates days and months since `needed_since` ("محتاج من N شهر / يوم") so forgotten or postponed items stand out visually.
+    - `calculateTreatmentAdherence`: calculates total elapsed active days vs taken days to output exact adherence percentage.
+    - `getNextRecurringDate`: adds recurring months for automated next-item creation on done checkups.
+    - `computeHealthMetrics`: calculates KPI counts, longest-waiting checkups, upcoming appointments, and overall treatment adherence.
+  - **UI Architecture (`More > الصحة`)**:
+    - 3 Segmented tabs:
+      1. `To do (المطلوب)`: pending items sorted by waiting time, with schedule, postpone (with reason), done (with result note & cost), and reminder actions.
+      2. `History (السجل)`: completed checkups with completion dates, result notes, follow-up badges, and audit history.
+      3. `Treatments (العلاجات)`: medications cards with purchased status, instructions, adherence status, daily tick button ("مشيت عليه النهارده"), and adherence progress bar.
+  - **Stats Integration**:
+    - Stats screen adds a 4th segment "الصحة" displaying KPI cards (needed, scheduled, done this year, treatment adherence %), longest-waiting checkups, and upcoming appointments.
+
+
