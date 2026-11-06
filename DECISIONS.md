@@ -224,3 +224,28 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
     - Added setting to hide notification details on the device lock screen (`NotificationVisibility.private`).
     - Added guidance message when device screen lock is not configured.
 
+## Decision 17: Round 4 Habits Architecture (Drift v5), Pure Dart Rules, Today Strip, Heatmap Calendar, and Statistics Integration
+- **Context**: Roadmap v2.0 Section 8 specifies the complete Habits module with 4 habit types (count, check, amount, checklist), 6 suggested habits, horizontal strip on Today, management in More > Habits, detail screen with month heatmap calendar and streaks, shared reminders, and stats tab integration.
+- **Decision & Implementation**:
+  - **Drift Migration v5 (Habits Data Model)**:
+    - Added 4 tables: `Habits` (`name_ar`, `name_en`, `type`, `unit`, `daily_target`, `icon`, `color`, `schedule_days`, `builtin_key`, `sort_order`, `archived`, `CommonColumns`), `HabitItems` (checklist items), `HabitLogs` (execution entries with `at` epoch ms for Round 7 timeline), and `HabitItemLogs` (checklist execution entries).
+    - Composite indexes on `(habit_id, log_date)`, `(habit_id, item_id, log_date)`, and `deleted_at`.
+    - Integrated with soft delete, 30-day purge, and full encrypted/unencrypted backup and restore.
+  - **Pure Dart Habits Rules (`HabitsService`)**:
+    - Weekdays bitmask evaluation (1..127): `(scheduleDays & (1 << (date.weekday - 1))) != 0`.
+    - Completion rules: `check` -> logged; `count` & `amount` -> daily total >= target if target exists, else > 0; `checklist` -> all items logged.
+    - Streaks calculation: consecutive complete scheduled days ending today (or yesterday if today is not complete yet); unscheduled days do not break the streak.
+    - Historical best streak, missed days count, and period completion rate calculations.
+  - **6 Suggested Habits**:
+    - Pre-configured, fully editable templates: Coffee (count, unit 'كوب'), Five prayers (checklist of 5 items), Quran (amount, unit 'صفحة', target 10), Adhkar (checklist: Morning & Evening), Water (count, unit 'كوب', target 8), Exercise (check).
+    - Conforms to Spec note: stores only labels, zero religious texts or prayer calculation algorithms.
+  - **Today Screen Strip**:
+    - Compact horizontal strip under date header displaying scheduled habits with 1-tap quick actions (+1 for count, tick for check, amount input sheet, checklist expander).
+  - **Habit Details Screen**:
+    - Month Heatmap Calendar with day-by-day intensity and tap-to-log past days (back-dating).
+    - Current streak (🔥) & Best streak (🏆) badges.
+    - Shared reminders integration (notification / alarm) via `ReminderScheduler`.
+  - **Stats Integration**:
+    - Section switcher on Statistics screen toggling between Tasks performance and Habits analytics.
+    - Shows consistency heatmap, most consistent habit, most missed habit, and daily line chart for count habits.
+

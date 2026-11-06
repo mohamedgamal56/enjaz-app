@@ -73,6 +73,7 @@ class BackupService {
       'recurrences': (dataMap['recurrences'] as List?)?.length ?? 0,
       'voice_notes': voiceCount,
       'notes': (dataMap['notes'] as List?)?.length ?? 0,
+      'habits': (dataMap['habits'] as List?)?.length ?? 0,
     };
 
     final manifest = BackupManifest(
@@ -166,6 +167,7 @@ class BackupService {
       final goalsCount = (dataMap['goals'] as List?)?.length ?? manifest?.counts['goals'] ?? 0;
       final ideasCount = (dataMap['ideas'] as List?)?.length ?? manifest?.counts['ideas'] ?? 0;
       final notesCount = (dataMap['notes'] as List?)?.length ?? manifest?.counts['notes'] ?? 0;
+      final habitsCount = (dataMap['habits'] as List?)?.length ?? manifest?.counts['habits'] ?? 0;
       final voiceNotesCount = (dataMap['voice_notes'] as List?)?.length ?? manifest?.counts['voice_notes'] ?? 0;
 
       DateTime? createdAt;
@@ -185,6 +187,7 @@ class BackupService {
         goalsCount: goalsCount,
         ideasCount: ideasCount,
         notesCount: notesCount,
+        habitsCount: habitsCount,
         voiceNotesCount: voiceNotesCount,
         fileSizeBytes: bytes.length,
       );

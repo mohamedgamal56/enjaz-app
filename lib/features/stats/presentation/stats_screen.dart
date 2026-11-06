@@ -11,6 +11,7 @@ import '../../../core/utils/date_formatter.dart';
 import '../../excel_export/presentation/excel_export_sheet.dart';
 import '../../tasks/presentation/task_details_screen.dart';
 import '../domain/stats_service.dart';
+import '../../habits/presentation/habits_stats_section.dart';
 
 class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
@@ -20,6 +21,7 @@ class StatsScreen extends ConsumerStatefulWidget {
 }
 
 class _StatsScreenState extends ConsumerState<StatsScreen> {
+  int _statsSection = 0; // 0: Tasks & Productivity, 1: Habits
   StatsRangeType _rangeType = StatsRangeType.week;
   DateTime _referenceDate = DateTime.now();
 
@@ -162,6 +164,29 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               children: [
+                // 0. Section Switcher (Tasks vs Habits)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: SegmentedButton<int>(
+                    segments: [
+                      ButtonSegment<int>(
+                        value: 0,
+                        label: Text(isAr ? 'المهام والإنجاز' : 'Tasks & Progress'),
+                        icon: const Icon(Icons.task_alt_rounded, size: 16),
+                      ),
+                      ButtonSegment<int>(
+                        value: 1,
+                        label: Text(isAr ? 'العادات اليومية' : 'Habits'),
+                        icon: const Icon(Icons.repeat_rounded, size: 16),
+                      ),
+                    ],
+                    selected: {_statsSection},
+                    onSelectionChanged: (val) {
+                      setState(() => _statsSection = val.first);
+                    },
+                  ),
+                ),
+
                 // 1. Range Segmented Control
                 _buildSegmentedControl(colors, l10n),
                 const SizedBox(height: 12),
@@ -170,7 +195,9 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 _buildRangeNavigator(colors, rangeLabel, isAr),
                 const SizedBox(height: 16),
 
-                if (stats.isEmpty) ...[
+                if (_statsSection == 1) ...[
+                  HabitsStatsSection(range: stats.range),
+                ] else if (stats.isEmpty) ...[
                   _buildEmptyState(colors, l10n),
                 ] else ...[
                   // 3. Summary Cards Grid

@@ -26,12 +26,16 @@ part 'app_database.g.dart';
   VoiceNotes,
   Reminders,
   Notes,
+  Habits,
+  HabitItems,
+  HabitLogs,
+  HabitItemLogs,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -90,6 +94,39 @@ class AppDatabase extends _$AppDatabase {
             );
             await customStatement(
               'CREATE INDEX IF NOT EXISTS idx_notes_deleted ON notes (deleted_at);',
+            );
+          }
+          if (from < 5) {
+            await m.createTable(habits);
+            await m.createTable(habitItems);
+            await m.createTable(habitLogs);
+            await m.createTable(habitItemLogs);
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_habits_deleted ON habits (deleted_at);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_habits_archived ON habits (archived);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_habit_items_habit ON habit_items (habit_id);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_habit_logs_habit_date ON habit_logs (habit_id, log_date);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_habit_logs_date ON habit_logs (log_date);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_habit_logs_deleted ON habit_logs (deleted_at);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_habit_item_logs_habit_item_date ON habit_item_logs (habit_id, item_id, log_date);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_habit_item_logs_date ON habit_item_logs (log_date);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_habit_item_logs_deleted ON habit_item_logs (deleted_at);',
             );
           }
         },
@@ -635,6 +672,10 @@ class AppDatabase extends _$AppDatabase {
       itemsPurged += await (delete(milestones)..where((m) => m.deletedAt.isNotNull())).go();
       itemsPurged += await (delete(ideas)..where((i) => i.deletedAt.isNotNull())).go();
       itemsPurged += await (delete(notes)..where((n) => n.deletedAt.isNotNull())).go();
+      itemsPurged += await (delete(habitLogs)..where((l) => l.deletedAt.isNotNull())).go();
+      itemsPurged += await (delete(habitItemLogs)..where((l) => l.deletedAt.isNotNull())).go();
+      itemsPurged += await (delete(habitItems)..where((i) => i.deletedAt.isNotNull())).go();
+      itemsPurged += await (delete(habits)..where((h) => h.deletedAt.isNotNull())).go();
     });
 
     return (itemsPurged, filesDeleted, bytesFreed);
@@ -1264,6 +1305,10 @@ class AppDatabase extends _$AppDatabase {
     final voiceNotesList = await select(voiceNotes).get();
     final notesList = await select(notes).get();
     final remindersList = await select(reminders).get();
+    final habitsList = await select(habits).get();
+    final habitItemsList = await select(habitItems).get();
+    final habitLogsList = await select(habitLogs).get();
+    final habitItemLogsList = await select(habitItemLogs).get();
 
     return {
       'schema_version': schemaVersion,
@@ -1282,6 +1327,10 @@ class AppDatabase extends _$AppDatabase {
       'voice_notes': voiceNotesList.map((e) => e.toJson()).toList(),
       'notes': notesList.map((e) => e.toJson()).toList(),
       'reminders': remindersList.map((e) => e.toJson()).toList(),
+      'habits': habitsList.map((e) => e.toJson()).toList(),
+      'habit_items': habitItemsList.map((e) => e.toJson()).toList(),
+      'habit_logs': habitLogsList.map((e) => e.toJson()).toList(),
+      'habit_item_logs': habitItemLogsList.map((e) => e.toJson()).toList(),
     };
   }
 
@@ -1302,6 +1351,10 @@ class AppDatabase extends _$AppDatabase {
       await delete(settings).go();
       await delete(notes).go();
       await delete(reminders).go();
+      await delete(habitItemLogs).go();
+      await delete(habitLogs).go();
+      await delete(habitItems).go();
+      await delete(habits).go();
 
       if (data['reasons'] is List) {
         for (final item in (data['reasons'] as List)) {
@@ -1371,6 +1424,26 @@ class AppDatabase extends _$AppDatabase {
       if (data['reminders'] is List) {
         for (final item in (data['reminders'] as List)) {
           await into(reminders).insert(Reminder.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['habits'] is List) {
+        for (final item in (data['habits'] as List)) {
+          await into(habits).insert(Habit.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['habit_items'] is List) {
+        for (final item in (data['habit_items'] as List)) {
+          await into(habitItems).insert(HabitItem.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['habit_logs'] is List) {
+        for (final item in (data['habit_logs'] as List)) {
+          await into(habitLogs).insert(HabitLog.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['habit_item_logs'] is List) {
+        for (final item in (data['habit_item_logs'] as List)) {
+          await into(habitItemLogs).insert(HabitItemLog.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
         }
       }
     });
@@ -1582,6 +1655,13 @@ class AppDatabase extends _$AppDatabase {
       await permanentlyDeleteNote(note.id);
       purged++;
     }
+    final oldHabits = await (select(habits)
+          ..where((h) => h.deletedAt.isNotNull() & h.deletedAt.isSmallerOrEqualValue(thirtyDaysAgoMs)))
+        .get();
+    for (final habit in oldHabits) {
+      await permanentlyDeleteHabit(habit.id);
+      purged++;
+    }
     return purged;
   }
   // -------------------------------------------------------------
@@ -1687,6 +1767,350 @@ class AppDatabase extends _$AppDatabase {
           ..where((v) => v.parentType.equals('note') & v.parentId.equals(id)))
         .go();
     return (delete(notes)..where((n) => n.id.equals(id))).go();
+  }
+
+  // -------------------------------------------------------------
+  // ROADMAP V2.0 ROUND 4: HABITS QUERIES
+  // -------------------------------------------------------------
+
+  /// Watch active habits ordered by sortOrder then id
+  Stream<List<Habit>> watchActiveHabits() {
+    return (select(habits)
+          ..where((h) => h.deletedAt.isNull() & h.archived.equals(false))
+          ..orderBy([
+            (h) => OrderingTerm(expression: h.sortOrder, mode: OrderingMode.asc),
+            (h) => OrderingTerm(expression: h.id, mode: OrderingMode.asc),
+          ]))
+        .watch();
+  }
+
+  /// Get all active habits
+  Future<List<Habit>> getAllActiveHabits() {
+    return (select(habits)
+          ..where((h) => h.deletedAt.isNull() & h.archived.equals(false))
+          ..orderBy([
+            (h) => OrderingTerm(expression: h.sortOrder, mode: OrderingMode.asc),
+            (h) => OrderingTerm(expression: h.id, mode: OrderingMode.asc),
+          ]))
+        .get();
+  }
+
+  /// Get habit by id
+  Future<Habit?> getHabitById(int id) {
+    return (select(habits)..where((h) => h.id.equals(id))).getSingleOrNull();
+  }
+
+  /// Insert habit
+  Future<int> insertHabit(HabitsCompanion habit) {
+    return into(habits).insert(habit);
+  }
+
+  /// Update habit
+  Future<bool> updateHabit(HabitsCompanion habit) {
+    return update(habits).replace(habit);
+  }
+
+  /// Archive or unarchive habit
+  Future<void> archiveHabit(int id, bool isArchived) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(habits)..where((h) => h.id.equals(id))).write(
+      HabitsCompanion(
+        archived: Value(isArchived),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Soft delete habit and its items & logs to trash
+  Future<void> softDeleteHabit(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await transaction(() async {
+      await (update(habits)..where((h) => h.id.equals(id))).write(
+        HabitsCompanion(
+          deletedAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
+      await (update(habitItems)..where((i) => i.habitId.equals(id))).write(
+        HabitItemsCompanion(
+          deletedAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
+      await (update(habitLogs)..where((l) => l.habitId.equals(id))).write(
+        HabitLogsCompanion(
+          deletedAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
+      await (update(habitItemLogs)..where((l) => l.habitId.equals(id))).write(
+        HabitItemLogsCompanion(
+          deletedAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
+      // Cancel reminders
+      await (delete(reminders)..where((r) => r.ownerType.equals('habit') & r.ownerId.equals(id))).go();
+    });
+  }
+
+  /// Restore habit from trash
+  Future<void> restoreHabit(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await transaction(() async {
+      await (update(habits)..where((h) => h.id.equals(id))).write(
+        HabitsCompanion(
+          deletedAt: const Value(null),
+          updatedAt: Value(now),
+        ),
+      );
+      await (update(habitItems)..where((i) => i.habitId.equals(id))).write(
+        HabitItemsCompanion(
+          deletedAt: const Value(null),
+          updatedAt: Value(now),
+        ),
+      );
+      await (update(habitLogs)..where((l) => l.habitId.equals(id))).write(
+        HabitLogsCompanion(
+          deletedAt: const Value(null),
+          updatedAt: Value(now),
+        ),
+      );
+      await (update(habitItemLogs)..where((l) => l.habitId.equals(id))).write(
+        HabitItemLogsCompanion(
+          deletedAt: const Value(null),
+          updatedAt: Value(now),
+        ),
+      );
+    });
+  }
+
+  /// Permanently delete habit from trash
+  Future<void> permanentlyDeleteHabit(int id) async {
+    await transaction(() async {
+      await (delete(habitItemLogs)..where((l) => l.habitId.equals(id))).go();
+      await (delete(habitLogs)..where((l) => l.habitId.equals(id))).go();
+      await (delete(habitItems)..where((i) => i.habitId.equals(id))).go();
+      await (delete(reminders)..where((r) => r.ownerType.equals('habit') & r.ownerId.equals(id))).go();
+      await (delete(habits)..where((h) => h.id.equals(id))).go();
+    });
+  }
+
+  /// Watch trash habits
+  Stream<List<Habit>> watchTrashHabits() {
+    return (select(habits)
+          ..where((h) => h.deletedAt.isNotNull())
+          ..orderBy([(h) => OrderingTerm(expression: h.deletedAt, mode: OrderingMode.desc)]))
+        .watch();
+  }
+
+  /// Watch items for a habit
+  Stream<List<HabitItem>> watchHabitItems(int habitId) {
+    return (select(habitItems)
+          ..where((i) => i.habitId.equals(habitId) & i.deletedAt.isNull())
+          ..orderBy([(i) => OrderingTerm(expression: i.sortOrder, mode: OrderingMode.asc)]))
+        .watch();
+  }
+
+  /// Get items for a habit
+  Future<List<HabitItem>> getHabitItems(int habitId) {
+    return (select(habitItems)
+          ..where((i) => i.habitId.equals(habitId) & i.deletedAt.isNull())
+          ..orderBy([(i) => OrderingTerm(expression: i.sortOrder, mode: OrderingMode.asc)]))
+        .get();
+  }
+
+  /// Insert habit item
+  Future<int> insertHabitItem(HabitItemsCompanion item) {
+    return into(habitItems).insert(item);
+  }
+
+  /// Watch logs for a specific date
+  Stream<List<HabitLog>> watchHabitLogsForDate(String date) {
+    return (select(habitLogs)
+          ..where((l) => l.logDate.equals(date) & l.deletedAt.isNull())
+          ..orderBy([(l) => OrderingTerm(expression: l.at, mode: OrderingMode.asc)]))
+        .watch();
+  }
+
+  /// Watch item logs for a specific date
+  Stream<List<HabitItemLog>> watchHabitItemLogsForDate(String date) {
+    return (select(habitItemLogs)
+          ..where((l) => l.logDate.equals(date) & l.deletedAt.isNull())
+          ..orderBy([(l) => OrderingTerm(expression: l.doneAt, mode: OrderingMode.asc)]))
+        .watch();
+  }
+
+  /// Get all logs for a habit in date range
+  Future<List<HabitLog>> getHabitLogsForRange(int habitId, String startDate, String endDate) {
+    return (select(habitLogs)
+          ..where((l) =>
+              l.habitId.equals(habitId) &
+              l.logDate.isBiggerOrEqualValue(startDate) &
+              l.logDate.isSmallerOrEqualValue(endDate) &
+              l.deletedAt.isNull())
+          ..orderBy([(l) => OrderingTerm(expression: l.at, mode: OrderingMode.asc)]))
+        .get();
+  }
+
+  /// Get all item logs for a habit in date range
+  Future<List<HabitItemLog>> getHabitItemLogsForRange(int habitId, String startDate, String endDate) {
+    return (select(habitItemLogs)
+          ..where((l) =>
+              l.habitId.equals(habitId) &
+              l.logDate.isBiggerOrEqualValue(startDate) &
+              l.logDate.isSmallerOrEqualValue(endDate) &
+              l.deletedAt.isNull())
+          ..orderBy([(l) => OrderingTerm(expression: l.doneAt, mode: OrderingMode.asc)]))
+        .get();
+  }
+
+  /// Get all logs across all habits in date range
+  Future<List<HabitLog>> getAllHabitLogsForRange(String startDate, String endDate) {
+    return (select(habitLogs)
+          ..where((l) =>
+              l.logDate.isBiggerOrEqualValue(startDate) &
+              l.logDate.isSmallerOrEqualValue(endDate) &
+              l.deletedAt.isNull())
+          ..orderBy([(l) => OrderingTerm(expression: l.at, mode: OrderingMode.asc)]))
+        .get();
+  }
+
+  /// Get all item logs across all habits in date range
+  Future<List<HabitItemLog>> getAllHabitItemLogsForRange(String startDate, String endDate) {
+    return (select(habitItemLogs)
+          ..where((l) =>
+              l.logDate.isBiggerOrEqualValue(startDate) &
+              l.logDate.isSmallerOrEqualValue(endDate) &
+              l.deletedAt.isNull())
+          ..orderBy([(l) => OrderingTerm(expression: l.doneAt, mode: OrderingMode.asc)]))
+        .get();
+  }
+
+  /// Log a count tap (+1) with timestamp
+  Future<int> logHabitCount(int habitId, String logDate) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return into(habitLogs).insert(
+      HabitLogsCompanion.insert(
+        habitId: habitId,
+        logDate: logDate,
+        value: const Value(1.0),
+        at: now,
+        occurredAt: Value(now),
+        localDate: Value(logDate),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+
+  /// Decrement count: remove last log entry for date
+  Future<void> decrementHabitCount(int habitId, String logDate) async {
+    final lastLog = await (select(habitLogs)
+          ..where((l) => l.habitId.equals(habitId) & l.logDate.equals(logDate) & l.deletedAt.isNull())
+          ..orderBy([(l) => OrderingTerm(expression: l.at, mode: OrderingMode.desc)])
+          ..limit(1))
+        .getSingleOrNull();
+    if (lastLog != null) {
+      await (delete(habitLogs)..where((l) => l.id.equals(lastLog.id))).go();
+    }
+  }
+
+  /// Toggle check habit (done / not done)
+  Future<void> setHabitCheck(int habitId, String logDate, bool done) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (done) {
+      final existing = await (select(habitLogs)
+            ..where((l) => l.habitId.equals(habitId) & l.logDate.equals(logDate) & l.deletedAt.isNull()))
+          .getSingleOrNull();
+      if (existing == null) {
+        await into(habitLogs).insert(
+          HabitLogsCompanion.insert(
+            habitId: habitId,
+            logDate: logDate,
+            value: const Value(1.0),
+            at: now,
+            occurredAt: Value(now),
+            localDate: Value(logDate),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+      }
+    } else {
+      await (delete(habitLogs)..where((l) => l.habitId.equals(habitId) & l.logDate.equals(logDate))).go();
+    }
+  }
+
+  /// Set amount habit value for date
+  Future<void> setHabitAmount(int habitId, String logDate, double amount, {String? note}) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final existing = await (select(habitLogs)
+          ..where((l) => l.habitId.equals(habitId) & l.logDate.equals(logDate) & l.deletedAt.isNull()))
+        .getSingleOrNull();
+    if (existing != null) {
+      await (update(habitLogs)..where((l) => l.id.equals(existing.id))).write(
+        HabitLogsCompanion(
+          value: Value(amount),
+          note: Value(note),
+          updatedAt: Value(now),
+        ),
+      );
+    } else {
+      await into(habitLogs).insert(
+        HabitLogsCompanion.insert(
+          habitId: habitId,
+          logDate: logDate,
+          value: Value(amount),
+          at: now,
+          note: Value(note),
+          occurredAt: Value(now),
+          localDate: Value(logDate),
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    }
+  }
+
+  /// Toggle checklist item for date
+  Future<void> toggleHabitItem(int habitId, int itemId, String logDate, bool done) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (done) {
+      final existing = await (select(habitItemLogs)
+            ..where((l) =>
+                l.habitId.equals(habitId) &
+                l.itemId.equals(itemId) &
+                l.logDate.equals(logDate) &
+                l.deletedAt.isNull()))
+          .getSingleOrNull();
+      if (existing == null) {
+        await into(habitItemLogs).insert(
+          HabitItemLogsCompanion.insert(
+            habitId: habitId,
+            itemId: itemId,
+            logDate: logDate,
+            doneAt: now,
+            occurredAt: Value(now),
+            localDate: Value(logDate),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+      }
+    } else {
+      await (delete(habitItemLogs)
+            ..where((l) =>
+                l.habitId.equals(habitId) &
+                l.itemId.equals(itemId) &
+                l.logDate.equals(logDate)))
+          .go();
+    }
+  }
+
+  /// Delete a single habit log entry
+  Future<int> deleteHabitLog(int logId) {
+    return (delete(habitLogs)..where((l) => l.id.equals(logId))).go();
   }
 }
 

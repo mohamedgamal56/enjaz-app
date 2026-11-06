@@ -177,6 +177,15 @@ class ReminderScheduler {
             languageCode: languageCode,
           );
         }
+      } else if (r.ownerType == 'habit') {
+        final habit = await _db.getHabitById(r.ownerId);
+        if (habit != null && !habit.archived && habit.deletedAt == null) {
+          await scheduleReminder(
+            reminder: r,
+            title: habit.nameAr,
+            languageCode: languageCode,
+          );
+        }
       }
     }
   }

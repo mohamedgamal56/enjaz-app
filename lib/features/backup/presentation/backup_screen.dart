@@ -280,6 +280,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                   _previewRow(l10n.goalsCountLabel, '${preview.goalsCount}'),
                   _previewRow(l10n.ideasCountLabel, '${preview.ideasCount}'),
                   _previewRow(isArabic ? 'الملاحظات' : 'Notes', '${preview.notesCount}'),
+                  _previewRow(isArabic ? 'العادات' : 'Habits', '${preview.habitsCount}'),
                   _previewRow(l10n.voiceNotesCountLabel, '${preview.voiceNotesCount}'),
                   _previewRow(
                     l10n.fileSizeLabel,

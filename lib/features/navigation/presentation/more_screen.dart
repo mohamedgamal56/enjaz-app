@@ -6,6 +6,7 @@ import '../../history/presentation/history_screen.dart';
 import '../../settings/presentation/trash_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
 import '../../backup/presentation/backup_screen.dart';
+import '../../habits/presentation/habits_screen.dart';
 
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -58,7 +59,22 @@ class MoreScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
 
-        // 1. History
+        // 1. Habits (Roadmap v2.0 Round 4)
+        _buildMenuCard(
+          context,
+          icon: Icons.repeat_rounded,
+          iconColor: Colors.teal,
+          title: isArabic ? 'العادات اليومية' : 'Habits',
+          subtitle: isArabic ? 'متابعة العادات، الصلوات، القراءة، والروتين اليومي' : 'Track daily habits, prayers, reading & routine',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const HabitsScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: 10),
+
+        // 2. History
         _buildMenuCard(
           context,
           icon: Icons.history_rounded,

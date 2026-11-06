@@ -53,6 +53,7 @@ class BackupPreview {
   final int goalsCount;
   final int ideasCount;
   final int notesCount;
+  final int habitsCount;
   final int voiceNotesCount;
   final int fileSizeBytes;
 
@@ -67,6 +68,7 @@ class BackupPreview {
     this.goalsCount = 0,
     this.ideasCount = 0,
     this.notesCount = 0,
+    this.habitsCount = 0,
     this.voiceNotesCount = 0,
     this.fileSizeBytes = 0,
   });

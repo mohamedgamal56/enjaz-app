@@ -12,6 +12,7 @@ import '../../tasks/presentation/widgets/bulk_selection_bar.dart';
 import '../../recurrence/domain/recurrence_service.dart';
 import '../../reminders/domain/notification_service.dart';
 import '../../reminders/domain/reminder_scheduler.dart';
+import '../../habits/presentation/habits_strip.dart';
 
 class TodayScreen extends ConsumerStatefulWidget {
   const TodayScreen({super.key});
@@ -349,6 +350,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 },
               ),
               const SizedBox(height: 8),
+
+              // Habits Strip (Roadmap v2.0 Round 4)
+              HabitsStrip(selectedDate: _selectedDate),
 
               // Task Sections List
               Expanded(

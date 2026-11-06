@@ -187,4 +187,58 @@ class Notes extends Table with CommonColumns {
   TextColumn get localDate => text().nullable()();
 }
 
+// 15. Habits (Roadmap v2.0 Round 4 - Habits)
+@TableIndex(name: 'idx_habits_deleted', columns: {#deletedAt})
+@TableIndex(name: 'idx_habits_archived', columns: {#archived})
+class Habits extends Table with CommonColumns {
+  TextColumn get nameAr => text()();
+  TextColumn get nameEn => text().nullable()();
+  TextColumn get type => text()(); // count | check | amount | checklist
+  TextColumn get unit => text().nullable()(); // cups, pages, minutes, ml...
+  RealColumn get dailyTarget => real().nullable()();
+  TextColumn get icon => text().nullable()();
+  TextColumn get color => text().nullable()();
+  IntColumn get scheduleDays => integer().withDefault(const Constant(127))(); // bitmask 1..127 (all days = 127)
+  TextColumn get builtinKey => text().nullable()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  BoolColumn get archived => boolean().withDefault(const Constant(false))();
+  IntColumn get occurredAt => integer().nullable()();
+  TextColumn get localDate => text().nullable()();
+}
+
+// 16. Habit Items (Checklist elements for checklist habits)
+@TableIndex(name: 'idx_habit_items_habit', columns: {#habitId})
+class HabitItems extends Table with CommonColumns {
+  IntColumn get habitId => integer()();
+  TextColumn get name => text()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+}
+
+// 17. Habit Logs (Execution logs for count, check, amount)
+@TableIndex(name: 'idx_habit_logs_habit_date', columns: {#habitId, #logDate})
+@TableIndex(name: 'idx_habit_logs_date', columns: {#logDate})
+@TableIndex(name: 'idx_habit_logs_deleted', columns: {#deletedAt})
+class HabitLogs extends Table with CommonColumns {
+  IntColumn get habitId => integer()();
+  TextColumn get logDate => text()(); // YYYY-MM-DD
+  RealColumn get value => real().withDefault(const Constant(1.0))(); // 1 per count tap, entered number for amount, 1 for check
+  IntColumn get at => integer()(); // epoch ms of the tap/entry
+  TextColumn get note => text().nullable()();
+  IntColumn get occurredAt => integer().nullable()();
+  TextColumn get localDate => text().nullable()();
+}
+
+// 18. Habit Item Logs (Execution logs for checklist items)
+@TableIndex(name: 'idx_habit_item_logs_habit_item_date', columns: {#habitId, #itemId, #logDate})
+@TableIndex(name: 'idx_habit_item_logs_date', columns: {#logDate})
+@TableIndex(name: 'idx_habit_item_logs_deleted', columns: {#deletedAt})
+class HabitItemLogs extends Table with CommonColumns {
+  IntColumn get habitId => integer()();
+  IntColumn get itemId => integer()();
+  TextColumn get logDate => text()(); // YYYY-MM-DD
+  IntColumn get doneAt => integer()(); // epoch ms
+  IntColumn get occurredAt => integer().nullable()();
+  TextColumn get localDate => text().nullable()();
+}
+
 

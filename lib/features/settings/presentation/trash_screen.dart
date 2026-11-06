@@ -133,6 +133,42 @@ class TrashScreen extends ConsumerWidget {
     }
   }
 
+  void _permanentlyDeleteHabit(BuildContext context, WidgetRef ref, Habit habit) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isArabic ? 'حذف نهائي' : 'Delete Permanently'),
+        content: Text(
+          isArabic
+              ? 'هل تريد حذف عادة "${habit.nameAr}" وسجلاتها وتنبيهاتها نهائياً؟ لا يمكن التراجع عن هذا الإجراء.'
+              : 'Permanently delete habit "${habit.nameEn ?? habit.nameAr}" and all its logs? This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            child: Text(isArabic ? 'حذف نهائي' : 'Delete Permanently'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final db = ref.read(databaseProvider);
+      await db.permanentlyDeleteHabit(habit.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(isArabic ? 'تم حذف العادة نهائياً' : 'Habit permanently deleted')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -142,7 +178,7 @@ class TrashScreen extends ConsumerWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Text(isArabic ? 'سلة المحذوفات' : l10n.trash),
@@ -150,6 +186,7 @@ class TrashScreen extends ConsumerWidget {
             tabs: [
               Tab(text: isArabic ? 'المهام' : 'Tasks'),
               Tab(text: isArabic ? 'الملاحظات' : 'Notes'),
+              Tab(text: isArabic ? 'العادات' : 'Habits'),
             ],
           ),
           actions: [
@@ -351,6 +388,101 @@ class TrashScreen extends ConsumerWidget {
                         icon: Icon(Icons.delete_forever_rounded, color: theme.colorScheme.error),
                         tooltip: isArabic ? 'حذف نهائي' : 'Delete Permanently',
                         onPressed: () => _permanentlyDeleteNote(context, ref, n),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+
+      // 3. Habits Trash
+      StreamBuilder<List<Habit>>(
+        stream: db.watchTrashHabits(),
+        builder: (context, snapshot) {
+          final habits = snapshot.data ?? [];
+
+          if (habits.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.repeat_rounded,
+                    size: 64,
+                    color: theme.colorScheme.outline,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    isArabic ? 'سلة العادات فارغة' : 'Habits trash is empty',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(16.0),
+            itemCount: habits.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, idx) {
+              final h = habits[idx];
+              final deletedDateStr = h.deletedAt != null
+                  ? AppFormatter.formatDateTime(
+                      DateTime.fromMillisecondsSinceEpoch(h.deletedAt!),
+                      locale: Localizations.localeOf(context).toString(),
+                      format: numeralsFormat,
+                    )
+                  : '';
+
+              return Card(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      const CircleAvatar(
+                        child: Icon(Icons.repeat_rounded, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isArabic ? h.nameAr : (h.nameEn ?? h.nameAr),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              isArabic ? 'حُذفت: $deletedDateStr' : 'Deleted: $deletedDateStr',
+                              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.restore_rounded, color: Colors.teal),
+                        tooltip: isArabic ? 'استرجاع' : 'Restore',
+                        onPressed: () async {
+                          await db.restoreHabit(h.id);
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(isArabic ? 'تم استرجاع العادة' : 'Habit restored')),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete_forever_rounded, color: theme.colorScheme.error),
+                        tooltip: isArabic ? 'حذف نهائي' : 'Delete Permanently',
+                        onPressed: () => _permanentlyDeleteHabit(context, ref, h),
                       ),
                     ],
                   ),
