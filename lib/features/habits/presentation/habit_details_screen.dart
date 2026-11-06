@@ -186,17 +186,13 @@ class _HabitDetailsScreenState extends ConsumerState<HabitDetailsScreen> {
                     }
 
                     final reminderId = await db.insertReminder(
-                      RemindersCompanion.insert(
-                        ownerType: 'habit',
-                        ownerId: habit.id,
-                        kind: drift.Value(reminderKind),
-                        triggerType: const drift.Value('absolute'),
-                        absoluteTime: drift.Value(targetTime),
-                        message: drift.Value(messageController.text.trim()),
-                        enabled: const drift.Value(true),
-                        createdAt: now.millisecondsSinceEpoch,
-                        updatedAt: now.millisecondsSinceEpoch,
-                      ),
+                      ownerType: 'habit',
+                      ownerId: habit.id,
+                      kind: reminderKind,
+                      triggerType: 'absolute',
+                      absoluteTime: targetTime,
+                      message: messageController.text.trim(),
+                      enabled: true,
                     );
 
                     final rem = await db.getReminderById(reminderId);

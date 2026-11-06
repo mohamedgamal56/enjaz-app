@@ -1533,6 +1533,10 @@ class AppDatabase extends _$AppDatabase {
     return (delete(reminders)..where((r) => r.id.equals(id))).go();
   }
 
+  Future<Reminder?> getReminderById(int id) {
+    return (select(reminders)..where((r) => r.id.equals(id))).getSingleOrNull();
+  }
+
   /// Delete all reminders for a specific owner
   Future<int> deleteRemindersForOwner(String ownerType, int ownerId) {
     return (delete(reminders)
@@ -1923,6 +1927,10 @@ class AppDatabase extends _$AppDatabase {
   /// Insert habit item
   Future<int> insertHabitItem(HabitItemsCompanion item) {
     return into(habitItems).insert(item);
+  }
+
+  Future<int> deleteHabitItem(int itemId) {
+    return (delete(habitItems)..where((i) => i.id.equals(itemId))).go();
   }
 
   /// Watch logs for a specific date
