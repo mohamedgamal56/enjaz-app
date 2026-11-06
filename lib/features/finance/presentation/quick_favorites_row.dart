@@ -208,7 +208,9 @@ class QuickFavoritesRow extends ConsumerWidget {
     return StreamBuilder<List<FinanceCategory>>(
       stream: db.watchActiveFinanceCategories(kind: 'expense'),
       builder: (context, catSnap) {
-        final catMap = {for (final c in (catSnap.data ?? [])) c.id: c};
+        final catMap = <int, FinanceCategory>{
+          for (final c in (catSnap.data ?? <FinanceCategory>[])) c.id: c
+        };
 
         return StreamBuilder<List<QuickExpense>>(
           stream: db.watchQuickExpenses(),
