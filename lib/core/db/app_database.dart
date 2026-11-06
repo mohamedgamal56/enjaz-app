@@ -1673,7 +1673,19 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<int> permanentlyDeleteNote(int id) async {
-    await deleteVoiceNotesForParent('note', id);
+    final vns = await (select(voiceNotes)
+          ..where((v) => v.parentType.equals('note') & v.parentId.equals(id)))
+        .get();
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      for (final vn in vns) {
+        final f = File(p.join(appDir.path, vn.fileName));
+        if (await f.exists()) await f.delete();
+      }
+    } catch (_) {}
+    await (delete(voiceNotes)
+          ..where((v) => v.parentType.equals('note') & v.parentId.equals(id)))
+        .go();
     return (delete(notes)..where((n) => n.id.equals(id))).go();
   }
 }

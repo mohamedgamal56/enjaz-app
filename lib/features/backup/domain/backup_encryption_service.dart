@@ -17,7 +17,7 @@ class BackupEncryptionService {
   static const List<int> magicBytes = [0x45, 0x4E, 0x4A, 0x41, 0x5A, 0x45, 0x4E, 0x43]; // "ENJAZENC"
   static const int formatVersion = 1;
 
-  final AesGcm _aesGcm = AesGcm.with256Bits();
+  final AesGcm _aesGcm = AesGcm.with256bits();
   final Pbkdf2 _pbkdf2 = Pbkdf2(
     macAlgorithm: Hmac.sha256(),
     iterations: 100000,
