@@ -1039,6 +1039,14 @@ class AppDatabase extends _$AppDatabase {
     }).toList();
   }
 
+  /// Get all active goals (not deleted, status = active)
+  Future<List<Goal>> getAllActiveGoals() {
+    return (select(goals)..where((g) => g.deletedAt.isNull() & g.status.equals('active'))).get();
+  }
+
+  /// Alias for watchVoiceNotesCount
+  Stream<int> watchVoiceNoteCount(String parentType, int parentId) => watchVoiceNotesCount(parentType, parentId);
+
   /// Get all active goals
   Future<List<Goal>> getAllGoalsList() {
     return (select(goals)..where((g) => g.deletedAt.isNull())).get();

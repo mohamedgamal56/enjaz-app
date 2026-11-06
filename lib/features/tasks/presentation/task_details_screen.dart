@@ -436,8 +436,8 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
 
       if (choice == 'all_future') {
         await db.updateFutureTasksForRecurrence(
-          recurrenceId: currentTask.recurrenceId!,
-          fromDate: currentTask.dueDate ?? '',
+          currentTask.recurrenceId!,
+          currentTask.dueDate ?? '',
           title: _titleController.text.trim(),
           kind: _kind,
           dueTime: _dueTime,

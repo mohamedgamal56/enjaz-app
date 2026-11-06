@@ -65,12 +65,15 @@ class AppFormatter {
     '٩': '9',
   };
 
-  static String formatNumber(num number, {NumeralsFormat format = NumeralsFormat.western}) {
-    final str = number.toString();
+  static String formatStringDigits(String text, {NumeralsFormat format = NumeralsFormat.western}) {
     if (format == NumeralsFormat.western) {
-      return str.split('').map((char) => _arabicToWesternDigits[char] ?? char).join();
+      return text.split('').map((char) => _arabicToWesternDigits[char] ?? char).join();
     }
-    return str.split('').map((char) => _westernToArabicDigits[char] ?? char).join();
+    return text.split('').map((char) => _westernToArabicDigits[char] ?? char).join();
+  }
+
+  static String formatNumber(num number, {NumeralsFormat format = NumeralsFormat.western}) {
+    return formatStringDigits(number.toString(), format: format);
   }
 
   static String formatDate(DateTime date, {required String locale, NumeralsFormat format = NumeralsFormat.western}) {

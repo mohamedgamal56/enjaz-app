@@ -249,7 +249,7 @@ class TaskCard extends ConsumerWidget {
                                 ),
                                 const SizedBox(width: 2),
                                 Text(
-                                  AppFormatter.formatNumber(
+                                  AppFormatter.formatStringDigits(
                                     task.dueTime!,
                                     format: numeralsFormat,
                                   ),
@@ -284,7 +284,7 @@ class TaskCard extends ConsumerWidget {
                               ],
                               // Voice Note indicator badge (Addendum v1.1)
                               StreamBuilder<int>(
-                                stream: ref.watch(databaseProvider).watchVoiceNoteCount(
+                                stream: ref.watch(databaseProvider).watchVoiceNotesCount(
                                       'task',
                                       task.id,
                                     ),
