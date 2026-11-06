@@ -348,5 +348,104 @@ void main() {
       final noteCell = summarySheet.rows[1][1]?.value.toString();
       expect(noteCell, contains('لا توجد بيانات'));
     });
+
+    test('6. Acceptance test: Excel report contains the finance sheets', () async {
+      final range = StatsDateRange(
+        type: StatsRangeType.month,
+        start: DateTime(2026, 11, 1),
+        end: DateTime(2026, 11, 30),
+      );
+      final stats = statsService.computeStats(
+        range: range,
+        tasks: [],
+        rangeEvents: [],
+        allDoneEvents: [],
+        previousPeriodCompletedCount: 0,
+        now: DateTime(2026, 11, 15),
+      );
+
+      final file = await exportService.generateReport(
+        range: range,
+        stats: stats,
+        tasks: [],
+        events: [],
+        goals: [],
+        milestones: [],
+        goalUpdates: [],
+        ideas: [],
+        voiceNotes: [],
+        transactions: [
+          Transaction(
+            id: 1,
+            kind: 'expense',
+            amountMinor: 2500,
+            categoryId: 1,
+            nature: 'side',
+            occurredAt: 1730000000000,
+            localDate: '2026-11-05',
+            createdAt: 1730000000000,
+            updatedAt: 1730000000000,
+          ),
+        ],
+        financeCategories: [
+          const FinanceCategory(
+            id: 1,
+            nameAr: 'شاي وقهوة',
+            nameEn: 'Tea & Coffee',
+            kind: 'expense',
+            nature: 'side',
+            color: 0xFF795548,
+            isDefault: true,
+            archived: false,
+            sortOrder: 1,
+            createdAt: 0,
+            updatedAt: 0,
+          ),
+        ],
+        obligations: [
+          const Obligation(
+            id: 1,
+            name: 'إيجار',
+            kind: 'installment',
+            amountMinor: 250000,
+            frequency: 'monthly',
+            startDate: '2026-11-01',
+            createdAt: 0,
+            updatedAt: 0,
+          ),
+        ],
+        obligationInstances: [
+          const ObligationInstance(
+            id: 1,
+            obligationId: 1,
+            dueDate: '2026-11-05',
+            amountMinor: 250000,
+            status: 'paid',
+            createdAt: 0,
+            updatedAt: 0,
+          ),
+        ],
+        wishlistItems: [
+          const WishlistItem(
+            id: 1,
+            name: 'سماعات',
+            estimatedPriceMinor: 150000,
+            priority: 'normal',
+            status: 'wanted',
+            createdAt: 0,
+            updatedAt: 0,
+          ),
+        ],
+        languageCode: 'ar',
+        outputDirectory: tempDir,
+      );
+
+      expect(file.existsSync(), isTrue);
+      final excel = Excel.decodeBytes(file.readAsBytesSync());
+      expect(excel.tables.keys, contains('المعاملات'));
+      expect(excel.tables.keys, contains('الالتزامات'));
+      expect(excel.tables.keys, contains('المشتريات'));
+      expect(excel.tables.keys, contains('ملخص المال'));
+    });
   });
 }

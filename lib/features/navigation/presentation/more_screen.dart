@@ -7,6 +7,7 @@ import '../../settings/presentation/trash_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
 import '../../backup/presentation/backup_screen.dart';
 import '../../habits/presentation/habits_screen.dart';
+import '../../finance/presentation/finance_screen.dart';
 
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -59,7 +60,22 @@ class MoreScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
 
-        // 1. Habits (Roadmap v2.0 Round 4)
+        // 1. Finance (Roadmap v2.0 Round 5)
+        _buildMenuCard(
+          context,
+          icon: Icons.account_balance_wallet_rounded,
+          iconColor: Colors.green,
+          title: isArabic ? 'المال والمصروفات' : 'Finance',
+          subtitle: isArabic ? 'المصروفات، الدخل، الأقساط، والمشتريات وتحليل الادخار' : 'Expenses, income, obligations, wishlist & savings',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const FinanceScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: 10),
+
+        // 2. Habits (Roadmap v2.0 Round 4)
         _buildMenuCard(
           context,
           icon: Icons.repeat_rounded,

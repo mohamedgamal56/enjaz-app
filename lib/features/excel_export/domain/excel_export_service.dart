@@ -24,6 +24,11 @@ class ExcelExportService {
     required List<GoalUpdate> goalUpdates,
     required List<Idea> ideas,
     required List<VoiceNote> voiceNotes,
+    List<Transaction>? transactions,
+    List<FinanceCategory>? financeCategories,
+    List<Obligation>? obligations,
+    List<ObligationInstance>? obligationInstances,
+    List<WishlistItem>? wishlistItems,
     required String languageCode, // 'ar' or 'en'
     Directory? outputDirectory,
   }) async {
@@ -81,6 +86,40 @@ class ExcelExportService {
     final ideasSheet = excel[ideasName];
     if (isAr) ideasSheet.isRTL = true;
     _buildIdeasSheet(ideasSheet, ideas, voiceNotes, range, isAr);
+
+    // 9. Sheet: Transactions / المعاملات (Roadmap v2.0 Round 5)
+    if (transactions != null) {
+      final transactionsName = isAr ? 'المعاملات' : 'Transactions';
+      final txSheet = excel[transactionsName];
+      if (isAr) txSheet.isRTL = true;
+      final catMap = {for (final c in (financeCategories ?? <FinanceCategory>[])) c.id: c};
+      _buildTransactionsSheet(txSheet, transactions, catMap, isAr);
+    }
+
+    // 10. Sheet: Obligations / الالتزامات
+    if (obligations != null && obligationInstances != null) {
+      final obligationsName = isAr ? 'الالتزامات' : 'Obligations';
+      final obSheet = excel[obligationsName];
+      if (isAr) obSheet.isRTL = true;
+      _buildObligationsSheet(obSheet, obligations, obligationInstances, isAr);
+    }
+
+    // 11. Sheet: Wishlist / المشتريات
+    if (wishlistItems != null) {
+      final wishlistName = isAr ? 'المشتريات' : 'Wishlist';
+      final wishSheet = excel[wishlistName];
+      if (isAr) wishSheet.isRTL = true;
+      _buildWishlistSheet(wishSheet, wishlistItems, isAr);
+    }
+
+    // 12. Sheet: Finance summary / ملخص المال
+    if (transactions != null) {
+      final finSummaryName = isAr ? 'ملخص المال' : 'Finance summary';
+      final finSumSheet = excel[finSummaryName];
+      if (isAr) finSumSheet.isRTL = true;
+      final catMap = {for (final c in (financeCategories ?? <FinanceCategory>[])) c.id: c};
+      _buildFinanceSummarySheet(finSumSheet, transactions, catMap, isAr);
+    }
 
     // Generate base Excel bytes
     final baseBytes = excel.save();
@@ -688,6 +727,221 @@ class ExcelExportService {
         IntCellValue(vnMap[idea.id] ?? 0),
       ]);
     }
+  }
+
+  // --- Sheet 9: Transactions ---
+  void _buildTransactionsSheet(
+    Sheet sheet,
+    List<Transaction> transactions,
+    Map<int, FinanceCategory> catMap,
+    bool isAr,
+  ) {
+    sheet.appendRow([
+      TextCellValue(isAr ? 'المعرف' : 'id'),
+      TextCellValue(isAr ? 'التاريخ' : 'date'),
+      TextCellValue(isAr ? 'الوقت' : 'time'),
+      TextCellValue(isAr ? 'النوع' : 'kind'),
+      TextCellValue(isAr ? 'التصنيف' : 'category'),
+      TextCellValue(isAr ? 'طبيعة الإنفاق' : 'nature'),
+      TextCellValue(isAr ? 'المبلغ (ج.م)' : 'amount_egp'),
+      TextCellValue(isAr ? 'طريقة الدفع' : 'payment_method'),
+      TextCellValue(isAr ? 'ملاحظة' : 'note'),
+    ]);
+
+    for (final tx in transactions) {
+      final dt = DateTime.fromMillisecondsSinceEpoch(tx.occurredAt);
+      final timeStr = DateFormat('HH:mm').format(dt);
+      final cat = catMap[tx.categoryId];
+      final catName = isAr ? (cat?.nameAr ?? 'أخرى') : (cat?.nameEn ?? cat?.nameAr ?? 'Other');
+      final amount = tx.amountMinor / 100.0;
+
+      sheet.appendRow([
+        IntCellValue(tx.id),
+        TextCellValue(tx.localDate),
+        TextCellValue(timeStr),
+        TextCellValue(tx.kind == 'expense' ? (isAr ? 'مصروف' : 'Expense') : (isAr ? 'دخل' : 'Income')),
+        TextCellValue(catName),
+        TextCellValue(tx.nature == 'essential' ? (isAr ? 'ضروري' : 'Essential') : (isAr ? 'كمالي' : 'Side')),
+        DoubleCellValue(amount),
+        TextCellValue(tx.paymentMethod ?? ''),
+        TextCellValue(tx.note ?? ''),
+      ]);
+    }
+  }
+
+  // --- Sheet 10: Obligations ---
+  void _buildObligationsSheet(
+    Sheet sheet,
+    List<Obligation> obligations,
+    List<ObligationInstance> instances,
+    bool isAr,
+  ) {
+    sheet.appendRow([
+      TextCellValue(isAr ? 'المعرف' : 'id'),
+      TextCellValue(isAr ? 'الاسم' : 'name'),
+      TextCellValue(isAr ? 'النوع' : 'kind'),
+      TextCellValue(isAr ? 'المبلغ (ج.م)' : 'amount_egp'),
+      TextCellValue(isAr ? 'التكرار' : 'frequency'),
+      TextCellValue(isAr ? 'تاريخ/يوم الاستحقاق' : 'due_date'),
+      TextCellValue(isAr ? 'الجهة المستحقة' : 'counterpart'),
+      TextCellValue(isAr ? 'الحالة' : 'status'),
+      TextCellValue(isAr ? 'تاريخ السداد' : 'paid_at'),
+      TextCellValue(isAr ? 'المبلغ المسدد (ج.م)' : 'paid_amount_egp'),
+    ]);
+
+    final obMap = {for (final o in obligations) o.id: o};
+
+    for (final inst in instances) {
+      final ob = obMap[inst.obligationId];
+      final amount = inst.amountMinor / 100.0;
+      final paidAmount = inst.paidAmountMinor != null ? inst.paidAmountMinor! / 100.0 : 0.0;
+      final paidDateStr = inst.paidAt != null
+          ? DateFormat('yyyy-MM-dd').format(DateTime.fromMillisecondsSinceEpoch(inst.paidAt!))
+          : '';
+
+      sheet.appendRow([
+        IntCellValue(inst.id),
+        TextCellValue(ob?.name ?? ''),
+        TextCellValue(ob?.kind ?? ''),
+        DoubleCellValue(amount),
+        TextCellValue(ob?.frequency ?? ''),
+        TextCellValue(inst.dueDate),
+        TextCellValue(ob?.counterpart ?? ''),
+        TextCellValue(inst.status),
+        TextCellValue(paidDateStr),
+        DoubleCellValue(paidAmount),
+      ]);
+    }
+  }
+
+  // --- Sheet 11: Wishlist ---
+  void _buildWishlistSheet(
+    Sheet sheet,
+    List<WishlistItem> wishlist,
+    bool isAr,
+  ) {
+    sheet.appendRow([
+      TextCellValue(isAr ? 'المعرف' : 'id'),
+      TextCellValue(isAr ? 'اسم السلعة' : 'name'),
+      TextCellValue(isAr ? 'السعر التقديري (ج.م)' : 'estimated_price_egp'),
+      TextCellValue(isAr ? 'الأولوية' : 'priority'),
+      TextCellValue(isAr ? 'الحالة' : 'status'),
+      TextCellValue(isAr ? 'تاريخ الشراء' : 'bought_at'),
+      TextCellValue(isAr ? 'سعر الشراء (ج.م)' : 'bought_price_egp'),
+      TextCellValue(isAr ? 'ملاحظة' : 'note'),
+    ]);
+
+    for (final item in wishlist) {
+      final estPrice = item.estimatedPriceMinor / 100.0;
+      final boughtPrice = item.boughtPriceMinor != null ? item.boughtPriceMinor! / 100.0 : 0.0;
+      final boughtDateStr = item.boughtAt != null
+          ? DateFormat('yyyy-MM-dd').format(DateTime.fromMillisecondsSinceEpoch(item.boughtAt!))
+          : '';
+
+      sheet.appendRow([
+        IntCellValue(item.id),
+        TextCellValue(item.name),
+        DoubleCellValue(estPrice),
+        TextCellValue(item.priority),
+        TextCellValue(item.status),
+        TextCellValue(boughtDateStr),
+        DoubleCellValue(boughtPrice),
+        TextCellValue(item.note ?? ''),
+      ]);
+    }
+  }
+
+  // --- Sheet 12: Finance summary ---
+  void _buildFinanceSummarySheet(
+    Sheet sheet,
+    List<Transaction> transactions,
+    Map<int, FinanceCategory> catMap,
+    bool isAr,
+  ) {
+    int totalIncome = 0;
+    int totalExpense = 0;
+    final catTotals = <int, int>{};
+    final catCounts = <int, int>{};
+
+    for (final tx in transactions) {
+      if (tx.kind == 'income') {
+        totalIncome += tx.amountMinor;
+      } else if (tx.kind == 'expense') {
+        totalExpense += tx.amountMinor;
+        catTotals[tx.categoryId] = (catTotals[tx.categoryId] ?? 0) + tx.amountMinor;
+        catCounts[tx.categoryId] = (catCounts[tx.categoryId] ?? 0) + 1;
+      }
+    }
+
+    final saved = totalIncome - totalExpense;
+    final savingsRate = totalIncome > 0 ? (saved / totalIncome) * 100.0 : null;
+
+    sheet.appendRow([
+      TextCellValue(isAr ? 'مؤشرات المال العامة' : 'General Metrics'),
+      TextCellValue(''),
+    ]);
+    sheet.appendRow([
+      TextCellValue(isAr ? 'إجمالي الدخل (ج.م)' : 'Total Income (EGP)'),
+      DoubleCellValue(totalIncome / 100.0),
+    ]);
+    sheet.appendRow([
+      TextCellValue(isAr ? 'إجمالي المصروفات (ج.م)' : 'Total Expenses (EGP)'),
+      DoubleCellValue(totalExpense / 100.0),
+    ]);
+    sheet.appendRow([
+      TextCellValue(isAr ? 'صافي المدخرات (ج.م)' : 'Net Saved (EGP)'),
+      DoubleCellValue(saved / 100.0),
+    ]);
+    sheet.appendRow([
+      TextCellValue(isAr ? 'معدل الادخار' : 'Savings Rate'),
+      TextCellValue(savingsRate != null ? '${savingsRate.toStringAsFixed(1)}%' : (isAr ? 'غير متاح' : 'N/A')),
+    ]);
+    sheet.appendRow([TextCellValue(''), TextCellValue('')]);
+
+    sheet.appendRow([
+      TextCellValue(isAr ? 'التصنيف' : 'category'),
+      TextCellValue(isAr ? 'النوع' : 'kind'),
+      TextCellValue(isAr ? 'طبيعة الإنفاق' : 'nature'),
+      TextCellValue(isAr ? 'المجموع (ج.م)' : 'total_egp'),
+      TextCellValue(isAr ? 'عدد المعاملات' : 'count'),
+      TextCellValue(isAr ? 'النسبة من المصروفات' : 'percent'),
+    ]);
+
+    for (final entry in catTotals.entries) {
+      final cat = catMap[entry.key];
+      final catName = isAr ? (cat?.nameAr ?? 'أخرى') : (cat?.nameEn ?? cat?.nameAr ?? 'Other');
+      final pct = totalExpense > 0 ? (entry.value / totalExpense) * 100.0 : 0.0;
+
+      sheet.appendRow([
+        TextCellValue(catName),
+        TextCellValue(cat?.kind ?? 'expense'),
+        TextCellValue(cat?.nature ?? 'side'),
+        DoubleCellValue(entry.value / 100.0),
+        IntCellValue(catCounts[entry.key] ?? 0),
+        TextCellValue('${pct.toStringAsFixed(1)}%'),
+      ]);
+    }
+  }
+
+  /// Generate transactions.csv export (Roadmap v2.0 Section 5.5)
+  Future<File> generateTransactionsCsv({
+    required List<Transaction> transactions,
+    required List<FinanceCategory> categories,
+    required Directory outputDirectory,
+  }) async {
+    final catMap = {for (final c in categories) c.id: c};
+    final buf = StringBuffer();
+    buf.writeln('id,local_date,occurred_at,kind,category_id,category_name,nature,amount_minor,amount_egp,payment_method,note');
+    for (final tx in transactions) {
+      final cat = catMap[tx.categoryId];
+      final catName = cat?.nameAr ?? 'أخرى';
+      final noteSafe = (tx.note ?? '').replaceAll('"', '""');
+      final amountEgp = (tx.amountMinor / 100.0).toStringAsFixed(2);
+      buf.writeln('${tx.id},"${tx.localDate}",${tx.occurredAt},"${tx.kind}",${tx.categoryId},"$catName","${tx.nature}",${tx.amountMinor},$amountEgp,"${tx.paymentMethod ?? ''}","$noteSafe"');
+    }
+    final file = File(p.join(outputDirectory.path, 'transactions.csv'));
+    await file.writeAsString(buf.toString(), encoding: utf8);
+    return file;
   }
 
   String _translateStatus(String st, bool isAr) {

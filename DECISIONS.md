@@ -249,3 +249,34 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
     - Section switcher on Statistics screen toggling between Tasks performance and Habits analytics.
     - Shows consistency heatmap, most consistent habit, most missed habit, and daily line chart for count habits.
 
+## Decision 18: Round 5 Finance Module (Drift v6), Minor Units, Eye Masking, 4 Segments, Pure Dart Analysis, and Excel/Stats Extensions
+- **Context**: Roadmap v2.0 Section 9 specifies the complete Finance module covering expenses, income, wishlist, obligations, financial analysis, Excel/CSV reporting, and Stats integration.
+- **Decision & Implementation**:
+  - **Data Precision & Minor Units**:
+    - All monetary amounts are stored as integers in minor units (piasters - قرش: 1 EGP = 100 minor units) to avoid floating point representation inaccuracies.
+    - Currency formatter defaults to EGP (ج.م) and respects the user's numerals setting (Western digits default).
+  - **Privacy & Eye Masking**:
+    - Completely manual and offline entry: zero bank access, zero reading of SMS or notifications, and zero networking permissions.
+    - Eye masking icon in the app bar toggles masking all amounts across the screen (`•••• ج.م`) with instant persistence in user preferences.
+    - Lock screen notifications for obligations conceal financial details.
+  - **Drift Migration v6 (Finance Schema)**:
+    - Added 7 tables: `FinanceCategories`, `Transactions`, `QuickExpenses`, `WishlistItems`, `Obligations`, `ObligationInstances`, and `Budgets`.
+    - Seeded standard expense and income categories with icons and colors, plus default 1-tap quick expenses.
+    - Integrated with soft delete, 30-day auto-purge, and AES-256-GCM encrypted backup and restore.
+  - **Pure Dart Finance Engine (`FinanceService`)**:
+    - Monthly totals: Income, Expenses, Saved, Savings rate (displays "غير متاح" when income is 0).
+    - Expense classification: Essential (ضروري) vs Side (كمالي) share and percentage.
+    - Top 5 categories, daily average spending, and previous period comparison (% change).
+    - Weekday spending distribution (Sun - Sat).
+    - "Small Recurring Spending" detection for budget leakage (categories with >= 10 entries and low average amount).
+    - Obligations generator producing instances for 3 months ahead; tracks late instances (`due_date < today` and pending) and calculates on-time payment rate.
+    - Wishlist estimation: calculates total wanted/planned amount and estimates months of savings needed based on 3-month average savings.
+  - **UI Architecture (`More > المال`)**:
+    - Month selector bar with previous/next month navigation.
+    - Monthly summary banner showing income, expenses, and saved balance.
+    - 4 segmented tabs: 1. Transactions (with 1-tap quick favorites row and undo snackbar), 2. Wishlist (with "اشتريتها" action creating an expense), 3. Obligations (grouped into Late, Due soon, Upcoming, Paid with payment and reminder actions), and 4. Analysis.
+  - **Stats & Excel Reporting**:
+    - Stats tab adds a 3rd segment for Finance with essential vs side donut chart, category progress bars, daily spending line chart, and income vs expenses bar comparison.
+    - Excel report extended with 4 dedicated sheets: `Transactions`, `Obligations`, `Wishlist`, and `Finance summary`, fully formatted with Western digits and RTL layout.
+    - CSV export includes `transactions.csv`.
+

@@ -74,6 +74,10 @@ class BackupService {
       'voice_notes': voiceCount,
       'notes': (dataMap['notes'] as List?)?.length ?? 0,
       'habits': (dataMap['habits'] as List?)?.length ?? 0,
+      'transactions': (dataMap['transactions'] as List?)?.length ?? 0,
+      'finance': ((dataMap['transactions'] as List?)?.length ?? 0) +
+          ((dataMap['wishlist_items'] as List?)?.length ?? 0) +
+          ((dataMap['obligations'] as List?)?.length ?? 0),
     };
 
     final manifest = BackupManifest(
@@ -168,6 +172,13 @@ class BackupService {
       final ideasCount = (dataMap['ideas'] as List?)?.length ?? manifest?.counts['ideas'] ?? 0;
       final notesCount = (dataMap['notes'] as List?)?.length ?? manifest?.counts['notes'] ?? 0;
       final habitsCount = (dataMap['habits'] as List?)?.length ?? manifest?.counts['habits'] ?? 0;
+      final financeCount = ((dataMap['transactions'] as List?)?.length ?? 0) +
+              ((dataMap['wishlist_items'] as List?)?.length ?? 0) +
+              ((dataMap['obligations'] as List?)?.length ?? 0) != 0
+          ? ((dataMap['transactions'] as List?)?.length ?? 0) +
+              ((dataMap['wishlist_items'] as List?)?.length ?? 0) +
+              ((dataMap['obligations'] as List?)?.length ?? 0)
+          : (manifest?.counts['finance'] ?? 0);
       final voiceNotesCount = (dataMap['voice_notes'] as List?)?.length ?? manifest?.counts['voice_notes'] ?? 0;
 
       DateTime? createdAt;
@@ -188,6 +199,7 @@ class BackupService {
         ideasCount: ideasCount,
         notesCount: notesCount,
         habitsCount: habitsCount,
+        financeCount: financeCount,
         voiceNotesCount: voiceNotesCount,
         fileSizeBytes: bytes.length,
       );

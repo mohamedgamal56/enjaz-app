@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/db/app_database.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/money_formatter.dart';
 import '../../reminders/domain/reminder_scheduler.dart';
 
 class TrashScreen extends ConsumerWidget {
@@ -169,6 +170,42 @@ class TrashScreen extends ConsumerWidget {
     }
   }
 
+  void _permanentlyDeleteTransaction(BuildContext context, WidgetRef ref, Transaction tx) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isArabic ? 'حذف نهائي' : 'Delete Permanently'),
+        content: Text(
+          isArabic
+              ? 'هل تريد حذف هذه المعاملة نهائياً من الذاكرة؟'
+              : 'Permanently delete this transaction?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            child: Text(isArabic ? 'حذف نهائي' : 'Delete Permanently'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final db = ref.read(databaseProvider);
+      await db.permanentlyDeleteTransaction(tx.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(isArabic ? 'تم حذف المعاملة نهائياً' : 'Transaction permanently deleted')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -178,7 +215,7 @@ class TrashScreen extends ConsumerWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: Text(isArabic ? 'سلة المحذوفات' : l10n.trash),
@@ -187,6 +224,7 @@ class TrashScreen extends ConsumerWidget {
               Tab(text: isArabic ? 'المهام' : 'Tasks'),
               Tab(text: isArabic ? 'الملاحظات' : 'Notes'),
               Tab(text: isArabic ? 'العادات' : 'Habits'),
+              Tab(text: isArabic ? 'المال' : 'Finance'),
             ],
           ),
           actions: [
@@ -483,6 +521,119 @@ class TrashScreen extends ConsumerWidget {
                         icon: Icon(Icons.delete_forever_rounded, color: theme.colorScheme.error),
                         tooltip: isArabic ? 'حذف نهائي' : 'Delete Permanently',
                         onPressed: () => _permanentlyDeleteHabit(context, ref, h),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+      // Tab 4: Finance (Transactions)
+      StreamBuilder<List<Transaction>>(
+        stream: db.watchTrashTransactions(),
+        builder: (context, snapshot) {
+          final txs = snapshot.data ?? [];
+
+          if (txs.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.delete_outline_rounded,
+                    size: 64,
+                    color: theme.colorScheme.outline,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    isArabic ? 'سلة المحذوفات فارغة' : l10n.emptyTrash,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    isArabic ? 'لا توجد معاملات مالية محذوفة' : 'No deleted transactions',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            itemCount: txs.length,
+            itemBuilder: (context, index) {
+              final tx = txs[index];
+              final deletedDate = tx.deletedAt != null
+                  ? DateTime.fromMillisecondsSinceEpoch(tx.deletedAt!)
+                  : DateTime.now();
+              final deletedDateStr = AppFormatter.formatDate(
+                deletedDate,
+                locale: Localizations.localeOf(context).languageCode,
+                format: numeralsFormat,
+              );
+              final isExpense = tx.kind == 'expense';
+              final amountFormatted = MoneyFormatter.formatWithCurrency(
+                tx.amountMinor,
+                currency: isArabic ? 'ج.م' : 'EGP',
+                format: numeralsFormat,
+              );
+
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8.0),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundColor: (isExpense ? Colors.red : Colors.green).withValues(alpha: 0.15),
+                        child: Icon(
+                          isExpense ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                          size: 18,
+                          color: isExpense ? Colors.red : Colors.green,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              amountFormatted,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${tx.localDate} • ${isArabic ? 'حُذفت:' : 'Deleted:'} $deletedDateStr',
+                              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.restore_rounded, color: Colors.teal),
+                        tooltip: isArabic ? 'استرجاع' : 'Restore',
+                        onPressed: () async {
+                          await db.restoreTransaction(tx.id);
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(isArabic ? 'تم استرجاع المعاملة' : 'Transaction restored')),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete_forever_rounded, color: theme.colorScheme.error),
+                        tooltip: isArabic ? 'حذف نهائي' : 'Delete Permanently',
+                        onPressed: () => _permanentlyDeleteTransaction(context, ref, tx),
                       ),
                     ],
                   ),

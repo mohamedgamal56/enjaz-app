@@ -186,6 +186,17 @@ class ReminderScheduler {
             languageCode: languageCode,
           );
         }
+      } else if (r.ownerType == 'obligation') {
+        final ob = await _db.getObligationById(r.ownerId);
+        if (ob != null && ob.deletedAt == null) {
+          await scheduleReminder(
+            reminder: r,
+            title: ob.name,
+            dueDate: ob.dueDate ?? ob.startDate,
+            dueTime: '09:00',
+            languageCode: languageCode,
+          );
+        }
       }
     }
   }

@@ -241,4 +241,100 @@ class HabitItemLogs extends Table with CommonColumns {
   TextColumn get localDate => text().nullable()();
 }
 
+// 19. Finance Categories (Roadmap v2.0 Round 5 - Finance)
+@TableIndex(name: 'idx_fin_cat_kind', columns: {#kind})
+@TableIndex(name: 'idx_fin_cat_archived', columns: {#archived})
+class FinanceCategories extends Table with CommonColumns {
+  TextColumn get nameAr => text()();
+  TextColumn get nameEn => text().nullable()();
+  TextColumn get kind => text()(); // expense | income
+  TextColumn get nature => text().withDefault(const Constant('side'))(); // essential | side | none
+  TextColumn get icon => text().nullable()(); // icon key
+  IntColumn get color => integer().withDefault(const Constant(0xFF2196F3))(); // color int
+  BoolColumn get isDefault => boolean().withDefault(const Constant(false))();
+  BoolColumn get archived => boolean().withDefault(const Constant(false))();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+}
+
+// 20. Transactions
+@TableIndex(name: 'idx_transactions_date_kind', columns: {#localDate, #kind})
+@TableIndex(name: 'idx_transactions_category', columns: {#categoryId})
+@TableIndex(name: 'idx_transactions_deleted', columns: {#deletedAt})
+@TableIndex(name: 'idx_transactions_occurred', columns: {#occurredAt})
+class Transactions extends Table with CommonColumns {
+  TextColumn get kind => text()(); // expense | income
+  IntColumn get amountMinor => integer()(); // in piasters (1 EGP = 100 piasters)
+  IntColumn get categoryId => integer()();
+  TextColumn get nature => text().withDefault(const Constant('side'))(); // essential | side
+  IntColumn get occurredAt => integer()(); // UTC epoch ms
+  TextColumn get localDate => text()(); // YYYY-MM-DD
+  TextColumn get note => text().nullable()();
+  TextColumn get paymentMethod => text().nullable()(); // cash | card | wallet
+  IntColumn get obligationInstanceId => integer().nullable()();
+  IntColumn get wishlistItemId => integer().nullable()();
+}
+
+// 21. Quick Expenses (Favorites for 1-tap entry)
+@TableIndex(name: 'idx_quick_expenses_sort', columns: {#sortOrder})
+class QuickExpenses extends Table with CommonColumns {
+  TextColumn get label => text()();
+  IntColumn get categoryId => integer()();
+  IntColumn get defaultAmountMinor => integer()(); // in piasters
+  TextColumn get nature => text().withDefault(const Constant('side'))(); // essential | side
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+}
+
+// 22. Wishlist Items
+@TableIndex(name: 'idx_wishlist_status', columns: {#status})
+@TableIndex(name: 'idx_wishlist_deleted', columns: {#deletedAt})
+class WishlistItems extends Table with CommonColumns {
+  TextColumn get name => text()();
+  IntColumn get estimatedPriceMinor => integer()(); // in piasters
+  TextColumn get priority => text().withDefault(const Constant('normal'))(); // low | normal | high
+  TextColumn get status => text().withDefault(const Constant('wanted'))(); // wanted | planned | bought | dropped
+  TextColumn get targetDate => text().nullable()(); // YYYY-MM-DD
+  TextColumn get note => text().nullable()();
+  IntColumn get boughtAt => integer().nullable()(); // UTC epoch ms
+  IntColumn get boughtPriceMinor => integer().nullable()(); // in piasters
+  IntColumn get transactionId => integer().nullable()();
+}
+
+// 23. Obligations
+@TableIndex(name: 'idx_obligations_deleted', columns: {#deletedAt})
+class Obligations extends Table with CommonColumns {
+  TextColumn get name => text()();
+  TextColumn get kind => text()(); // bill | installment | debt | subscription | other
+  IntColumn get amountMinor => integer()(); // in piasters
+  TextColumn get frequency => text().withDefault(const Constant('monthly'))(); // once | weekly | monthly | yearly
+  IntColumn get dueDay => integer().nullable()(); // 1..31 for recurring
+  TextColumn get dueDate => text().nullable()(); // YYYY-MM-DD for once
+  TextColumn get startDate => text()(); // YYYY-MM-DD
+  TextColumn get endDate => text().nullable()(); // YYYY-MM-DD
+  IntColumn get installmentsTotal => integer().nullable()();
+  TextColumn get counterpart => text().nullable()();
+  TextColumn get note => text().nullable()();
+}
+
+// 24. Obligation Instances
+@TableIndex(name: 'idx_obligation_instances_due_status', columns: {#dueDate, #status})
+@TableIndex(name: 'idx_obligation_instances_obligation', columns: {#obligationId})
+class ObligationInstances extends Table with CommonColumns {
+  IntColumn get obligationId => integer()();
+  TextColumn get dueDate => text()(); // YYYY-MM-DD
+  IntColumn get amountMinor => integer()(); // in piasters
+  TextColumn get status => text().withDefault(const Constant('pending'))(); // pending | paid | skipped
+  IntColumn get paidAt => integer().nullable()(); // UTC epoch ms
+  IntColumn get paidAmountMinor => integer().nullable()(); // in piasters
+  IntColumn get transactionId => integer().nullable()();
+}
+
+// 25. Budgets
+@TableIndex(name: 'idx_budgets_month_category', columns: {#month, #categoryId})
+class Budgets extends Table with CommonColumns {
+  IntColumn get categoryId => integer().nullable()(); // null = overall monthly budget
+  TextColumn get month => text()(); // YYYY-MM or 'recurring'
+  IntColumn get limitMinor => integer()(); // in piasters
+}
+
+
 

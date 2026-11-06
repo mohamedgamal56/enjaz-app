@@ -148,6 +148,14 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
       final ideas = await db.getAllIdeasList();
       final voiceNotes = await db.getAllVoiceNotesList();
 
+      final rangeStartStr = "${range.start.year}-${range.start.month.toString().padLeft(2, '0')}-${range.start.day.toString().padLeft(2, '0')}";
+      final rangeEndStr = "${range.end.year}-${range.end.month.toString().padLeft(2, '0')}-${range.end.day.toString().padLeft(2, '0')}";
+      final transactions = await db.getTransactionsForRange(rangeStartStr, rangeEndStr);
+      final categories = await db.getAllFinanceCategories();
+      final obligations = await db.getAllObligations();
+      final instances = await db.getObligationInstancesForRange(rangeStartStr, rangeEndStr);
+      final wishlist = await db.getAllWishlistItems();
+
       // Compute statistics for the summary sheet
       final prevRange = range.getPreviousRange();
       final prevEvents = await db.getEventsForRange(prevRange.start, prevRange.end);
@@ -179,6 +187,11 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
         goalUpdates: goalUpdates,
         ideas: ideas,
         voiceNotes: voiceNotes,
+        transactions: transactions,
+        financeCategories: categories,
+        obligations: obligations,
+        obligationInstances: instances,
+        wishlistItems: wishlist,
         languageCode: l10n.locale.languageCode,
       );
 

@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'tables.dart';
 import 'seed_reasons.dart';
+import 'seed_finance.dart';
 import '../../features/tasks/domain/task_status_service.dart';
 
 part 'app_database.g.dart';
@@ -30,12 +31,19 @@ part 'app_database.g.dart';
   HabitItems,
   HabitLogs,
   HabitItemLogs,
+  FinanceCategories,
+  Transactions,
+  QuickExpenses,
+  WishlistItems,
+  Obligations,
+  ObligationInstances,
+  Budgets,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -58,6 +66,9 @@ class AppDatabase extends _$AppDatabase {
               ),
             );
           }
+
+          // Seed default finance categories and quick expenses (Roadmap v2.0 Round 5)
+          await _seedFinanceDefaults();
         },
         onUpgrade: (Migrator m, int from, int to) async {
           if (from < 2) {
@@ -129,8 +140,98 @@ class AppDatabase extends _$AppDatabase {
               'CREATE INDEX IF NOT EXISTS idx_habit_item_logs_deleted ON habit_item_logs (deleted_at);',
             );
           }
+          if (from < 6) {
+            await m.createTable(financeCategories);
+            await m.createTable(transactions);
+            await m.createTable(quickExpenses);
+            await m.createTable(wishlistItems);
+            await m.createTable(obligations);
+            await m.createTable(obligationInstances);
+            await m.createTable(budgets);
+
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_fin_cat_kind ON finance_categories (kind);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_fin_cat_archived ON finance_categories (archived);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_transactions_date_kind ON transactions (local_date, kind);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions (category_id);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_transactions_deleted ON transactions (deleted_at);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_transactions_occurred ON transactions (occurred_at);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_quick_expenses_sort ON quick_expenses (sort_order);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_wishlist_status ON wishlist_items (status);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_wishlist_deleted ON wishlist_items (deleted_at);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_obligations_deleted ON obligations (deleted_at);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_obligation_instances_due_status ON obligation_instances (due_date, status);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_obligation_instances_obligation ON obligation_instances (obligation_id);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_budgets_month_category ON budgets (month, category_id);',
+            );
+
+            await _seedFinanceDefaults();
+          }
         },
       );
+
+  Future<void> _seedFinanceDefaults() async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final catMap = <String, int>{};
+
+    for (final c in initialSeedFinanceCategories) {
+      final id = await into(financeCategories).insert(
+        FinanceCategoriesCompanion.insert(
+          nameAr: c.nameAr,
+          nameEn: Value(c.nameEn),
+          kind: c.kind,
+          nature: Value(c.nature),
+          icon: Value(c.icon),
+          color: Value(c.color),
+          isDefault: const Value(true),
+          archived: const Value(false),
+          sortOrder: Value(c.sortOrder),
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+      catMap[c.nameAr] = id;
+    }
+
+    for (final q in initialSeedQuickExpenses) {
+      final catId = catMap[q.categoryNameAr] ?? 1;
+      await into(quickExpenses).insert(
+        QuickExpensesCompanion.insert(
+          label: q.label,
+          categoryId: catId,
+          defaultAmountMinor: q.defaultAmountMinor,
+          nature: Value(q.nature),
+          sortOrder: Value(q.sortOrder),
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    }
+  }
 
   // -------------------------------------------------------------
   // TASKS QUERIES
@@ -676,6 +777,9 @@ class AppDatabase extends _$AppDatabase {
       itemsPurged += await (delete(habitItemLogs)..where((l) => l.deletedAt.isNotNull())).go();
       itemsPurged += await (delete(habitItems)..where((i) => i.deletedAt.isNotNull())).go();
       itemsPurged += await (delete(habits)..where((h) => h.deletedAt.isNotNull())).go();
+      itemsPurged += await (delete(transactions)..where((t) => t.deletedAt.isNotNull())).go();
+      itemsPurged += await (delete(wishlistItems)..where((w) => w.deletedAt.isNotNull())).go();
+      itemsPurged += await (delete(obligations)..where((o) => o.deletedAt.isNotNull())).go();
     });
 
     return (itemsPurged, filesDeleted, bytesFreed);
@@ -1309,6 +1413,13 @@ class AppDatabase extends _$AppDatabase {
     final habitItemsList = await select(habitItems).get();
     final habitLogsList = await select(habitLogs).get();
     final habitItemLogsList = await select(habitItemLogs).get();
+    final finCategoriesList = await select(financeCategories).get();
+    final transactionsList = await select(transactions).get();
+    final quickExpensesList = await select(quickExpenses).get();
+    final wishlistItemsList = await select(wishlistItems).get();
+    final obligationsList = await select(obligations).get();
+    final obligationInstancesList = await select(obligationInstances).get();
+    final budgetsList = await select(budgets).get();
 
     return {
       'schema_version': schemaVersion,
@@ -1331,12 +1442,26 @@ class AppDatabase extends _$AppDatabase {
       'habit_items': habitItemsList.map((e) => e.toJson()).toList(),
       'habit_logs': habitLogsList.map((e) => e.toJson()).toList(),
       'habit_item_logs': habitItemLogsList.map((e) => e.toJson()).toList(),
+      'finance_categories': finCategoriesList.map((e) => e.toJson()).toList(),
+      'transactions': transactionsList.map((e) => e.toJson()).toList(),
+      'quick_expenses': quickExpensesList.map((e) => e.toJson()).toList(),
+      'wishlist_items': wishlistItemsList.map((e) => e.toJson()).toList(),
+      'obligations': obligationsList.map((e) => e.toJson()).toList(),
+      'obligation_instances': obligationInstancesList.map((e) => e.toJson()).toList(),
+      'budgets': budgetsList.map((e) => e.toJson()).toList(),
     };
   }
 
   /// Import and replace all database tables from a JSON map in a transaction
   Future<void> importAllData(Map<String, dynamic> data) async {
     await transaction(() async {
+      await delete(budgets).go();
+      await delete(obligationInstances).go();
+      await delete(obligations).go();
+      await delete(wishlistItems).go();
+      await delete(quickExpenses).go();
+      await delete(transactions).go();
+      await delete(financeCategories).go();
       await delete(ideaTags).go();
       await delete(tags).go();
       await delete(voiceNotes).go();
@@ -1444,6 +1569,41 @@ class AppDatabase extends _$AppDatabase {
       if (data['habit_item_logs'] is List) {
         for (final item in (data['habit_item_logs'] as List)) {
           await into(habitItemLogs).insert(HabitItemLog.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['finance_categories'] is List) {
+        for (final item in (data['finance_categories'] as List)) {
+          await into(financeCategories).insert(FinanceCategory.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['transactions'] is List) {
+        for (final item in (data['transactions'] as List)) {
+          await into(transactions).insert(Transaction.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['quick_expenses'] is List) {
+        for (final item in (data['quick_expenses'] as List)) {
+          await into(quickExpenses).insert(QuickExpense.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['wishlist_items'] is List) {
+        for (final item in (data['wishlist_items'] as List)) {
+          await into(wishlistItems).insert(WishlistItem.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['obligations'] is List) {
+        for (final item in (data['obligations'] as List)) {
+          await into(obligations).insert(Obligation.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['obligation_instances'] is List) {
+        for (final item in (data['obligation_instances'] as List)) {
+          await into(obligationInstances).insert(ObligationInstance.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['budgets'] is List) {
+        for (final item in (data['budgets'] as List)) {
+          await into(budgets).insert(Budget.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
         }
       }
     });
@@ -1664,6 +1824,27 @@ class AppDatabase extends _$AppDatabase {
         .get();
     for (final habit in oldHabits) {
       await permanentlyDeleteHabit(habit.id);
+      purged++;
+    }
+    final oldTxs = await (select(transactions)
+          ..where((t) => t.deletedAt.isNotNull() & t.deletedAt.isSmallerOrEqualValue(thirtyDaysAgoMs)))
+        .get();
+    for (final tx in oldTxs) {
+      await permanentlyDeleteTransaction(tx.id);
+      purged++;
+    }
+    final oldWish = await (select(wishlistItems)
+          ..where((w) => w.deletedAt.isNotNull() & w.deletedAt.isSmallerOrEqualValue(thirtyDaysAgoMs)))
+        .get();
+    for (final w in oldWish) {
+      await permanentlyDeleteWishlistItem(w.id);
+      purged++;
+    }
+    final oldObs = await (select(obligations)
+          ..where((o) => o.deletedAt.isNotNull() & o.deletedAt.isSmallerOrEqualValue(thirtyDaysAgoMs)))
+        .get();
+    for (final o in oldObs) {
+      await permanentlyDeleteObligation(o.id);
       purged++;
     }
     return purged;
@@ -2119,6 +2300,370 @@ class AppDatabase extends _$AppDatabase {
   /// Delete a single habit log entry
   Future<int> deleteHabitLog(int logId) {
     return (delete(habitLogs)..where((l) => l.id.equals(logId))).go();
+  }
+
+  // -------------------------------------------------------------
+  // ROADMAP V2.0 ROUND 5: FINANCE (المال)
+  // -------------------------------------------------------------
+
+  // --- CATEGORIES ---
+  Stream<List<FinanceCategory>> watchActiveFinanceCategories({String? kind}) {
+    var q = select(financeCategories)..where((c) => c.archived.equals(false) & c.deletedAt.isNull());
+    if (kind != null) {
+      q = q..where((c) => c.kind.equals(kind));
+    }
+    return (q..orderBy([(c) => OrderingTerm.asc(c.sortOrder), (c) => OrderingTerm.asc(c.id)])).watch();
+  }
+
+  Future<List<FinanceCategory>> getAllFinanceCategories({String? kind}) {
+    var q = select(financeCategories)..where((c) => c.deletedAt.isNull());
+    if (kind != null) {
+      q = q..where((c) => c.kind.equals(kind));
+    }
+    return (q..orderBy([(c) => OrderingTerm.asc(c.sortOrder)])).get();
+  }
+
+  Future<FinanceCategory?> getFinanceCategoryById(int id) {
+    return (select(financeCategories)..where((c) => c.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<int> insertFinanceCategory(FinanceCategoriesCompanion cat) {
+    return into(financeCategories).insert(cat);
+  }
+
+  Future<bool> updateFinanceCategory(FinanceCategoriesCompanion cat) {
+    return update(financeCategories).replace(cat);
+  }
+
+  Future<void> archiveFinanceCategory(int id, bool isArchived) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(financeCategories)..where((c) => c.id.equals(id))).write(
+      FinanceCategoriesCompanion(
+        archived: Value(isArchived),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  // --- QUICK EXPENSES ---
+  Stream<List<QuickExpense>> watchQuickExpenses() {
+    return (select(quickExpenses)..orderBy([(q) => OrderingTerm.asc(q.sortOrder)])).watch();
+  }
+
+  Future<List<QuickExpense>> getAllQuickExpenses() {
+    return (select(quickExpenses)..orderBy([(q) => OrderingTerm.asc(q.sortOrder)])).get();
+  }
+
+  Future<int> insertQuickExpense(QuickExpensesCompanion qe) {
+    return into(quickExpenses).insert(qe);
+  }
+
+  Future<bool> updateQuickExpense(QuickExpensesCompanion qe) {
+    return update(quickExpenses).replace(qe);
+  }
+
+  Future<int> deleteQuickExpense(int id) {
+    return (delete(quickExpenses)..where((q) => q.id.equals(id))).go();
+  }
+
+  // --- TRANSACTIONS ---
+  Stream<List<Transaction>> watchTransactionsForMonth(String yearMonth) {
+    return (select(transactions)
+          ..where((t) => t.localDate.like('$yearMonth%') & t.deletedAt.isNull())
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.localDate),
+            (t) => OrderingTerm.desc(t.occurredAt),
+            (t) => OrderingTerm.desc(t.id),
+          ]))
+        .watch();
+  }
+
+  Stream<List<Transaction>> watchTransactionsForDate(String date) {
+    return (select(transactions)
+          ..where((t) => t.localDate.equals(date) & t.deletedAt.isNull())
+          ..orderBy([(t) => OrderingTerm.desc(t.occurredAt)]))
+        .watch();
+  }
+
+  Future<List<Transaction>> getTransactionsForRange(String startDate, String endDate) {
+    return (select(transactions)
+          ..where((t) =>
+              t.localDate.isBiggerOrEqualValue(startDate) &
+              t.localDate.isSmallerOrEqualValue(endDate) &
+              t.deletedAt.isNull())
+          ..orderBy([(t) => OrderingTerm.asc(t.localDate), (t) => OrderingTerm.asc(t.occurredAt)]))
+        .get();
+  }
+
+  Future<List<Transaction>> getAllActiveTransactions() {
+    return (select(transactions)
+          ..where((t) => t.deletedAt.isNull())
+          ..orderBy([(t) => OrderingTerm.desc(t.localDate), (t) => OrderingTerm.desc(t.occurredAt)]))
+        .get();
+  }
+
+  Future<Transaction?> getTransactionById(int id) {
+    return (select(transactions)..where((t) => t.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<int> insertTransaction(TransactionsCompanion tx) {
+    return into(transactions).insert(tx);
+  }
+
+  Future<bool> updateTransaction(TransactionsCompanion tx) {
+    return update(transactions).replace(tx);
+  }
+
+  Future<void> softDeleteTransaction(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(transactions)..where((t) => t.id.equals(id))).write(
+      TransactionsCompanion(
+        deletedAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> restoreTransaction(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(transactions)..where((t) => t.id.equals(id))).write(
+      TransactionsCompanion(
+        deletedAt: const Value(null),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> permanentlyDeleteTransaction(int id) async {
+    await (delete(transactions)..where((t) => t.id.equals(id))).go();
+  }
+
+  Stream<List<Transaction>> watchTrashTransactions() {
+    return (select(transactions)
+          ..where((t) => t.deletedAt.isNotNull())
+          ..orderBy([(t) => OrderingTerm.desc(t.deletedAt)]))
+        .watch();
+  }
+
+  // --- WISHLIST ITEMS ---
+  Stream<List<WishlistItem>> watchWishlistItems() {
+    return (select(wishlistItems)
+          ..where((w) => w.deletedAt.isNull())
+          ..orderBy([(w) => OrderingTerm.asc(w.status), (w) => OrderingTerm.desc(w.createdAt)]))
+        .watch();
+  }
+
+  Future<List<WishlistItem>> getAllWishlistItems() {
+    return (select(wishlistItems)
+          ..where((w) => w.deletedAt.isNull())
+          ..orderBy([(w) => OrderingTerm.desc(w.createdAt)]))
+        .get();
+  }
+
+  Future<WishlistItem?> getWishlistItemById(int id) {
+    return (select(wishlistItems)..where((w) => w.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<int> insertWishlistItem(WishlistItemsCompanion item) {
+    return into(wishlistItems).insert(item);
+  }
+
+  Future<bool> updateWishlistItem(WishlistItemsCompanion item) {
+    return update(wishlistItems).replace(item);
+  }
+
+  Future<void> markWishlistItemBought(int id, int boughtPriceMinor, int transactionId) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(wishlistItems)..where((w) => w.id.equals(id))).write(
+      WishlistItemsCompanion(
+        status: const Value('bought'),
+        boughtAt: Value(now),
+        boughtPriceMinor: Value(boughtPriceMinor),
+        transactionId: Value(transactionId),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> softDeleteWishlistItem(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(wishlistItems)..where((w) => w.id.equals(id))).write(
+      WishlistItemsCompanion(
+        deletedAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> restoreWishlistItem(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(wishlistItems)..where((w) => w.id.equals(id))).write(
+      WishlistItemsCompanion(
+        deletedAt: const Value(null),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> permanentlyDeleteWishlistItem(int id) async {
+    await (delete(wishlistItems)..where((w) => w.id.equals(id))).go();
+  }
+
+  Stream<List<WishlistItem>> watchTrashWishlistItems() {
+    return (select(wishlistItems)
+          ..where((w) => w.deletedAt.isNotNull())
+          ..orderBy([(w) => OrderingTerm.desc(w.deletedAt)]))
+        .watch();
+  }
+
+  // --- OBLIGATIONS & INSTANCES ---
+  Stream<List<Obligation>> watchObligations() {
+    return (select(obligations)
+          ..where((o) => o.deletedAt.isNull())
+          ..orderBy([(o) => OrderingTerm.asc(o.name)]))
+        .watch();
+  }
+
+  Future<List<Obligation>> getAllObligations() {
+    return (select(obligations)
+          ..where((o) => o.deletedAt.isNull())
+          ..orderBy([(o) => OrderingTerm.asc(o.name)]))
+        .get();
+  }
+
+  Future<Obligation?> getObligationById(int id) {
+    return (select(obligations)..where((o) => o.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<int> insertObligation(ObligationsCompanion ob) {
+    return into(obligations).insert(ob);
+  }
+
+  Future<bool> updateObligation(ObligationsCompanion ob) {
+    return update(obligations).replace(ob);
+  }
+
+  Future<void> softDeleteObligation(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await transaction(() async {
+      await (update(obligations)..where((o) => o.id.equals(id))).write(
+        ObligationsCompanion(
+          deletedAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
+      // Cancel shared reminders for this obligation
+      await (delete(reminders)..where((r) => r.ownerType.equals('obligation') & r.ownerId.equals(id))).go();
+    });
+  }
+
+  Future<void> restoreObligation(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(obligations)..where((o) => o.id.equals(id))).write(
+      ObligationsCompanion(
+        deletedAt: const Value(null),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> permanentlyDeleteObligation(int id) async {
+    await transaction(() async {
+      await (delete(obligationInstances)..where((i) => i.obligationId.equals(id))).go();
+      await (delete(reminders)..where((r) => r.ownerType.equals('obligation') & r.ownerId.equals(id))).go();
+      await (delete(obligations)..where((o) => o.id.equals(id))).go();
+    });
+  }
+
+  Stream<List<Obligation>> watchTrashObligations() {
+    return (select(obligations)
+          ..where((o) => o.deletedAt.isNotNull())
+          ..orderBy([(o) => OrderingTerm.desc(o.deletedAt)]))
+        .watch();
+  }
+
+  Stream<List<ObligationInstance>> watchObligationInstancesForMonth(String yearMonth) {
+    return (select(obligationInstances)
+          ..where((i) => i.dueDate.like('$yearMonth%'))
+          ..orderBy([(i) => OrderingTerm.asc(i.dueDate)]))
+        .watch();
+  }
+
+  Future<List<ObligationInstance>> getObligationInstancesForRange(String startDate, String endDate) {
+    return (select(obligationInstances)
+          ..where((i) =>
+              i.dueDate.isBiggerOrEqualValue(startDate) &
+              i.dueDate.isSmallerOrEqualValue(endDate))
+          ..orderBy([(i) => OrderingTerm.asc(i.dueDate)]))
+        .get();
+  }
+
+  Future<List<ObligationInstance>> getAllActiveObligationInstances() {
+    return (select(obligationInstances)..orderBy([(i) => OrderingTerm.asc(i.dueDate)])).get();
+  }
+
+  Future<void> markObligationInstancePaid(int id, int paidAmountMinor, int? transactionId) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(obligationInstances)..where((i) => i.id.equals(id))).write(
+      ObligationInstancesCompanion(
+        status: const Value('paid'),
+        paidAt: Value(now),
+        paidAmountMinor: Value(paidAmountMinor),
+        transactionId: Value(transactionId),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> skipObligationInstance(int id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(obligationInstances)..where((i) => i.id.equals(id))).write(
+      ObligationInstancesCompanion(
+        status: const Value('skipped'),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  // --- BUDGETS ---
+  Stream<List<Budget>> watchBudgetsForMonth(String month) {
+    return (select(budgets)..where((b) => b.month.equals(month) | b.month.equals('recurring'))).watch();
+  }
+
+  Future<List<Budget>> getBudgetsForMonth(String month) {
+    return (select(budgets)..where((b) => b.month.equals(month) | b.month.equals('recurring'))).get();
+  }
+
+  Future<void> setBudget({int? categoryId, required String month, required int limitMinor}) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final existing = await (select(budgets)
+          ..where((b) =>
+              b.month.equals(month) &
+              (categoryId == null ? b.categoryId.isNull() : b.categoryId.equals(categoryId))))
+        .getSingleOrNull();
+
+    if (existing != null) {
+      await (update(budgets)..where((b) => b.id.equals(existing.id))).write(
+        BudgetsCompanion(
+          limitMinor: Value(limitMinor),
+          updatedAt: Value(now),
+        ),
+      );
+    } else {
+      await into(budgets).insert(
+        BudgetsCompanion.insert(
+          categoryId: Value(categoryId),
+          month: month,
+          limitMinor: limitMinor,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    }
+  }
+
+  Future<int> deleteBudget(int id) {
+    return (delete(budgets)..where((b) => b.id.equals(id))).go();
   }
 }
 
