@@ -21,26 +21,59 @@ class PlanScreen extends ConsumerWidget {
       children: [
         // Top Header with Segmented Control & "Note of the day" quick action
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
           child: Row(
             children: [
               Expanded(
                 child: SegmentedButton<int>(
+                  showSelectedIcon: false,
+                  style: SegmentedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
                   segments: [
                     ButtonSegment<int>(
                       value: 0,
-                      label: Text(isArabic ? 'الأهداف' : 'Goals'),
-                      icon: const Icon(Icons.flag_rounded, size: 16),
+                      label: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          isArabic ? 'الأهداف' : 'Goals',
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      icon: const Icon(Icons.flag_rounded, size: 15),
                     ),
                     ButtonSegment<int>(
                       value: 1,
-                      label: Text(isArabic ? 'الأفكار' : 'Ideas'),
-                      icon: const Icon(Icons.lightbulb_rounded, size: 16),
+                      label: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          isArabic ? 'الأفكار' : 'Ideas',
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      icon: const Icon(Icons.lightbulb_rounded, size: 15),
                     ),
                     ButtonSegment<int>(
                       value: 2,
-                      label: Text(isArabic ? 'الملاحظات' : 'Notes'),
-                      icon: const Icon(Icons.note_alt_rounded, size: 16),
+                      label: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          isArabic ? 'الملاحظات' : 'Notes',
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      icon: const Icon(Icons.note_alt_rounded, size: 15),
                     ),
                   ],
                   selected: {currentSegment},
@@ -49,7 +82,7 @@ class PlanScreen extends ConsumerWidget {
                   },
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               // Quick "Note of the day" action (Spec Section 3.2)
               IconButton.filledTonal(
                 icon: const Icon(Icons.edit_note_rounded),
