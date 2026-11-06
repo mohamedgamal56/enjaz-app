@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:excel/excel.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:enjaz/core/db/app_database.dart';
@@ -30,6 +31,13 @@ void main() {
     await initializeDateFormatting('en', null);
 
     tempDir = Directory.systemTemp.createTempSync('enjaz_excel_test_');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (MethodCall methodCall) async {
+        return tempDir.path;
+      },
+    );
     now = DateTime(2026, 11, 6, 12, 0); // Friday
 
     weekRange = StatsService.resolveRange(type: StatsRangeType.week, referenceDate: now);
@@ -247,6 +255,8 @@ void main() {
           ideas: sampleIdeas,
           voiceNotes: sampleVoiceNotes,
           languageCode: 'ar',
+        outputDirectory: tempDir,
+          outputDirectory: tempDir,
         );
 
         expect(file.existsSync(), isTrue);
@@ -328,6 +338,7 @@ void main() {
         ideas: [],
         voiceNotes: [],
         languageCode: 'ar',
+        outputDirectory: tempDir,
       );
 
       expect(file.existsSync(), isTrue);

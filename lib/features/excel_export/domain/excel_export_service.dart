@@ -25,6 +25,7 @@ class ExcelExportService {
     required List<Idea> ideas,
     required List<VoiceNote> voiceNotes,
     required String languageCode, // 'ar' or 'en'
+    Directory? outputDirectory,
   }) async {
     final excel = Excel.createExcel();
     final isAr = languageCode == 'ar';
@@ -130,8 +131,8 @@ class ExcelExportService {
     final rangeName = range.type.name.toUpperCase();
     final fileName = 'Enjaz_${rangeName}_${startStr}_to_${endStr}.xlsx';
 
-    final tempDir = await getTemporaryDirectory();
-    final file = File(p.join(tempDir.path, fileName));
+    final outDir = outputDirectory ?? await getTemporaryDirectory();
+    final file = File(p.join(outDir.path, fileName));
     await file.writeAsBytes(finalBytes, flush: true);
 
     return file;
