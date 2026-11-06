@@ -195,7 +195,7 @@ class StatsService {
       case StatsRangeType.allTime:
         return StatsDateRange(
           type: StatsRangeType.allTime,
-          start: DateTime(2020, 1, 1),
+          start: DateTime(1970, 1, 1),
           end: DateTime(2100, 12, 31, 23, 59, 59, 999),
         );
 

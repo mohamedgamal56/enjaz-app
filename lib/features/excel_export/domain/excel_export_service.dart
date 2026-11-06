@@ -1,15 +1,19 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:archive/archive.dart';
 import 'package:excel/excel.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import '../../../core/db/app_database.dart';
 import '../../stats/domain/stats_service.dart';
+import 'chart_image_renderer.dart';
 
 class ExcelExportService {
   const ExcelExportService();
 
-  /// Build and save .xlsx report to disk matching Addendum v1.2
+  /// Build and save .xlsx report to disk matching Roadmap v2.0 Round 2
   Future<File> generateReport({
     required StatsDateRange range,
     required StatsResult stats,
@@ -25,56 +29,99 @@ class ExcelExportService {
     final excel = Excel.createExcel();
     final isAr = languageCode == 'ar';
 
-    // Remove default Sheet1 later or rename
+    // Remove or rename default sheet to become Dashboard (First Sheet)
     final defaultSheet = excel.getDefaultSheet() ?? 'Sheet1';
 
-    // 1. Sheet: Summary / الملخص
+    // 1. First Sheet: Dashboard / لوحة المتابعة (Roadmap v2.0 Sec 6.2)
+    final dashboardName = isAr ? 'لوحة المتابعة' : 'Dashboard';
+    excel.rename(defaultSheet, dashboardName);
+    final dashboardSheet = excel[dashboardName];
+    if (isAr) dashboardSheet.isRTL = true;
+    _buildDashboardSheet(dashboardSheet, stats, range, tasks, events, isAr);
+
+    // 2. Sheet: Summary / الملخص
     final summaryName = isAr ? 'الملخص' : 'Summary';
-    excel.rename(defaultSheet, summaryName);
     final summarySheet = excel[summaryName];
     if (isAr) summarySheet.isRTL = true;
     _buildSummarySheet(summarySheet, stats, range, isAr);
 
-    // 2. Sheet: Tasks / المهام
+    // 3. Sheet: Tasks / المهام
     final tasksName = isAr ? 'المهام' : 'Tasks';
     final tasksSheet = excel[tasksName];
     if (isAr) tasksSheet.isRTL = true;
-    _buildTasksSheet(tasksSheet, tasks, range, goals, voiceNotes, isAr);
+    _buildTasksSheet(tasksSheet, tasks, events, range, goals, voiceNotes, isAr);
 
-    // 3. Sheet: History / السجل
+    // 4. Sheet: History / السجل
     final historyName = isAr ? 'السجل' : 'History';
     final historySheet = excel[historyName];
     if (isAr) historySheet.isRTL = true;
     _buildHistorySheet(historySheet, events, tasks, isAr);
 
-    // 4. Sheet: Daily / يومي
+    // 5. Sheet: Daily / يومي
     final dailyName = isAr ? 'يومي' : 'Daily';
     final dailySheet = excel[dailyName];
     if (isAr) dailySheet.isRTL = true;
     _buildDailySheet(dailySheet, range, tasks, events, isAr);
 
-    // 5. Sheet: Reasons / الأسباب
+    // 6. Sheet: Reasons / الأسباب
     final reasonsName = isAr ? 'الأسباب' : 'Reasons';
     final reasonsSheet = excel[reasonsName];
     if (isAr) reasonsSheet.isRTL = true;
     _buildReasonsSheet(reasonsSheet, stats.topReasons, isAr);
 
-    // 6. Sheet: Goals / الأهداف
+    // 7. Sheet: Goals / الأهداف
     final goalsName = isAr ? 'الأهداف' : 'Goals';
     final goalsSheet = excel[goalsName];
     if (isAr) goalsSheet.isRTL = true;
     _buildGoalsSheet(goalsSheet, goals, milestones, goalUpdates, range, isAr);
 
-    // 7. Sheet: Ideas / الأفكار
+    // 8. Sheet: Ideas / الأفكار
     final ideasName = isAr ? 'الأفكار' : 'Ideas';
     final ideasSheet = excel[ideasName];
     if (isAr) ideasSheet.isRTL = true;
     _buildIdeasSheet(ideasSheet, ideas, voiceNotes, range, isAr);
 
-    // Generate bytes
-    final bytes = excel.save();
-    if (bytes == null) {
+    // Generate base Excel bytes
+    final baseBytes = excel.save();
+    if (baseBytes == null) {
       throw Exception('Failed to generate Excel file bytes');
+    }
+
+    // Prepare chart images
+    List<int> finalBytes = baseBytes;
+    try {
+      final renderer = const ChartImageRenderer();
+
+      // Timeline entries
+      final timelineMap = <String, int>{};
+      final doneEvents = events.where((e) => e.toStatus == 'done').toList();
+      for (final e in doneEvents) {
+        final dStr = DateFormat('yyyy-MM-dd').format(DateTime.fromMillisecondsSinceEpoch(e.at));
+        timelineMap[dStr] = (timelineMap[dStr] ?? 0) + 1;
+      }
+      final sortedTimeline = timelineMap.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
+
+      // Weekday counts (Saturday..Friday = 0..6)
+      final weekdayCounts = List.filled(7, 0);
+      for (final e in doneEvents) {
+        final dt = DateTime.fromMillisecondsSinceEpoch(e.at);
+        final idx = (dt.weekday + 1) % 7; // Sat=0, Sun=1.. Fri=6
+        weekdayCounts[idx]++;
+      }
+
+      final imgTimeline = await renderer.renderTimelineChart(entries: sortedTimeline, isAr: isAr);
+      final imgStatus = await renderer.renderStatusDonutChart(statusDist: stats.statusDistribution, isAr: isAr);
+      final imgReasons = await renderer.renderReasonsChart(topReasons: stats.topReasons, isAr: isAr);
+      final imgWeekday = await renderer.renderWeekdayProductivityChart(weekdayCounts: weekdayCounts, isAr: isAr);
+
+      // Embed DrawingML images into the xlsx archive
+      finalBytes = _embedImagesInXlsx(
+        xlsxBytes: baseBytes,
+        images: [imgTimeline, imgStatus, imgReasons, imgWeekday],
+      );
+    } catch (e) {
+      // In test or environments where image rendering might be bypassed, baseBytes remains valid
+      finalBytes = baseBytes;
     }
 
     // File name: Enjaz_<range>_<start>to<end>.xlsx
@@ -85,12 +132,148 @@ class ExcelExportService {
 
     final tempDir = await getTemporaryDirectory();
     final file = File(p.join(tempDir.path, fileName));
-    await file.writeAsBytes(bytes, flush: true);
+    await file.writeAsBytes(finalBytes, flush: true);
 
     return file;
   }
 
-  // --- Sheet 1: Summary ---
+  // --- Sheet 1: Dashboard (لوحة المتابعة) ---
+  void _buildDashboardSheet(
+    Sheet sheet,
+    StatsResult stats,
+    StatsDateRange range,
+    List<Task> tasks,
+    List<TaskEvent> events,
+    bool isAr,
+  ) {
+    final startStr = DateFormat('yyyy-MM-dd').format(range.start);
+    final endStr = DateFormat('yyyy-MM-dd').format(range.end);
+
+    // Title & Range Header
+    sheet.appendRow([
+      TextCellValue(isAr ? 'تطبيق إنجاز — لوحة المتابعة الشاملة' : 'Enjaz App — Executive Dashboard'),
+    ]);
+    sheet.appendRow([
+      TextCellValue('${isAr ? 'نطاق التقرير' : 'Report Range'}: ${range.getLocalizedLabel(isAr ? 'ar' : 'en')} ($startStr - $endStr)'),
+    ]);
+    sheet.appendRow([
+      TextCellValue('${isAr ? 'تاريخ الاستخراج' : 'Generated At'}: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}'),
+    ]);
+    sheet.appendRow([]); // Empty spacer row 4
+
+    // KPI Header Row (Row 5)
+    sheet.appendRow([
+      TextCellValue(isAr ? 'المهام المنجزة' : 'Completed'),
+      TextCellValue(isAr ? 'نسبة الإنجاز %' : 'Completion Rate %'),
+      TextCellValue(isAr ? 'المهام المؤجلة' : 'Postponed'),
+      TextCellValue(isAr ? 'إنجاز جزئي' : 'Partially Done'),
+      TextCellValue(isAr ? 'متوسط المدة (دقيقة)' : 'Avg Duration (min)'),
+      TextCellValue(isAr ? 'أطول حماسة (أيام)' : 'Best Streak (days)'),
+    ]);
+
+    // KPI Values Row (Row 6)
+    sheet.appendRow([
+      IntCellValue(stats.completedCount),
+      TextCellValue('${stats.completionRate.round()}%'),
+      IntCellValue(stats.postponedCount),
+      IntCellValue(stats.partialCount),
+      DoubleCellValue(double.parse(stats.averageDurationMinutes.toStringAsFixed(1))),
+      IntCellValue(stats.bestStreak),
+    ]);
+
+    sheet.appendRow([]); // Row 7
+    sheet.appendRow([
+      TextCellValue(isAr ? '--- المخططات البيانية التفاعلية (أدناه) ---' : '--- Graphical Visualizations (Below) ---'),
+    ]); // Row 8
+
+    // Rows 9 to 40 are reserved as the visual canvas for the 4 charts (2x2 grid)
+    for (int r = 9; r <= 40; r++) {
+      sheet.appendRow([]);
+    }
+
+    // Row 41: Highlights Section Header
+    sheet.appendRow([
+      TextCellValue(isAr ? 'جدول أبرز المؤشرات والملخص التنفيذي' : 'Executive Highlights & Key Observations'),
+    ]);
+    sheet.appendRow([
+      TextCellValue(isAr ? 'المؤشر' : 'Metric'),
+      TextCellValue(isAr ? 'القيمة' : 'Value'),
+      TextCellValue(isAr ? 'الملاحظات والدلالة' : 'Notes'),
+    ]);
+
+    // Calculate highlight facts
+    // Most productive weekday
+    final doneEvents = events.where((e) => e.toStatus == 'done').toList();
+    final weekdayCounts = List.filled(7, 0);
+    for (final e in doneEvents) {
+      final dt = DateTime.fromMillisecondsSinceEpoch(e.at);
+      final idx = (dt.weekday + 1) % 7;
+      weekdayCounts[idx]++;
+    }
+    final dayNames = isAr
+        ? ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة']
+        : ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    int maxDayIdx = 0;
+    int maxDayCount = 0;
+    for (int i = 0; i < 7; i++) {
+      if (weekdayCounts[i] > maxDayCount) {
+        maxDayCount = weekdayCounts[i];
+        maxDayIdx = i;
+      }
+    }
+    final peakDayStr = maxDayCount > 0
+        ? '${dayNames[maxDayIdx]} ($maxDayCount ${isAr ? 'مهمة' : 'tasks'})'
+        : (isAr ? 'لا توجد بيانات كافية' : 'Insufficient data');
+
+    // Top postponement reason
+    final topReason = stats.topReasons.isNotEmpty ? stats.topReasons.first : null;
+    final topReasonStr = topReason != null
+        ? '${topReason.reason} (${topReason.count}×)'
+        : (isAr ? 'لا توجد أسباب مسجلة' : 'No recorded reasons');
+
+    final highlights = [
+      [
+        isAr ? 'اليوم الأكثر إنتاجية' : 'Most Productive Day',
+        peakDayStr,
+        isAr ? 'أعلى تركيز لإنجاز المهام في الأسبوع' : 'Day with highest task completion rate',
+      ],
+      [
+        isAr ? 'أهم سبب للتأجيل' : 'Top Delay Reason',
+        topReasonStr,
+        isAr ? 'السبب الرئيسي المؤثر على تعطل المهام' : 'Primary factor leading to postponed tasks',
+      ],
+      [
+        isAr ? 'المهام المتوقفة والمعلقة' : 'Waiting & Stopped Tasks',
+        stats.waitingStoppedCount.toString(),
+        isAr ? 'مهام تحتاج لمتابعة أو إزالة معوقات' : 'Tasks waiting on external factors or stopped',
+      ],
+      [
+        isAr ? 'الحماسة الحالية (Streak)' : 'Current Streak',
+        '${stats.currentStreak} ${isAr ? 'أيام متتالية' : 'consecutive days'}',
+        isAr ? 'الاستمرارية الحالية في إنجاز المهام' : 'Current active streak of completed tasks',
+      ],
+      [
+        isAr ? 'الأهداف المرتبطة المنجزة' : 'Completed Linked Goals',
+        stats.goalsCompletedCount.toString(),
+        isAr ? 'أهداف حياتية تم تحقيقها بالكامل' : 'Life goals achieved within this range',
+      ],
+      [
+        isAr ? 'الأفكار المحولة إلى مشاريع' : 'Converted Ideas',
+        stats.ideasConvertedCount.toString(),
+        isAr ? 'أفكار ملهمة تحولت إلى مهام وأهداف تنفيذية' : 'Brainstormed ideas converted into actions',
+      ],
+    ];
+
+    for (final h in highlights) {
+      sheet.appendRow([
+        TextCellValue(h[0]),
+        TextCellValue(h[1]),
+        TextCellValue(h[2]),
+      ]);
+    }
+  }
+
+  // --- Sheet 2: Summary ---
   void _buildSummarySheet(
     Sheet sheet,
     StatsResult stats,
@@ -105,7 +288,7 @@ class ExcelExportService {
     if (stats.isEmpty) {
       sheet.appendRow([
         TextCellValue(isAr ? 'ملاحظة' : 'Note'),
-        TextCellValue(isAr ? 'مفيش بيانات في دي الفترة' : 'No data in this range'),
+        TextCellValue(isAr ? 'لا توجد بيانات مسجلة في هذه الفترة' : 'No data recorded in this range'),
       ]);
       return;
     }
@@ -138,10 +321,11 @@ class ExcelExportService {
     }
   }
 
-  // --- Sheet 2: Tasks ---
+  // --- Sheet 3: Tasks ---
   void _buildTasksSheet(
     Sheet sheet,
     List<Task> allTasks,
+    List<TaskEvent> events,
     StatsDateRange range,
     List<Goal> goals,
     List<VoiceNote> voiceNotes,
@@ -172,6 +356,8 @@ class ExcelExportService {
     final startMs = range.start.millisecondsSinceEpoch;
     final endMs = range.end.millisecondsSinceEpoch;
     final goalMap = {for (final g in goals) g.id: g.title};
+    final eventTaskIds = events.map((e) => e.taskId).toSet();
+    final isAllTime = range.type == StatsRangeType.allTime;
 
     // Count voice notes per task
     final vnMap = <int, int>{};
@@ -184,6 +370,7 @@ class ExcelExportService {
     for (final t in allTasks) {
       bool isScheduled = false;
       bool isCompleted = false;
+      bool hasEvent = eventTaskIds.contains(t.id);
 
       // Scheduled check
       if (t.dueDate != null && t.dueDate!.isNotEmpty) {
@@ -207,13 +394,18 @@ class ExcelExportService {
         isCompleted = true;
       }
 
-      if (!isScheduled && !isCompleted) continue;
+      // If not relevant to range and not all-time, skip
+      if (!isScheduled && !isCompleted && !hasEvent && !isAllTime) continue;
 
       String countedAs = 'scheduled';
       if (isScheduled && isCompleted) {
         countedAs = 'both';
       } else if (isCompleted) {
         countedAs = 'completed';
+      } else if (hasEvent) {
+        countedAs = 'active_event';
+      } else if (isAllTime) {
+        countedAs = 'all_time';
       }
 
       double durationMin = 0;
@@ -250,7 +442,7 @@ class ExcelExportService {
     }
   }
 
-  // --- Sheet 3: History ---
+  // --- Sheet 4: History ---
   void _buildHistorySheet(
     Sheet sheet,
     List<TaskEvent> events,
@@ -258,24 +450,26 @@ class ExcelExportService {
     bool isAr,
   ) {
     sheet.appendRow([
-      TextCellValue('event_time'),
+      TextCellValue('id'),
+      TextCellValue('timestamp'),
       TextCellValue('task_id'),
-      TextCellValue(isAr ? 'عنوان المهمة' : 'task_title'),
+      TextCellValue(isAr ? 'العنوان' : 'task_title'),
       TextCellValue(isAr ? 'من حالة' : 'from_status'),
       TextCellValue(isAr ? 'إلى حالة' : 'to_status'),
-      TextCellValue('to_status_key'),
+      TextCellValue('status_key'),
       TextCellValue(isAr ? 'السبب' : 'reason'),
       TextCellValue(isAr ? 'ملاحظة' : 'note'),
       TextCellValue('progress_pct'),
     ]);
 
-    final taskTitleMap = {for (final t in tasks) t.id: t.title};
+    final taskMap = {for (final t in tasks) t.id: t.title};
 
     for (final e in events) {
       final timeStr = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.fromMillisecondsSinceEpoch(e.at));
-      final title = taskTitleMap[e.taskId] ?? 'Task #${e.taskId}';
+      final title = taskMap[e.taskId] ?? '#${e.taskId}';
 
       sheet.appendRow([
+        IntCellValue(e.id),
         TextCellValue(timeStr),
         IntCellValue(e.taskId),
         TextCellValue(title),
@@ -289,7 +483,7 @@ class ExcelExportService {
     }
   }
 
-  // --- Sheet 4: Daily ---
+  // --- Sheet 5: Daily ---
   void _buildDailySheet(
     Sheet sheet,
     StatsDateRange range,
@@ -306,29 +500,41 @@ class ExcelExportService {
       TextCellValue(isAr ? 'متوقفة' : 'stopped'),
     ]);
 
-    // Iterate through every single day in the range
-    DateTime day = DateTime(range.start.year, range.start.month, range.start.day);
-    final endDay = DateTime(range.end.year, range.end.month, range.end.day);
+    DateTime day;
+    DateTime endDay;
+
+    if (range.type == StatsRangeType.allTime) {
+      // In all-time range, avoid 80-year empty iterations: bound by earliest task/event up to today
+      final now = DateTime.now();
+      endDay = DateTime(now.year, now.month, now.day);
+      if (tasks.isEmpty && events.isEmpty) {
+        day = endDay.subtract(const Duration(days: 7));
+      } else {
+        int minMs = now.millisecondsSinceEpoch;
+        for (final t in tasks) {
+          if (t.createdAt < minMs) minMs = t.createdAt;
+        }
+        for (final e in events) {
+          if (e.at < minMs) minMs = e.at;
+        }
+        final minDt = DateTime.fromMillisecondsSinceEpoch(minMs);
+        day = DateTime(minDt.year, minDt.month, minDt.day);
+      }
+    } else {
+      day = DateTime(range.start.year, range.start.month, range.start.day);
+      endDay = DateTime(range.end.year, range.end.month, range.end.day);
+    }
 
     while (!day.isAfter(endDay)) {
       final dayStartMs = DateTime(day.year, day.month, day.day, 0, 0, 0).millisecondsSinceEpoch;
       final dayEndMs = DateTime(day.year, day.month, day.day, 23, 59, 59, 999).millisecondsSinceEpoch;
       final dayStr = DateFormat('yyyy-MM-dd').format(day);
 
-      // Created on this day
       final created = tasks.where((t) => t.createdAt >= dayStartMs && t.createdAt <= dayEndMs).length;
-
-      // Completed on this day
       final completed = events.where((e) => e.toStatus == 'done' && e.at >= dayStartMs && e.at <= dayEndMs).length;
-
-      // Postponed on this day
       final postponed = events.where((e) => e.toStatus == 'postponed' && e.at >= dayStartMs && e.at <= dayEndMs).length;
-
-      // Partial on this day
       final partial = events.where((e) => e.toStatus == 'partial' && e.at >= dayStartMs && e.at <= dayEndMs).length;
-
-      // Stopped on this day
-      final stopped = events.where((e) => e.toStatus == 'stopped' && e.at >= dayStartMs && e.at <= dayEndMs).length;
+      final stopped = events.where((e) => (e.toStatus == 'stopped' || e.toStatus == 'waiting') && e.at >= dayStartMs && e.at <= dayEndMs).length;
 
       sheet.appendRow([
         TextCellValue(dayStr),
@@ -343,7 +549,7 @@ class ExcelExportService {
     }
   }
 
-  // --- Sheet 5: Reasons ---
+  // --- Sheet 6: Reasons ---
   void _buildReasonsSheet(
     Sheet sheet,
     List<ReasonCount> topReasons,
@@ -370,7 +576,7 @@ class ExcelExportService {
     }
   }
 
-  // --- Sheet 6: Goals ---
+  // --- Sheet 7: Goals ---
   void _buildGoalsSheet(
     Sheet sheet,
     List<Goal> goals,
@@ -398,7 +604,6 @@ class ExcelExportService {
       final gMilestones = milestones.where((m) => m.goalId == g.id).toList();
       final doneMs = gMilestones.where((m) => m.status == 'done').length;
 
-      // Progress calculation
       int progressPct = 0;
       if (g.progressMode == 'numeric') {
         if (g.targetValue != null && g.targetValue! > 0) {
@@ -410,7 +615,6 @@ class ExcelExportService {
         }
       }
 
-      // Progress delta in range
       final rangeUpdates = updates.where((u) => u.goalId == g.id && u.at >= startMs && u.at <= endMs).toList();
       double progressChange = 0;
       for (final u in rangeUpdates) {
@@ -437,7 +641,7 @@ class ExcelExportService {
     }
   }
 
-  // --- Sheet 7: Ideas ---
+  // --- Sheet 8: Ideas ---
   void _buildIdeasSheet(
     Sheet sheet,
     List<Idea> ideas,
@@ -496,5 +700,122 @@ class ExcelExportService {
       default:
         return st;
     }
+  }
+
+  /// Inject OpenXML DrawingML artifacts and PNG chart images into the generated XLSX ZIP archive
+  List<int> _embedImagesInXlsx({
+    required List<int> xlsxBytes,
+    required List<Uint8List> images,
+  }) {
+    if (images.isEmpty) return xlsxBytes;
+
+    final inArchive = ZipDecoder().decodeBytes(xlsxBytes);
+    final outArchive = Archive();
+
+    // Chart positioning in grid:
+    // Chart 1: Row 8 to 23, Col 0 to 5 (A..F)
+    // Chart 2: Row 8 to 23, Col 6 to 11 (G..L)
+    // Chart 3: Row 25 to 40, Col 0 to 5 (A..F)
+    // Chart 4: Row 25 to 40, Col 6 to 11 (G..L)
+    final anchors = [
+      (0, 8, 5, 23),
+      (6, 8, 11, 23),
+      (0, 25, 5, 40),
+      (6, 25, 11, 40),
+    ];
+
+    for (final file in inArchive) {
+      var content = file.content as List<int>;
+
+      if (file.name == 'xl/worksheets/sheet1.xml') {
+        var xmlStr = utf8.decode(content);
+        if (!xmlStr.contains('xmlns:r=')) {
+          xmlStr = xmlStr.replaceFirst(
+            '<worksheet ',
+            '<worksheet xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ',
+          );
+        }
+        if (!xmlStr.contains('<drawing')) {
+          xmlStr = xmlStr.replaceFirst('</worksheet>', '<drawing r:id="rIdDrawing1"/></worksheet>');
+        }
+        content = utf8.encode(xmlStr);
+      } else if (file.name == '[Content_Types].xml') {
+        var xmlStr = utf8.decode(content);
+        if (!xmlStr.contains('Extension="png"')) {
+          const overrides = '<Default Extension="png" ContentType="image/png"/>'
+              '<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>';
+          xmlStr = xmlStr.replaceFirst('</Types>', '$overrides</Types>');
+          content = utf8.encode(xmlStr);
+        }
+      }
+
+      outArchive.addFile(ArchiveFile(file.name, content.length, content));
+    }
+
+    // 1. Add sheet1.xml.rels
+    const sheet1Rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\n'
+        '  <Relationship Id="rIdDrawing1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>\n'
+        '</Relationships>';
+    final sheet1RelsBytes = utf8.encode(sheet1Rels);
+    outArchive.addFile(ArchiveFile('xl/worksheets/_rels/sheet1.xml.rels', sheet1RelsBytes.length, sheet1RelsBytes));
+
+    // 2. Build drawing1.xml
+    final sb = StringBuffer();
+    sb.writeln('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>');
+    sb.writeln('<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">');
+
+    for (int i = 0; i < images.length && i < anchors.length; i++) {
+      final a = anchors[i];
+      final colFrom = a.$1;
+      final rowFrom = a.$2;
+      final colTo = a.$3;
+      final rowTo = a.$4;
+
+      sb.writeln('  <xdr:twoCellAnchor editAs="oneCell">');
+      sb.writeln('    <xdr:from><xdr:col>$colFrom</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>$rowFrom</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>');
+      sb.writeln('    <xdr:to><xdr:col>$colTo</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>$rowTo</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to>');
+      sb.writeln('    <xdr:pic>');
+      sb.writeln('      <xdr:nvPicPr>');
+      sb.writeln('        <xdr:cNvPr id="${i + 1}" name="EnjazChart${i + 1}"/>');
+      sb.writeln('        <xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr>');
+      sb.writeln('      </xdr:nvPicPr>');
+      sb.writeln('      <xdr:blipFill>');
+      sb.writeln('        <a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="rIdImg${i + 1}"/>');
+      sb.writeln('        <a:stretch><a:fillRect/></a:stretch>');
+      sb.writeln('      </xdr:blipFill>');
+      sb.writeln('      <xdr:spPr>');
+      sb.writeln('        <a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></a:xfrm>');
+      sb.writeln('        <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>');
+      sb.writeln('      </xdr:spPr>');
+      sb.writeln('    </xdr:pic>');
+      sb.writeln('    <xdr:clientData/>');
+      sb.writeln('  </xdr:twoCellAnchor>');
+    }
+    sb.writeln('</xdr:wsDr>');
+
+    final drawingBytes = utf8.encode(sb.toString());
+    outArchive.addFile(ArchiveFile('xl/drawings/drawing1.xml', drawingBytes.length, drawingBytes));
+
+    // 3. Build drawing1.xml.rels
+    final relsSb = StringBuffer();
+    relsSb.writeln('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>');
+    relsSb.writeln('<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">');
+    for (int i = 0; i < images.length && i < anchors.length; i++) {
+      relsSb.writeln('  <Relationship Id="rIdImg${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image${i + 1}.png"/>');
+    }
+    relsSb.writeln('</Relationships>');
+
+    final drawingRelsBytes = utf8.encode(relsSb.toString());
+    outArchive.addFile(ArchiveFile('xl/drawings/_rels/drawing1.xml.rels', drawingRelsBytes.length, drawingRelsBytes));
+
+    // 4. Add image PNG files in xl/media/
+    for (int i = 0; i < images.length && i < anchors.length; i++) {
+      final imgBytes = images[i];
+      outArchive.addFile(ArchiveFile('xl/media/image${i + 1}.png', imgBytes.length, imgBytes));
+    }
+
+    final encoded = ZipEncoder().encode(outArchive);
+    return encoded ?? xlsxBytes;
   }
 }

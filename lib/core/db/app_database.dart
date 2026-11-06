@@ -1011,13 +1011,31 @@ class AppDatabase extends _$AppDatabase {
     final endMs = end.millisecondsSinceEpoch;
     final all = await (select(tasks)..where((t) => t.deletedAt.isNull())).get();
 
+    // If all time range (e.g. from <= 1970 to >= 2099), return all non-deleted tasks
+    if (start.year <= 1970 && end.year >= 2099) {
+      return all;
+    }
+
+    // Get task IDs with any status change event in the range
+    final eventsInRange = await (select(taskEvents)
+          ..where((e) =>
+              e.at.isBiggerOrEqualValue(startMs) &
+              e.at.isSmallerOrEqualValue(endMs)))
+        .get();
+    final eventTaskIds = eventsInRange.map((e) => e.taskId).toSet();
+
     return all.where((task) {
       // 1. Finished inside range
       if (task.finishedAt != null && task.finishedAt! >= startMs && task.finishedAt! <= endMs) {
         return true;
       }
 
-      // 2. Scheduled inside range
+      // 2. Has an event inside range (postponed, completed, partial, waiting, etc.)
+      if (eventTaskIds.contains(task.id)) {
+        return true;
+      }
+
+      // 3. Scheduled inside range
       if (task.dueDate != null && task.dueDate!.isNotEmpty) {
         try {
           final due = DateTime.parse(task.dueDate!);

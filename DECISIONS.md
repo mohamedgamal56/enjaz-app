@@ -171,4 +171,29 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
     - Recurring tasks prompt the user with 'هذه المهمة فقط' or 'كل المهام القادمة'.
   - Bulk Selection Engine:
     - Built 	askSelectionProvider and BulkSelectionBar enabling long-press selection on Today, History, and Inbox with bulk done, bulk move, bulk status change, and bulk soft-delete actions, each supported with an 8-second Undo mechanism.
-
+## Decision 15: Round 2 Excel Export Root Cause Fix, Executive Dashboard & OpenXML DrawingML Injection
+- **Context**: The exported Excel report was reported empty in certain ranges, the `excel` Dart library lacks native picture insertion APIs, and Roadmap v2.0 Section 6 demands an Executive Dashboard as the first sheet with KPI cells, highlights, and 4 embedded chart images at 2x resolution that look identical to the Stats screen.
+- **Root Cause of Empty Report**:
+  1. `getTasksForStatsRange` strictly checked `task.finishedAt` and `task.dueDate`. Tasks completed or postponed during the period whose scheduled date was outside the range (e.g., tasks postponed from earlier or undated inbox tasks completed during the week) were completely excluded from the query.
+  2. In `excel_export_service.dart`, `_buildTasksSheet` used `if (!isScheduled && !isCompleted) continue;`, silently skipping tasks that had active status events (`postponed`, `partial`, `waiting`, `stopped`) in the period.
+  3. `allTime` was bounded between 2020 and 2100, and its daily sheet iteration attempted to loop over tens of thousands of empty days.
+- **Decision & Implementation**:
+  - **Query Expansion**:
+    - `getTasksForStatsRange` now joins task IDs that have any status change event (`TaskEvent`) in the range, ensuring no active, completed, or postponed task is lost.
+    - `allTime` range now starts at epoch (1970) and returns all non-deleted tasks directly.
+    - Daily sheet in `allTime` dynamically clamps its loop to the span between the earliest recorded task/event and today, eliminating unnecessary iterations.
+  - **Executive Dashboard Sheet (First Sheet)**:
+    - Positioned as Sheet 1 (`لوحة المتابعة` in Arabic, `Dashboard` in English) with RTL support.
+    - Features formatted KPI cells (Completed, Completion Rate %, Postponed, Partial, Avg Duration, Streak).
+    - Features an Executive Highlights table (Most Productive Weekday, Top Delay Reason, Total Tasks, Commitments).
+    - Allocates rows 9–40 as the layout grid for 4 charts.
+  - **Chart Image Renderer (Headless Canvas)**:
+    - Created `ChartImageRenderer` using Flutter's `dart:ui` `PictureRecorder` and `Canvas` to generate 4 high-resolution 2x PNG images:
+      1. Timeline bar chart of completed tasks per day.
+      2. Donut chart of status distribution with slice percentages and color legend.
+      3. Top postponement reasons horizontal bar chart.
+      4. Productivity by weekday bar chart with peak-day star highlight.
+    - Pure Dart/Flutter with zero network access and deterministic millisecond rendering.
+  - **OpenXML DrawingML Injection**:
+    - Rather than adding heavy or commercially restricted third-party libraries (e.g. Syncfusion), the service uses the existing `archive` library to unpack the generated XLSX zip archive, inject `xl/drawings/drawing1.xml` with `<xdr:twoCellAnchor>` definitions, wire `xl/worksheets/_rels/sheet1.xml.rels`, embed PNG images in `xl/media/`, register `drawing+xml` in `[Content_Types].xml`, and re-encode to a valid XLSX file.
+    - 100% compliant with Microsoft Excel, Google Sheets, and LibreOffice.

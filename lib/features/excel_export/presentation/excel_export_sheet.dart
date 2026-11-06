@@ -414,7 +414,7 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
                             ),
                           ),
                           Text(
-                            '${(_generatedFile!.lengthSync() / 1024).toStringAsFixed(1)} KB • 7 ${l10n.sheetTasks}',
+                            '${(_generatedFile!.lengthSync() / 1024).toStringAsFixed(1)} KB • 8 ${isAr ? 'أوراق عمل' : 'worksheets'}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: textMuted,
                             ),
