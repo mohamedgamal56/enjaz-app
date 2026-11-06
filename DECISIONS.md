@@ -338,5 +338,19 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
     - Monthly backup reminder toggle set to ON by default (`backup_monthly_reminder = true`) to safeguard memory archives.
     - Voice notes storage monitor in Settings and BackupScreen showing total disk space used in MB.
 
+## Decision 21: Project Final Polish, Section 14 Acceptance Criteria Verification & Production Release v1.1.0
+- **Context**: Final milestone of Roadmap v2.0 as specified in Section 14 (Acceptance tests by round from Round 0 to Round 7). Preparing the production-ready, fully verified, signed release APK.
+- **Decision & Implementation**:
+  - **Comprehensive Acceptance Test Verification**:
+    - Validated all 23 unit test suites covering every engine: task status state machine, recurring rules, reminder scheduling, encrypted backups with AES-256-GCM, full Excel export with 15 sheets and RTL drawing, habits streak engine, finance engine & masking eye, health lifecycle & adherence calculation, life timeline aggregation, and performance targets.
+  - **Version Bump**:
+    - Bumped application version to final stable production release `1.1.0+10` in `pubspec.yaml`.
+  - **Release Architecture & Signing Integrity**:
+    - All builds are consistently signed with the immutable keystore (`enjaz-release-key.jks`) ensuring frictionless in-place updates over all prior builds without data migration or re-installation.
+    - Zero network permissions (`android.permission.INTERNET` remains completely absent) maintaining the 100% offline security promise.
+  - **Documentation & Archive**:
+    - Complete synchronization across `README.md`, `CHANGELOG.md`, `DECISIONS.md`, and official GitHub release notes.
+
+
 
 
