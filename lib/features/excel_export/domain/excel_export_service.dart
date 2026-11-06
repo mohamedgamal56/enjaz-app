@@ -115,14 +115,23 @@ class ExcelExportService {
       final imgReasons = await renderer.renderReasonsChart(topReasons: stats.topReasons, isAr: isAr);
       final imgWeekday = await renderer.renderWeekdayProductivityChart(weekdayCounts: weekdayCounts, isAr: isAr);
 
-      // Embed DrawingML images into the xlsx archive
+      // Embed DrawingML images and apply RTL into the xlsx archive
       finalBytes = _embedImagesInXlsx(
         xlsxBytes: baseBytes,
         images: [imgTimeline, imgStatus, imgReasons, imgWeekday],
+        isAr: isAr,
       );
     } catch (e) {
-      // In test or environments where image rendering might be bypassed, baseBytes remains valid
-      finalBytes = baseBytes;
+      // If chart rendering fails (e.g. headless environment with no canvas), still apply RTL
+      try {
+        finalBytes = _embedImagesInXlsx(
+          xlsxBytes: baseBytes,
+          images: [],
+          isAr: isAr,
+        );
+      } catch (_) {
+        finalBytes = baseBytes;
+      }
     }
 
     // File name: Enjaz_<range>_<start>to<end>.xlsx
@@ -703,12 +712,13 @@ class ExcelExportService {
     }
   }
 
-  /// Inject OpenXML DrawingML artifacts and PNG chart images into the generated XLSX ZIP archive
+  /// Inject OpenXML DrawingML artifacts, PNG chart images, and RTL direction into the generated XLSX ZIP archive
   List<int> _embedImagesInXlsx({
     required List<int> xlsxBytes,
     required List<Uint8List> images,
+    required bool isAr,
   }) {
-    if (images.isEmpty) return xlsxBytes;
+    if (images.isEmpty && !isAr) return xlsxBytes;
 
     final inArchive = ZipDecoder().decodeBytes(xlsxBytes);
     final outArchive = Archive();
@@ -728,19 +738,40 @@ class ExcelExportService {
     for (final file in inArchive) {
       var content = file.content as List<int>;
 
-      if (file.name == 'xl/worksheets/sheet1.xml') {
+      if (file.name.startsWith('xl/worksheets/sheet') && file.name.endsWith('.xml') && !file.name.contains('_rels')) {
         var xmlStr = utf8.decode(content);
-        if (!xmlStr.contains('xmlns:r=')) {
-          xmlStr = xmlStr.replaceFirst(
-            '<worksheet ',
-            '<worksheet xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ',
-          );
+
+        // Ensure RTL view for Arabic worksheets
+        if (isAr) {
+          if (xmlStr.contains('<sheetView')) {
+            if (xmlStr.contains('rightToLeft="0"')) {
+              xmlStr = xmlStr.replaceAll('rightToLeft="0"', 'rightToLeft="1"');
+            } else if (!xmlStr.contains('rightToLeft=')) {
+              xmlStr = xmlStr.replaceFirst('<sheetView ', '<sheetView rightToLeft="1" ');
+            }
+          } else if (xmlStr.contains('<sheetData')) {
+            xmlStr = xmlStr.replaceFirst(
+              '<sheetData',
+              '<sheetViews><sheetView workbookViewId="0" rightToLeft="1"/></sheetViews><sheetData',
+            );
+          }
         }
-        if (!xmlStr.contains('<drawing')) {
-          xmlStr = xmlStr.replaceFirst('</worksheet>', '<drawing r:id="rIdDrawing1"/></worksheet>');
+
+        // Add drawing link to sheet1.xml (Dashboard) if images are provided
+        if (file.name == 'xl/worksheets/sheet1.xml' && images.isNotEmpty) {
+          if (!xmlStr.contains('xmlns:r=')) {
+            xmlStr = xmlStr.replaceFirst(
+              '<worksheet ',
+              '<worksheet xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ',
+            );
+          }
+          if (!xmlStr.contains('<drawing')) {
+            xmlStr = xmlStr.replaceFirst('</worksheet>', '<drawing r:id="rIdDrawing1"/></worksheet>');
+          }
         }
+
         content = utf8.encode(xmlStr);
-      } else if (file.name == '[Content_Types].xml') {
+      } else if (file.name == '[Content_Types].xml' && images.isNotEmpty) {
         var xmlStr = utf8.decode(content);
         if (!xmlStr.contains('Extension="png"')) {
           const overrides = '<Default Extension="png" ContentType="image/png"/>'
