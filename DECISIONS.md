@@ -152,3 +152,23 @@
     - In `AppFormatter`, added bidirectional mapping `_arabicToWesternDigits` to ensure that when `NumeralsFormat.western` is active (the default), any Arabic-Indic digits produced by `DateFormat` in Arabic locale are normalized to Western digits (e.g. "6 نوفمبر 2026").
   - Quick Add Architecture:
     - Segregated form state in `QuickAddSheet` to dynamically render dedicated form controls for Goals (target date, description) and Ideas (tags, details) while hiding Task-only controls, and restricted the multi-line import action exclusively to Tasks and Errands.
+
+## Decision 14: Round 1 Shared Reminders, Alarms, Edit-After-Save, Trash & Bulk Selection
+- **Context**: Task details previously did not permit editing all fields (due date/time, priority, goal link, started/finished times) with an explicit save button, alarms only showed as silent shade notifications, reminder channel attributes were immutable on Android 8+, and bulk management actions were unavailable.
+- **Decision**:
+  - Drift Schema Version 3 Migration:
+    - Introduced a dedicated, shared 
+eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolute_time, message, enabled).
+    - Implemented onUpgrade step from version 2 to 3 migrating existing task reminders.
+  - Alarm Channel & Insistent Notification Strategy:
+    - Created new channel IDs enjaz_alarm_v2 and enjaz_reminders_v2 and deleted deprecated channels so that audio attributes and high importance take effect on device.
+    - Configured enjaz_alarm_v2 with Importance.max, AudioAttributesUsage.alarm, ongoing: true, and FLAG_INSISTENT = 4 (dditionalFlags: Int32List.fromList([4])), ensuring continuous ringing and vibration until explicit user action (Done, Snooze, Stop).
+    - Avoided full-screen intent permissions (USE_FULL_SCREEN_INTENT) to protect battery and prevent disruptive overlays, adhering to Google Play policies.
+    - Switched from USE_EXACT_ALARM to SCHEDULE_EXACT_ALARM with a runtime verification screen and direct shortcut to Android system settings.
+  - Task Editing & Exit Protection:
+    - All task fields are now fully editable with an explicit 'حفظ التعديلات / Save Changes' action.
+    - Added PopScope exit interception: if unsaved modifications exist, a confirmation dialog warns the user before discarding.
+    - Recurring tasks prompt the user with 'هذه المهمة فقط' or 'كل المهام القادمة'.
+  - Bulk Selection Engine:
+    - Built 	askSelectionProvider and BulkSelectionBar enabling long-press selection on Today, History, and Inbox with bulk done, bulk move, bulk status change, and bulk soft-delete actions, each supported with an 8-second Undo mechanism.
+

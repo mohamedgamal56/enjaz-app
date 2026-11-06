@@ -7,8 +7,11 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../tasks/presentation/quick_add_sheet.dart';
 import '../../tasks/presentation/widgets/task_card.dart';
+import '../../tasks/domain/task_selection_provider.dart';
+import '../../tasks/presentation/widgets/bulk_selection_bar.dart';
 import '../../recurrence/domain/recurrence_service.dart';
 import '../../reminders/domain/notification_service.dart';
+import '../../reminders/domain/reminder_scheduler.dart';
 
 class TodayScreen extends ConsumerStatefulWidget {
   const TodayScreen({super.key});
@@ -21,6 +24,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   late DateTime _selectedDate;
   bool _isWaitingCollapsed = true;
   bool _isDoneCollapsed = true;
+  List<int> _currentVisibleTaskIds = [];
 
   @override
   void initState() {
@@ -30,10 +34,14 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final db = ref.read(databaseProvider);
+      await db.purgeTrashOlderThan30Days();
       await RecurrenceService.generateAllUpcomingInstances(db);
       if (mounted) {
         await NotificationService().rescheduleAll(
           db,
+          languageCode: Localizations.localeOf(context).languageCode,
+        );
+        await ReminderScheduler(db: db).rescheduleAllActive(
           languageCode: Localizations.localeOf(context).languageCode,
         );
       }
@@ -206,9 +214,20 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     );
 
     final db = ref.watch(databaseProvider);
+    final selectionState = ref.watch(taskSelectionProvider);
 
-    return Scaffold(
-      body: SafeArea(
+    return PopScope(
+      canPop: !selectionState.isSelecting,
+      onPopInvoked: (didPop) {
+        if (!didPop && selectionState.isSelecting) {
+          ref.read(taskSelectionProvider.notifier).clear();
+        }
+      },
+      child: Scaffold(
+        appBar: selectionState.isSelecting
+            ? BulkSelectionBar(currentVisibleTaskIds: _currentVisibleTaskIds)
+            : null,
+        body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Column(
@@ -337,6 +356,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   stream: db.watchTasksForDate(selectedDateStr),
                   builder: (context, dayTasksSnapshot) {
                     final allDayTasks = dayTasksSnapshot.data ?? [];
+                    _currentVisibleTaskIds = allDayTasks.map((t) => t.id).toList();
 
                     return StreamBuilder<List<Task>>(
                       stream: db.watchOverdueTasks(todayStr),
@@ -578,7 +598,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildSectionHeader(

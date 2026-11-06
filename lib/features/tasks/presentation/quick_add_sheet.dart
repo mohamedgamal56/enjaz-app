@@ -9,6 +9,7 @@ import '../../voice_notes/domain/voice_note_service.dart';
 import '../../voice_notes/presentation/voice_recorder_sheet.dart';
 import '../../recurrence/domain/recurrence_service.dart';
 import '../../reminders/domain/notification_service.dart';
+import '../../reminders/domain/reminder_scheduler.dart';
 import '../../reminders/presentation/notification_permission_sheet.dart';
 
 class QuickAddSheet extends ConsumerStatefulWidget {
@@ -353,9 +354,21 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       insertedId = await db.insertNewTask(companion);
 
         if (_selectedReminderOffset != null) {
-          final task = await (db.select(db.tasks)..where((t) => t.id.equals(insertedId!))).getSingleOrNull();
-          if (task != null) {
-            await NotificationService().scheduleTaskReminder(task: task);
+          final defaultKind = await db.getSetting('default_reminder_kind') ?? 'alarm';
+          final remId = await db.insertReminder(
+            ownerType: 'task',
+            ownerId: insertedId!,
+            kind: defaultKind,
+            offsetMinutes: _selectedReminderOffset,
+          );
+          final savedRem = await (db.select(db.reminders)..where((r) => r.id.equals(remId))).getSingleOrNull();
+          if (savedRem != null) {
+            await ReminderScheduler(db: db).scheduleReminder(
+              reminder: savedRem,
+              title: _titleController.text.trim(),
+              dueDate: finalDueDate,
+              dueTime: _selectedDueTime,
+            );
           }
         }
       }

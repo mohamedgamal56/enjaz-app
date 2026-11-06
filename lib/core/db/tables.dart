@@ -156,3 +156,18 @@ class VoiceNotes extends Table with CommonColumns {
   TextColumn get label => text().nullable()();
   IntColumn get recordedAt => integer()(); // epoch ms
 }
+
+// 13. Reminders (Roadmap v2.0 Round 1 - Shared Reminders)
+@TableIndex(name: 'idx_reminders_owner', columns: {#ownerType, #ownerId})
+@TableIndex(name: 'idx_reminders_enabled', columns: {#enabled})
+class Reminders extends Table with CommonColumns {
+  TextColumn get ownerType => text()(); // task | goal | idea | habit | obligation | health_item | treatment
+  IntColumn get ownerId => integer()();
+  TextColumn get kind => text().withDefault(const Constant('notification'))(); // notification | alarm
+  TextColumn get triggerType => text().withDefault(const Constant('offset'))(); // offset | absolute
+  IntColumn get offsetMinutes => integer().nullable()(); // 0, 10, 30, 60, 1440
+  DateTimeColumn get absoluteTime => dateTime().nullable()();
+  TextColumn get message => text().nullable()(); // null = fallback to item title
+  BoolColumn get enabled => boolean().withDefault(const Constant(true))();
+}
+

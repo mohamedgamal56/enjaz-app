@@ -24,12 +24,13 @@ part 'app_database.g.dart';
   Recurrences,
   Settings,
   VoiceNotes,
+  Reminders,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -59,6 +60,24 @@ class AppDatabase extends _$AppDatabase {
             await customStatement(
               'CREATE INDEX IF NOT EXISTS idx_voice_notes_parent ON voice_notes (parent_type, parent_id);',
             );
+          }
+          if (from < 3) {
+            await m.createTable(reminders);
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_reminders_owner ON reminders (owner_type, owner_id);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_reminders_enabled ON reminders (enabled);',
+            );
+
+            // Migrate existing tasks with reminder_offset_minutes
+            final now = DateTime.now().millisecondsSinceEpoch;
+            await customStatement('''
+              INSERT INTO reminders (owner_type, owner_id, kind, trigger_type, offset_minutes, message, enabled, created_at, updated_at)
+              SELECT 'task', id, 'alarm', 'offset', reminder_offset_minutes, title, 1, $now, $now
+              FROM tasks
+              WHERE reminder_offset_minutes IS NOT NULL AND deleted_at IS NULL;
+            ''');
           }
         },
       );
@@ -1293,6 +1312,208 @@ class AppDatabase extends _$AppDatabase {
         }
       }
     });
+  }
+
+  // -------------------------------------------------------------
+  // ROADMAP V2.0 ROUND 1: SHARED REMINDERS, BULK & TRASH
+  // -------------------------------------------------------------
+
+  /// Watch reminders for a specific owner (e.g. task, goal, idea)
+  Stream<List<Reminder>> watchRemindersForOwner(String ownerType, int ownerId) {
+    return (select(reminders)
+          ..where((r) =>
+              r.ownerType.equals(ownerType) &
+              r.ownerId.equals(ownerId) &
+              r.deletedAt.isNull())
+          ..orderBy([(r) => OrderingTerm.asc(r.createdAt)]))
+        .watch();
+  }
+
+  /// Get reminders for a specific owner
+  Future<List<Reminder>> getRemindersForOwner(String ownerType, int ownerId) {
+    return (select(reminders)
+          ..where((r) =>
+              r.ownerType.equals(ownerType) &
+              r.ownerId.equals(ownerId) &
+              r.deletedAt.isNull())
+          ..orderBy([(r) => OrderingTerm.asc(r.createdAt)]))
+        .get();
+  }
+
+  /// Insert a new reminder
+  Future<int> insertReminder({
+    required String ownerType,
+    required int ownerId,
+    required String kind,
+    String triggerType = 'offset',
+    int? offsetMinutes,
+    DateTime? absoluteTime,
+    String? message,
+    bool enabled = true,
+  }) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return into(reminders).insert(
+      RemindersCompanion.insert(
+        ownerType: ownerType,
+        ownerId: ownerId,
+        kind: Value(kind),
+        triggerType: Value(triggerType),
+        offsetMinutes: Value(offsetMinutes),
+        absoluteTime: Value(absoluteTime),
+        message: Value(message),
+        enabled: Value(enabled),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+
+  /// Update an existing reminder
+  Future<bool> updateReminder({
+    required int id,
+    String? kind,
+    String? triggerType,
+    int? offsetMinutes,
+    DateTime? absoluteTime,
+    String? message,
+    bool? enabled,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final count = await (update(reminders)..where((r) => r.id.equals(id))).write(
+      RemindersCompanion(
+        kind: kind != null ? Value(kind) : const Value.absent(),
+        triggerType: triggerType != null ? Value(triggerType) : const Value.absent(),
+        offsetMinutes: offsetMinutes != null ? Value(offsetMinutes) : const Value.absent(),
+        absoluteTime: absoluteTime != null ? Value(absoluteTime) : const Value.absent(),
+        message: message != null ? Value(message) : const Value.absent(),
+        enabled: enabled != null ? Value(enabled) : const Value.absent(),
+        updatedAt: Value(now),
+      ),
+    );
+    return count > 0;
+  }
+
+  /// Delete a single reminder
+  Future<int> deleteReminder(int id) {
+    return (delete(reminders)..where((r) => r.id.equals(id))).go();
+  }
+
+  /// Delete all reminders for a specific owner
+  Future<int> deleteRemindersForOwner(String ownerType, int ownerId) {
+    return (delete(reminders)
+          ..where((r) => r.ownerType.equals(ownerType) & r.ownerId.equals(ownerId)))
+        .go();
+  }
+
+  /// Get all active reminders across all modules
+  Future<List<Reminder>> getAllActiveReminders() {
+    return (select(reminders)
+          ..where((r) => r.enabled.equals(true) & r.deletedAt.isNull()))
+        .get();
+  }
+
+  /// Bulk soft delete tasks (move to trash)
+  Future<int> bulkSoftDeleteTasks(List<int> taskIds) async {
+    if (taskIds.isEmpty) return 0;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(tasks)..where((t) => t.id.isIn(taskIds))).write(
+      TasksCompanion(
+        deletedAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Bulk restore tasks from trash
+  Future<int> bulkRestoreTasks(List<int> taskIds) async {
+    if (taskIds.isEmpty) return 0;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(tasks)..where((t) => t.id.isIn(taskIds))).write(
+      TasksCompanion(
+        deletedAt: const Value(null),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Bulk update tasks status (e.g. mark done or change status)
+  Future<int> bulkUpdateTasksStatus(
+    List<int> taskIds,
+    String newStatus, {
+    int? reasonId,
+    String? reasonText,
+    String? outcomeNote,
+  }) async {
+    if (taskIds.isEmpty) return 0;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    int affected = 0;
+    for (final id in taskIds) {
+      final task = await (select(tasks)..where((t) => t.id.equals(id))).getSingleOrNull();
+      if (task != null) {
+        await updateTaskStatus(
+          task: task,
+          newStatus: newStatus,
+          reasonId: reasonId,
+          reasonText: reasonText,
+          outcomeNote: outcomeNote,
+        );
+        affected++;
+      }
+    }
+    return affected;
+  }
+
+  /// Bulk move tasks due date
+  Future<int> bulkMoveTasksDueDate(List<int> taskIds, String? newDueDate) async {
+    if (taskIds.isEmpty) return 0;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(tasks)..where((t) => t.id.isIn(taskIds))).write(
+      TasksCompanion(
+        dueDate: Value(newDueDate),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Permanently delete a single task from trash, removing voice note files & reminders
+  Future<void> permanentlyDeleteTask(int taskId) async {
+    // 1. Delete voice notes and audio files
+    final vns = await (select(voiceNotes)
+          ..where((v) => v.parentType.equals('task') & v.parentId.equals(taskId)))
+        .get();
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      for (final vn in vns) {
+        final f = File(p.join(appDir.path, vn.fileName));
+        if (await f.exists()) await f.delete();
+      }
+    } catch (_) {}
+    await (delete(voiceNotes)
+          ..where((v) => v.parentType.equals('task') & v.parentId.equals(taskId)))
+        .go();
+
+    // 2. Delete reminders
+    await (delete(reminders)
+          ..where((r) => r.ownerType.equals('task') & r.ownerId.equals(taskId)))
+        .go();
+
+    // 3. Delete task events & task
+    await (delete(taskEvents)..where((e) => e.taskId.equals(taskId))).go();
+    await (delete(tasks)..where((t) => t.id.equals(taskId))).go();
+  }
+
+  /// Auto-purge trash items deleted more than 30 days ago
+  Future<int> purgeTrashOlderThan30Days() async {
+    final thirtyDaysAgoMs = DateTime.now().subtract(const Duration(days: 30)).millisecondsSinceEpoch;
+    final oldTasks = await (select(tasks)
+          ..where((t) => t.deletedAt.isNotNull() & t.deletedAt.isSmallerOrEqualValue(thirtyDaysAgoMs)))
+        .get();
+    int purged = 0;
+    for (final task in oldTasks) {
+      await permanentlyDeleteTask(task.id);
+      purged++;
+    }
+    return purged;
   }
 }
 
