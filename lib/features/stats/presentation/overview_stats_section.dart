@@ -6,7 +6,7 @@ import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../timeline/domain/timeline_models.dart';
 import '../../timeline/domain/timeline_provider.dart';
-import '../domain/stats_models.dart';
+import '../domain/stats_service.dart';
 
 class OverviewStatsSection extends ConsumerWidget {
   final StatsDateRange range;
