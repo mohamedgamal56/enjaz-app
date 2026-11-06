@@ -1,5 +1,5 @@
 import '../../../core/db/app_database.dart';
-import '../../../core/utils/numerals_formatter.dart';
+import '../../../core/utils/date_formatter.dart';
 
 class HealthWaitingDuration {
   final int totalDays;
@@ -17,10 +17,10 @@ class HealthWaitingDuration {
       return isArabic ? 'اليوم' : 'Today';
     }
     if (months >= 1) {
-      final mStr = NumeralsFormatter.format(months.toString(), numerals);
+      final mStr = AppFormatter.formatStringDigits(months.toString(), format: numerals);
       return isArabic ? 'محتاج من $mStr شهر' : 'needed for $mStr mo';
     }
-    final dStr = NumeralsFormatter.format(totalDays.toString(), numerals);
+    final dStr = AppFormatter.formatStringDigits(totalDays.toString(), format: numerals);
     return isArabic ? 'محتاج من $dStr يوم' : 'needed for $dStr d';
   }
 }
@@ -38,7 +38,7 @@ class TreatmentAdherenceMetrics {
 
   String formatPercent({NumeralsFormat numerals = NumeralsFormat.western}) {
     final rounded = adherencePercent.round();
-    final pStr = NumeralsFormatter.format(rounded.toString(), numerals);
+    final pStr = AppFormatter.formatStringDigits(rounded.toString(), format: numerals);
     return '$pStr%';
   }
 }

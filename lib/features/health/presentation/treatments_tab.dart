@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/db/app_database.dart';
-import '../../../core/utils/numerals_formatter.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../reminders/domain/reminder_scheduler.dart';
 import '../domain/health_service.dart';
 import 'health_icon_helper.dart';
