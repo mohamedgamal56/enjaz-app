@@ -9,6 +9,7 @@ import '../../backup/presentation/backup_screen.dart';
 import '../../habits/presentation/habits_screen.dart';
 import '../../finance/presentation/finance_screen.dart';
 import '../../health/presentation/health_screen.dart';
+import '../../timeline/presentation/timeline_calendar_screen.dart';
 
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -60,6 +61,21 @@ class MoreScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
+
+        // 0. Calendar and Life Timeline (Roadmap v2.0 Round 7)
+        _buildMenuCard(
+          context,
+          icon: Icons.calendar_month_rounded,
+          iconColor: Colors.indigo,
+          title: isArabic ? 'التقويم والسجل الزمني' : 'Calendar & Timeline',
+          subtitle: isArabic ? 'استعراض سجل الحياة اليومي، الأسبوعي، والشهري والسنوي من 2026 إلى 2046' : 'Life timeline and calendar across day, week, month & year (2026-2046)',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const TimelineCalendarScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: 10),
 
         // 1. Finance (Roadmap v2.0 Round 5)
         _buildMenuCard(

@@ -29,6 +29,12 @@ class ExcelExportService {
     List<Obligation>? obligations,
     List<ObligationInstance>? obligationInstances,
     List<WishlistItem>? wishlistItems,
+    List<Habit>? habits,
+    List<HabitLog>? habitLogs,
+    List<Note>? notes,
+    List<HealthItem>? healthItems,
+    List<HealthEvent>? healthEvents,
+    List<Treatment>? treatments,
     required String languageCode, // 'ar' or 'en'
     Directory? outputDirectory,
   }) async {
@@ -119,6 +125,30 @@ class ExcelExportService {
       if (isAr) finSumSheet.isRTL = true;
       final catMap = {for (final c in (financeCategories ?? <FinanceCategory>[])) c.id: c};
       _buildFinanceSummarySheet(finSumSheet, transactions, catMap, isAr);
+    }
+
+    // 13. Sheet: Habits / العادات (Roadmap v2.0 Round 7)
+    if (habits != null) {
+      final habitsName = isAr ? 'العادات' : 'Habits';
+      final habitSheet = excel[habitsName];
+      if (isAr) habitSheet.isRTL = true;
+      _buildHabitsSheet(habitSheet, habits, habitLogs ?? <HabitLog>[], isAr);
+    }
+
+    // 14. Sheet: Notes / الملاحظات (Roadmap v2.0 Round 7)
+    if (notes != null) {
+      final notesName = isAr ? 'الملاحظات' : 'Notes';
+      final noteSheet = excel[notesName];
+      if (isAr) noteSheet.isRTL = true;
+      _buildNotesSheet(noteSheet, notes, isAr);
+    }
+
+    // 15. Sheet: Health / الصحة (Roadmap v2.0 Round 7)
+    if (healthItems != null) {
+      final healthName = isAr ? 'الصحة' : 'Health';
+      final hlSheet = excel[healthName];
+      if (isAr) hlSheet.isRTL = true;
+      _buildHealthSheet(hlSheet, healthItems, healthEvents ?? <HealthEvent>[], treatments ?? <Treatment>[], isAr);
     }
 
     // Generate base Excel bytes
@@ -942,6 +972,201 @@ class ExcelExportService {
     final file = File(p.join(outputDirectory.path, 'transactions.csv'));
     await file.writeAsString(buf.toString(), encoding: utf8);
     return file;
+  }
+
+  // --- Sheet 13: Habits (العادات) ---
+  void _buildHabitsSheet(
+    Sheet sheet,
+    List<Habit> habits,
+    List<HabitLog> logs,
+    bool isAr,
+  ) {
+    sheet.appendRow([
+      TextCellValue(isAr ? '--- قائمة العادات المعرفة ---' : '--- Defined Habits ---'),
+    ]);
+    sheet.appendRow([
+      TextCellValue(isAr ? 'المعرف' : 'id'),
+      TextCellValue(isAr ? 'اسم العادة' : 'name_ar'),
+      TextCellValue(isAr ? 'الاسم بالإنجليزية' : 'name_en'),
+      TextCellValue(isAr ? 'نوع العادة' : 'type'),
+      TextCellValue(isAr ? 'الهدف اليومي' : 'daily_target'),
+      TextCellValue(isAr ? 'الوحدة' : 'unit'),
+      TextCellValue(isAr ? 'أيام التكرار' : 'schedule_days'),
+    ]);
+
+    for (final h in habits) {
+      sheet.appendRow([
+        IntCellValue(h.id),
+        TextCellValue(h.nameAr),
+        TextCellValue(h.nameEn ?? ''),
+        TextCellValue(h.type),
+        DoubleCellValue(h.dailyTarget ?? 0.0),
+        TextCellValue(h.unit ?? ''),
+        IntCellValue(h.scheduleDays),
+      ]);
+    }
+
+    sheet.appendRow([]);
+    sheet.appendRow([
+      TextCellValue(isAr ? '--- سجلات تنفيذ العادات ---' : '--- Habit Logs History ---'),
+    ]);
+    sheet.appendRow([
+      TextCellValue(isAr ? 'معرف السجل' : 'log_id'),
+      TextCellValue(isAr ? 'معرف العادة' : 'habit_id'),
+      TextCellValue(isAr ? 'اسم العادة' : 'habit_name'),
+      TextCellValue(isAr ? 'التاريخ' : 'log_date'),
+      TextCellValue(isAr ? 'القيمة' : 'value'),
+      TextCellValue(isAr ? 'الوقت' : 'time'),
+      TextCellValue(isAr ? 'الملاحظات' : 'note'),
+    ]);
+
+    final habitMap = {for (final h in habits) h.id: h};
+    for (final l in logs) {
+      final h = habitMap[l.habitId];
+      final timeStr = DateFormat('HH:mm').format(DateTime.fromMillisecondsSinceEpoch(l.at));
+      sheet.appendRow([
+        IntCellValue(l.id),
+        IntCellValue(l.habitId),
+        TextCellValue(h?.nameAr ?? ''),
+        TextCellValue(l.logDate),
+        DoubleCellValue(l.value),
+        TextCellValue(timeStr),
+        TextCellValue(l.note ?? ''),
+      ]);
+    }
+  }
+
+  // --- Sheet 14: Notes (الملاحظات) ---
+  void _buildNotesSheet(
+    Sheet sheet,
+    List<Note> notes,
+    bool isAr,
+  ) {
+    sheet.appendRow([
+      TextCellValue(isAr ? 'المعرف' : 'id'),
+      TextCellValue(isAr ? 'التاريخ' : 'date'),
+      TextCellValue(isAr ? 'النوع' : 'kind'),
+      TextCellValue(isAr ? 'العنوان' : 'title'),
+      TextCellValue(isAr ? 'المحتوى' : 'body'),
+      TextCellValue(isAr ? 'الوسوم' : 'tags'),
+      TextCellValue(isAr ? 'مثبتة' : 'pinned'),
+    ]);
+
+    for (final n in notes) {
+      sheet.appendRow([
+        IntCellValue(n.id),
+        TextCellValue(n.localDate ?? n.noteDate ?? ''),
+        TextCellValue(n.kind),
+        TextCellValue(n.title ?? ''),
+        TextCellValue(n.body),
+        TextCellValue(n.tags ?? ''),
+        TextCellValue(n.pinned ? (isAr ? 'نعم' : 'Yes') : (isAr ? 'لا' : 'No')),
+      ]);
+    }
+  }
+
+  // --- Sheet 15: Health (الصحة) ---
+  void _buildHealthSheet(
+    Sheet sheet,
+    List<HealthItem> items,
+    List<HealthEvent> events,
+    List<Treatment> treatments,
+    bool isAr,
+  ) {
+    sheet.appendRow([
+      TextCellValue(isAr ? '--- الفحوصات والكشوفات والتحاليل ---' : '--- Health Checkups & Tests ---'),
+    ]);
+    sheet.appendRow([
+      TextCellValue(isAr ? 'المعرف' : 'id'),
+      TextCellValue(isAr ? 'العنوان' : 'title'),
+      TextCellValue(isAr ? 'النوع' : 'kind'),
+      TextCellValue(isAr ? 'الحالة' : 'status'),
+      TextCellValue(isAr ? 'مطلوب منذ' : 'needed_since'),
+      TextCellValue(isAr ? 'مطلوب قبل' : 'due_by'),
+      TextCellValue(isAr ? 'الموعد المجدول' : 'scheduled_at'),
+      TextCellValue(isAr ? 'تاريخ الإنجاز' : 'done_at'),
+      TextCellValue(isAr ? 'المكان أو الطبيب' : 'doctor_or_place'),
+      TextCellValue(isAr ? 'التكلفة (ج.م)' : 'cost_egp'),
+      TextCellValue(isAr ? 'الملاحظات والنتيجة' : 'result_note'),
+    ]);
+
+    for (final h in items) {
+      final schedStr = h.scheduledAt != null
+          ? DateFormat('yyyy-MM-dd HH:mm').format(DateTime.fromMillisecondsSinceEpoch(h.scheduledAt!))
+          : '';
+      final doneStr = h.doneAt != null
+          ? DateFormat('yyyy-MM-dd HH:mm').format(DateTime.fromMillisecondsSinceEpoch(h.doneAt!))
+          : '';
+
+      sheet.appendRow([
+        IntCellValue(h.id),
+        TextCellValue(h.title),
+        TextCellValue(h.kind),
+        TextCellValue(h.status),
+        TextCellValue(h.neededSince),
+        TextCellValue(h.dueBy ?? ''),
+        TextCellValue(schedStr),
+        TextCellValue(doneStr),
+        TextCellValue(h.placeOrDoctor ?? ''),
+        DoubleCellValue(h.costMinor != null ? h.costMinor! / 100.0 : 0.0),
+        TextCellValue(h.resultNote ?? ''),
+      ]);
+    }
+
+    sheet.appendRow([]);
+    sheet.appendRow([
+      TextCellValue(isAr ? '--- سجل تحديثات الحالة الصحية ---' : '--- Health Events History ---'),
+    ]);
+    sheet.appendRow([
+      TextCellValue(isAr ? 'المعرف' : 'id'),
+      TextCellValue(isAr ? 'معرف الفحص' : 'health_item_id'),
+      TextCellValue(isAr ? 'الوقت' : 'at'),
+      TextCellValue(isAr ? 'من حالة' : 'from_status'),
+      TextCellValue(isAr ? 'إلى حالة' : 'to_status'),
+      TextCellValue(isAr ? 'الملاحظة' : 'note'),
+    ]);
+
+    for (final e in events) {
+      final atStr = DateFormat('yyyy-MM-dd HH:mm').format(DateTime.fromMillisecondsSinceEpoch(e.at));
+      sheet.appendRow([
+        IntCellValue(e.id),
+        IntCellValue(e.healthItemId),
+        TextCellValue(atStr),
+        TextCellValue(e.fromStatus),
+        TextCellValue(e.toStatus),
+        TextCellValue(e.note ?? ''),
+      ]);
+    }
+
+    sheet.appendRow([]);
+    sheet.appendRow([
+      TextCellValue(isAr ? '--- الأدوية والعلاجات ---' : '--- Treatments & Medications ---'),
+    ]);
+    sheet.appendRow([
+      TextCellValue(isAr ? 'المعرف' : 'id'),
+      TextCellValue(isAr ? 'اسم العلاج' : 'name'),
+      TextCellValue(isAr ? 'حالة الالتزام' : 'adherence'),
+      TextCellValue(isAr ? 'التعليمات' : 'instructions'),
+      TextCellValue(isAr ? 'تاريخ البدء' : 'start_date'),
+      TextCellValue(isAr ? 'تاريخ الانتهاء' : 'end_date'),
+      TextCellValue(isAr ? 'تم الشراء' : 'purchased'),
+      TextCellValue(isAr ? 'تكلفة الشراء (ج.م)' : 'purchase_cost_egp'),
+      TextCellValue(isAr ? 'الملاحظات' : 'note'),
+    ]);
+
+    for (final t in treatments) {
+      sheet.appendRow([
+        IntCellValue(t.id),
+        TextCellValue(t.name),
+        TextCellValue(t.adherence),
+        TextCellValue(t.instructionsNote ?? ''),
+        TextCellValue(t.startDate),
+        TextCellValue(t.endDate ?? ''),
+        TextCellValue(t.purchased ? (isAr ? 'نعم' : 'Yes') : (isAr ? 'لا' : 'No')),
+        DoubleCellValue(t.purchaseCostMinor != null ? t.purchaseCostMinor! / 100.0 : 0.0),
+        TextCellValue(t.note ?? ''),
+      ]);
+    }
   }
 
   String _translateStatus(String st, bool isAr) {

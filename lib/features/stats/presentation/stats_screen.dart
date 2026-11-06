@@ -14,6 +14,8 @@ import '../domain/stats_service.dart';
 import '../../habits/presentation/habits_stats_section.dart';
 import '../../finance/presentation/finance_stats_section.dart';
 import '../../health/presentation/health_stats_section.dart';
+import '../../timeline/presentation/timeline_calendar_screen.dart';
+import 'overview_stats_section.dart';
 
 class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
@@ -123,6 +125,16 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
         backgroundColor: colors.surface,
         elevation: 0,
         actions: [
+          // Calendar & Life Timeline (Roadmap v2.0 Round 7)
+          IconButton(
+            icon: const Icon(Icons.calendar_month_rounded),
+            tooltip: isAr ? 'التقويم والسجل الزمني' : 'Calendar & Timeline',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const TimelineCalendarScreen()),
+              );
+            },
+          ),
           // Export Excel Button
           IconButton(
             icon: Icon(Icons.table_chart_rounded, color: colors.accent),
@@ -166,36 +178,44 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               children: [
-                // 0. Section Switcher (Tasks vs Habits)
+                // 0. Section Switcher (Overview, Tasks, Habits, Finance, Health)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: SegmentedButton<int>(
-                    segments: [
-                      ButtonSegment<int>(
-                        value: 0,
-                        label: Text(isAr ? 'المهام والإنجاز' : 'Tasks & Progress'),
-                        icon: const Icon(Icons.task_alt_rounded, size: 16),
-                      ),
-                      ButtonSegment<int>(
-                        value: 1,
-                        label: Text(isAr ? 'العادات اليومية' : 'Habits'),
-                        icon: const Icon(Icons.repeat_rounded, size: 16),
-                      ),
-                      ButtonSegment<int>(
-                        value: 2,
-                        label: Text(isAr ? 'المال والمصروفات' : 'Finance'),
-                        icon: const Icon(Icons.account_balance_wallet_rounded, size: 16),
-                      ),
-                      ButtonSegment<int>(
-                        value: 3,
-                        label: Text(isAr ? 'الصحة' : 'Health'),
-                        icon: const Icon(Icons.favorite_rounded, size: 16),
-                      ),
-                    ],
-                    selected: {_statsSection},
-                    onSelectionChanged: (val) {
-                      setState(() => _statsSection = val.first);
-                    },
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SegmentedButton<int>(
+                      segments: [
+                        ButtonSegment<int>(
+                          value: 0,
+                          label: Text(isAr ? 'نظرة عامة' : 'Overview'),
+                          icon: const Icon(Icons.dashboard_rounded, size: 16),
+                        ),
+                        ButtonSegment<int>(
+                          value: 1,
+                          label: Text(isAr ? 'المهام والإنجاز' : 'Tasks & Progress'),
+                          icon: const Icon(Icons.task_alt_rounded, size: 16),
+                        ),
+                        ButtonSegment<int>(
+                          value: 2,
+                          label: Text(isAr ? 'العادات اليومية' : 'Habits'),
+                          icon: const Icon(Icons.repeat_rounded, size: 16),
+                        ),
+                        ButtonSegment<int>(
+                          value: 3,
+                          label: Text(isAr ? 'المال والمصروفات' : 'Finance'),
+                          icon: const Icon(Icons.account_balance_wallet_rounded, size: 16),
+                        ),
+                        ButtonSegment<int>(
+                          value: 4,
+                          label: Text(isAr ? 'الصحة' : 'Health'),
+                          icon: const Icon(Icons.favorite_rounded, size: 16),
+                        ),
+                      ],
+                      selected: {_statsSection},
+                      onSelectionChanged: (val) {
+                        setState(() => _statsSection = val.first);
+                      },
+                    ),
                   ),
                 ),
 
@@ -207,11 +227,13 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 _buildRangeNavigator(colors, rangeLabel, isAr),
                 const SizedBox(height: 16),
 
-                if (_statsSection == 1) ...[
-                  HabitsStatsSection(range: stats.range),
+                if (_statsSection == 0) ...[
+                  OverviewStatsSection(range: stats.range, referenceDate: _referenceDate),
                 ] else if (_statsSection == 2) ...[
-                  FinanceStatsSection(referenceDate: _referenceDate),
+                  HabitsStatsSection(range: stats.range),
                 ] else if (_statsSection == 3) ...[
+                  FinanceStatsSection(referenceDate: _referenceDate),
+                ] else if (_statsSection == 4) ...[
                   HealthStatsSection(referenceDate: _referenceDate),
                 ] else if (stats.isEmpty) ...[
                   _buildEmptyState(colors, l10n),

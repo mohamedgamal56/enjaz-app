@@ -447,5 +447,105 @@ void main() {
       expect(excel.tables.keys, contains('المشتريات'));
       expect(excel.tables.keys, contains('ملخص المال'));
     });
+
+    test('7. Acceptance test: Round 7 extended Excel report includes Habits, Notes, and Health sheets', () async {
+      final range = StatsDateRange(
+        type: StatsRangeType.month,
+        start: DateTime(2026, 11, 1),
+        end: DateTime(2026, 11, 30),
+      );
+      final stats = statsService.computeStats(
+        range: range,
+        tasks: [],
+        rangeEvents: [],
+        allDoneEvents: [],
+        previousPeriodCompletedCount: 0,
+        now: DateTime(2026, 11, 15),
+      );
+
+      final file = await exportService.generateReport(
+        range: range,
+        stats: stats,
+        tasks: [],
+        events: [],
+        goals: [],
+        milestones: [],
+        goalUpdates: [],
+        ideas: [],
+        voiceNotes: [],
+        habits: [
+          const Habit(
+            id: 1,
+            nameAr: 'شرب الماء',
+            nameEn: 'Drink Water',
+            type: 'count',
+            unit: 'كوب',
+            dailyTarget: 8.0,
+            scheduleDays: 127,
+            sortOrder: 1,
+            archived: false,
+            createdAt: 0,
+            updatedAt: 0,
+          ),
+        ],
+        habitLogs: [
+          const HabitLog(
+            id: 1,
+            habitId: 1,
+            logDate: '2026-11-05',
+            value: 2.0,
+            at: 1730000000000,
+            createdAt: 0,
+            updatedAt: 0,
+          ),
+        ],
+        notes: [
+          const Note(
+            id: 1,
+            body: 'ملاحظة تجريبية لاختبار الإكسيل',
+            kind: 'note',
+            pinned: false,
+            createdAt: 0,
+            updatedAt: 0,
+          ),
+        ],
+        healthItems: [
+          const HealthItem(
+            id: 1,
+            title: 'فحص دوري شامل',
+            kind: 'checkup',
+            status: 'done',
+            neededSince: '2026-11-01',
+            occurredAt: 1730000000000,
+            localDate: '2026-11-05',
+            followUpNeeded: false,
+            postponeCount: 0,
+            createdAt: 0,
+            updatedAt: 0,
+          ),
+        ],
+        treatments: [
+          const Treatment(
+            id: 1,
+            name: 'فيتامين د',
+            adherence: 'following',
+            startDate: '2026-11-01',
+            purchased: true,
+            occurredAt: 1730000000000,
+            localDate: '2026-11-01',
+            createdAt: 0,
+            updatedAt: 0,
+          ),
+        ],
+        languageCode: 'ar',
+        outputDirectory: tempDir,
+      );
+
+      expect(file.existsSync(), isTrue);
+      final excel = Excel.decodeBytes(file.readAsBytesSync());
+      expect(excel.tables.keys, contains('العادات'));
+      expect(excel.tables.keys, contains('الملاحظات'));
+      expect(excel.tables.keys, contains('الصحة'));
+    });
   });
 }

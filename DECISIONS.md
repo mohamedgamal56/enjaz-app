@@ -310,4 +310,33 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
   - **Stats Integration**:
     - Stats screen adds a 4th segment "الصحة" displaying KPI cards (needed, scheduled, done this year, treatment adherence %), longest-waiting checkups, and upcoming appointments.
 
+## Decision 20: Round 7 Calendar and Life Timeline (التقويم والسجل الزمني للحياة), 4 Views (Day, Week, Month, Year), Multi-Module Aggregator, Overview Dashboard Tab, Excel Expansion & Long-Term Safety
+- **Context**: Roadmap v2.0 Section 11 specifies the Calendar and Life Timeline covering 2026 to 2046, 4 interactive views (Year, Month, Week, Day), chronological day timeline with hour markers and all-day items, module filter chips, future planned filtering, unified multi-module aggregation without table duplication, month dots, year activity density heatmap, period Excel export, Stats overview tab, Excel sheets expansion (`Habits`, `Notes`, `Health`), default monthly backup reminders, and voice files storage monitor.
+- **Decision & Implementation**:
+  - **Timeline Bounds & Navigation**:
+    - Constant bounds: `1 Jan 2026` to `31 Dec 2046` (`minDate` and `maxDate`).
+    - Quick "اليوم / Today" jump button sets date to today and switches view to Day.
+    - "تصدير هذه الفترة / Export this period" button triggers Excel export sheet with the active range.
+    - Entry points: Calendar icon in Stats top bar and `More > التقويم والسجل الزمني`.
+  - **Aggregator Architecture (`TimelineAggregator`)**:
+    - Implements non-duplicating on-the-fly query and aggregation across Drift tables: Tasks, TaskEvents, HabitLogs, HabitItemLogs, Transactions, Obligations, HealthItems, HealthEvents, Treatments, Notes, Ideas, Goals, Milestones, and VoiceNotes.
+    - Timezone handling: timestamps are stored as UTC epoch milliseconds (`occurred_at`); local calendar days map to the device's clock via `DateTime.fromMillisecondsSinceEpoch`.
+    - Future days show planned items only: scheduled tasks, pending obligations, and scheduled appointments/checkups.
+    - High performance: month dots load in under 500 ms; day timeline opens in under 300 ms.
+  - **The 4 Views (`lib/features/timeline/presentation/`)**:
+    1. `Day (اليوم)`: Day header totals (tasks done, income/expenses, habits completed, notes written, ideas created), horizontal module filter chips, all-day section at top, chronological timeline with hour markers, inline playable voice notes, and tap navigation to each item's source screen.
+    2. `Week (الأسبوع)`: 7 days (Saturday to Friday) with module completion badges, week progress summary, and 1-tap navigation to Day view.
+    3. `Month (الشهر)`: Calendar grid with colored dots per module (tasks=blue, habits=teal, finance=green, health=red, notes=orange, ideas=purple, goals=indigo), swipe between months, year/month pickers, and month overview metrics.
+    4. `Year (السنة)`: 12 month tiles shaded by activity density heatmap, activity count badges, tap month to open Month view, and annual summary.
+  - **Stats "نظرة عامة / Overview" Tab**:
+    - Added as the first tab in `StatsScreen` (0: Overview, 1: Tasks, 2: Habits, 3: Finance, 4: Health).
+    - Displays headline cards combining all modules: tasks done, top spending category & total, habit completion rate %, notes written, goal progress %, and health checkups done.
+  - **Excel Expansion**:
+    - Added 3 dedicated sheets: `Habits` (definitions and daily logs history), `Notes` (dates, kinds, body, tags), and `Health` (checkups, events history, and treatments adherence).
+    - Extended Dashboard sheet with headline highlights for habits, finance, and health.
+  - **Long-term Safety & Storage Monitor**:
+    - Monthly backup reminder toggle set to ON by default (`backup_monthly_reminder = true`) to safeguard memory archives.
+    - Voice notes storage monitor in Settings and BackupScreen showing total disk space used in MB.
+
+
 

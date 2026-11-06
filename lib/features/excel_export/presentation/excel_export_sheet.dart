@@ -155,6 +155,12 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
       final obligations = await db.getAllObligations();
       final instances = await db.getObligationInstancesForRange(rangeStartStr, rangeEndStr);
       final wishlist = await db.getAllWishlistItems();
+      final habits = await db.getAllActiveHabits();
+      final habitLogs = await db.getAllHabitLogsForRange(rangeStartStr, rangeEndStr);
+      final notes = await db.getAllActiveNotes();
+      final healthItems = await db.getAllActiveHealthItems();
+      final healthEvents = await db.getHealthEventsForRange(range.start.millisecondsSinceEpoch, range.end.millisecondsSinceEpoch);
+      final treatments = await (db.select(db.treatments)..where((t) => t.deletedAt.isNull())).get();
 
       // Compute statistics for the summary sheet
       final prevRange = range.getPreviousRange();
@@ -192,6 +198,12 @@ class _ExcelExportSheetState extends ConsumerState<ExcelExportSheet> {
         obligations: obligations,
         obligationInstances: instances,
         wishlistItems: wishlist,
+        habits: habits,
+        habitLogs: habitLogs,
+        notes: notes,
+        healthItems: healthItems,
+        healthEvents: healthEvents,
+        treatments: treatments,
         languageCode: l10n.locale.languageCode,
       );
 

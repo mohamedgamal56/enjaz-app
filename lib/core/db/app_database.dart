@@ -3008,6 +3008,15 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
+  Future<List<HealthEvent>> getHealthEventsForRange(int startMs, int endMs) {
+    return (select(healthEvents)
+          ..where((e) =>
+              e.at.isBiggerOrEqualValue(startMs) &
+              e.at.isSmallerOrEqualValue(endMs))
+          ..orderBy([(e) => OrderingTerm.asc(e.at)]))
+        .get();
+  }
+
   // --- TREATMENTS ---
 
   Stream<List<Treatment>> watchActiveTreatments() {
@@ -3113,6 +3122,18 @@ class AppDatabase extends _$AppDatabase {
               c.treatmentId.equals(treatmentId) &
               c.checkDate.isBiggerOrEqualValue(startDate) &
               c.checkDate.isSmallerOrEqualValue(endDate)))
+        .get();
+  }
+
+  Future<List<TreatmentCheck>> getAllTreatmentChecksForRange(
+    String startDate,
+    String endDate,
+  ) {
+    return (select(treatmentChecks)
+          ..where((c) =>
+              c.checkDate.isBiggerOrEqualValue(startDate) &
+              c.checkDate.isSmallerOrEqualValue(endDate) &
+              c.taken.equals(true)))
         .get();
   }
 

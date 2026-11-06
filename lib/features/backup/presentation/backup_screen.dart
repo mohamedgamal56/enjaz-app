@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/db/app_database.dart';
 import '../../../core/l10n/app_localizations.dart';
@@ -23,8 +24,30 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   bool _includeVoice = true;
   bool _isEncrypted = true;
   bool _obscureExportPassword = true;
+  bool _monthlyReminder = true;
   final TextEditingController _exportPasswordController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMonthlyReminderPref();
+  }
+
+  Future<void> _loadMonthlyReminderPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _monthlyReminder = prefs.getBool('backup_monthly_reminder') ?? true;
+      });
+    }
+  }
+
+  Future<void> _setMonthlyReminderPref(bool val) async {
+    setState(() => _monthlyReminder = val);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('backup_monthly_reminder', val);
+  }
 
   @override
   void dispose() {
@@ -382,6 +405,78 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
+              // Storage Monitor Card (Roadmap v2.0 Round 7)
+              FutureBuilder<(int, int)>(
+                future: ref.read(databaseProvider).getVoiceStorageStats(),
+                builder: (context, snapshot) {
+                  final count = snapshot.data?.$1 ?? 0;
+                  final bytes = snapshot.data?.$2 ?? 0;
+                  final sizeFormatted = VoiceNoteService.formatFileSize(bytes);
+
+                  return Card(
+                    elevation: 0,
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.storage_rounded, color: theme.colorScheme.primary),
+                              const SizedBox(width: 10),
+                              Text(
+                                isArabic ? 'مساحة التسجيلات الصوتية (Storage Monitor)' : 'Voice Notes Storage Monitor',
+                                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                isArabic ? 'عدد التسجيلات: $count' : 'Voice notes: $count',
+                                style: TextStyle(color: theme.colorScheme.outline),
+                              ),
+                              Text(
+                                isArabic ? 'المساحة المستخدمة: $sizeFormatted' : 'Used: $sizeFormatted',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+
+              // Monthly Safety Reminder Toggle (Roadmap v2.0 Round 7 - Default ON)
+              Card(
+                elevation: 0,
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                child: SwitchListTile(
+                  secondary: const Icon(Icons.alarm_on_rounded, color: Colors.teal),
+                  title: Text(
+                    isArabic ? 'تذكير شهري بالنسخ الاحتياطي' : 'Monthly Backup Reminder',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    isArabic
+                        ? 'تنبيه دوري أول كل شهر لإنشاء نسخة احتياطية مشفرة لحفظ الذكريات وسجل الحياة'
+                        : 'Periodic reminder on the 1st of every month to take an encrypted safety backup',
+                    style: TextStyle(fontSize: 12, color: theme.colorScheme.outline),
+                  ),
+                  value: _monthlyReminder,
+                  onChanged: _setMonthlyReminderPref,
+                ),
+              ),
+              const SizedBox(height: 16),
+
               // Section 1: Full Backup (.zip)
               Card(
                 child: Padding(
