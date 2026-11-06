@@ -79,7 +79,10 @@ class HealthStatsSection extends ConsumerWidget {
             return StreamBuilder<List<Treatment>>(
               stream: db.watchActiveTreatments(),
               builder: (context, treatSnap) {
-                final allItems = [...(activeSnap.data ?? []), ...(doneSnap.data ?? [])];
+                final allItems = <HealthItem>[
+                  ...(activeSnap.data ?? <HealthItem>[]),
+                  ...(doneSnap.data ?? <HealthItem>[]),
+                ];
                 final treatments = treatSnap.data ?? [];
 
                 // For checks, let's load all active treatments checks or compute directly
