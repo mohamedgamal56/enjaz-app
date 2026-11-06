@@ -197,3 +197,30 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
   - **OpenXML DrawingML Injection**:
     - Rather than adding heavy or commercially restricted third-party libraries (e.g. Syncfusion), the service uses the existing `archive` library to unpack the generated XLSX zip archive, inject `xl/drawings/drawing1.xml` with `<xdr:twoCellAnchor>` definitions, wire `xl/worksheets/_rels/sheet1.xml.rels`, embed PNG images in `xl/media/`, register `drawing+xml` in `[Content_Types].xml`, and re-encode to a valid XLSX file.
     - 100% compliant with Microsoft Excel, Google Sheets, and LibreOffice.
+
+## Decision 16: Round 3 Navigation Architecture, Notes Module (Drift v4), Reminders for Goals & Ideas, and AES-256-GCM Encrypted Backup
+- **Context**: Roadmap v2.0 Section 7 specifies a streamlined 4-tab bottom navigation with a unified Plan screen, a new dedicated Notes module (with kind classification, pinning, colors, tags, voice notes, and conversion), reminders integration for goals and ideas via the shared reminder system, audited AES-256-GCM password-encrypted backups with PBKDF2 key derivation, and an app lock review.
+- **Decision & Implementation**:
+  - **New 4-Tab Navigation**:
+    - Bottom bar reorganized into: 1. Today (اليوم), 2. Plan (التخطيط), 3. Stats (الإحصائيات), 4. More (المزيد).
+    - Plan screen combines Goals, Ideas, and Notes under a unified `SegmentedButton`. The floating action button (+) contextually dispatches to `AddGoalSheet`, `AddIdeaSheet`, or `AddNoteSheet` based on the active segment, with a dedicated quick action for "Note of the day" (ملاحظة اليوم).
+    - More screen houses secondary destinations: History (السجل), Trash (سلة المحذوفات), Backup & Security (النسخ الاحتياطي والأمان), and Settings (الإعدادات). Unimplemented future modules (Habits, Finance, Health, Timeline) remain hidden rather than disabled.
+  - **Drift Migration v4 (Notes Module)**:
+    - Added `Notes` table containing: `id`, `title` (optional), `body` (required), `kind` (`note` | `quote` | `info`), `color`, `pinned`, `note_date` (YYYY-MM-DD), `tags`, `occurred_at`, `local_date`, and `CommonColumns`.
+    - Added indexed lookup queries on `note_date`, `pinned`, and `deleted_at`.
+    - Integrated with trash (soft delete with 30-day purge and permanent cascade deletion of attached voice notes).
+    - Provided one-tap conversion to Task or Idea.
+  - **Shared Reminders for Goals and Ideas**:
+    - Leveraged the unified `reminders` table and `ReminderScheduler` from Round 1.
+    - Goals offer presets for target date (09:00 AM) and milestone deadlines, supporting both Notification and Alarm channels with custom message copy.
+    - Ideas offer quick "ذكّرني بهذه الفكرة" presets (Tomorrow, in 3 days, in 1 week, or custom date/time) with Notification or Alarm.
+  - **Audited AES-256-GCM Encrypted Backup**:
+    - Implemented `BackupEncryptionService` using the standard, audited `cryptography` package.
+    - Uses AES-256-GCM authenticated encryption with keys derived via PBKDF2 (100,000 iterations, HMAC-SHA256, 16-byte random salt, and 12-byte nonce).
+    - Encrypted container includes magic header `ENJAZENC`, format version, salt, nonce, MAC tag, and ciphertext wrapping the entire backup archive (data, manifest, and audio files).
+    - Import automatically recognizes encrypted backups, prompts for the password, and fails gracefully with a user-friendly Arabic error message on incorrect password or tampering, without crashing.
+  - **App Lock & Privacy**:
+    - Added background timeout options: immediately (0s), 30 seconds, 1 minute, 5 minutes.
+    - Added setting to hide notification details on the device lock screen (`NotificationVisibility.private`).
+    - Added guidance message when device screen lock is not configured.
+

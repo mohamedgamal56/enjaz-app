@@ -5,6 +5,7 @@ import 'package:drift/drift.dart' as drift;
 import '../../../core/db/app_database.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../voice_notes/presentation/widgets/voice_notes_section.dart';
+import '../../reminders/domain/reminder_scheduler.dart';
 
 class IdeaDetailsScreen extends ConsumerStatefulWidget {
   final int ideaId;
@@ -31,6 +32,270 @@ class _IdeaDetailsScreenState extends ConsumerState<IdeaDetailsScreen> {
     _descController.dispose();
     _tagInputController.dispose();
     super.dispose();
+  }
+
+  Widget _buildIdeaRemindersSection(BuildContext context, Idea idea) {
+    final theme = Theme.of(context);
+    final db = ref.watch(databaseProvider);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    return StreamBuilder<List<Reminder>>(
+      stream: db.watchRemindersForOwner('idea', idea.id),
+      builder: (context, snapshot) {
+        final reminders = snapshot.data ?? [];
+
+        return Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.notifications_active_rounded, color: theme.colorScheme.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          isArabic ? 'تذكير بالفكرة' : 'Idea Reminder',
+                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    if (reminders.isEmpty)
+                      FilledButton.tonalIcon(
+                        icon: const Icon(Icons.alarm_add_rounded, size: 18),
+                        label: Text(isArabic ? 'ذكّرني بهذه الفكرة' : 'Remind me'),
+                        onPressed: () => _showAddIdeaReminderSheet(context, idea),
+                      ),
+                  ],
+                ),
+                if (reminders.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  ...reminders.map((r) {
+                    final isAlarm = r.kind == 'alarm';
+                    String timeLabel = '';
+                    if (r.absoluteTime != null) {
+                      timeLabel = '${r.absoluteTime!.year}-${r.absoluteTime!.month.toString().padLeft(2, '0')}-${r.absoluteTime!.day.toString().padLeft(2, '0')} ${r.absoluteTime!.hour.toString().padLeft(2, '0')}:${r.absoluteTime!.minute.toString().padLeft(2, '0')}';
+                    }
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isAlarm ? Icons.alarm_rounded : Icons.notifications_rounded,
+                            color: isAlarm ? Colors.amber : Colors.teal,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  r.message ?? idea.title,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  timeLabel,
+                                  style: TextStyle(fontSize: 11, color: theme.colorScheme.outline),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline_rounded, size: 20, color: Colors.red),
+                            onPressed: () async {
+                              await ReminderScheduler(db: db).cancelReminder(r.id);
+                              await db.deleteReminder(r.id);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAddIdeaReminderSheet(BuildContext context, Idea idea) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final db = ref.read(databaseProvider);
+    var kind = 'notification';
+    var selectedOption = 1; // 1: tomorrow, 3: in 3 days, 7: in a week, 0: custom
+    DateTime selectedDateTime = DateTime.now().add(const Duration(days: 1));
+    selectedDateTime = DateTime(selectedDateTime.year, selectedDateTime.month, selectedDateTime.day, 9, 0);
+    final msgController = TextEditingController(text: idea.title);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isArabic ? 'ذكّرني بهذه الفكرة' : 'Remind Me About This Idea',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    ChoiceChip(
+                      label: Text(isArabic ? 'إشعار عادي' : 'Notification'),
+                      selected: kind == 'notification',
+                      onSelected: (_) => setSheetState(() => kind = 'notification'),
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: Text(isArabic ? 'منبه مستمر' : 'Alarm'),
+                      selected: kind == 'alarm',
+                      onSelected: (_) => setSheetState(() => kind = 'alarm'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    ChoiceChip(
+                      label: Text(isArabic ? 'غداً (9:00 ص)' : 'Tomorrow (9 AM)'),
+                      selected: selectedOption == 1,
+                      onSelected: (_) => setSheetState(() {
+                        selectedOption = 1;
+                        final d = DateTime.now().add(const Duration(days: 1));
+                        selectedDateTime = DateTime(d.year, d.month, d.day, 9, 0);
+                      }),
+                    ),
+                    ChoiceChip(
+                      label: Text(isArabic ? 'بعد 3 أيام' : 'In 3 days'),
+                      selected: selectedOption == 3,
+                      onSelected: (_) => setSheetState(() {
+                        selectedOption = 3;
+                        final d = DateTime.now().add(const Duration(days: 3));
+                        selectedDateTime = DateTime(d.year, d.month, d.day, 9, 0);
+                      }),
+                    ),
+                    ChoiceChip(
+                      label: Text(isArabic ? 'بعد أسبوع' : 'In 1 week'),
+                      selected: selectedOption == 7,
+                      onSelected: (_) => setSheetState(() {
+                        selectedOption = 7;
+                        final d = DateTime.now().add(const Duration(days: 7));
+                        selectedDateTime = DateTime(d.year, d.month, d.day, 9, 0);
+                      }),
+                    ),
+                    ChoiceChip(
+                      label: Text(isArabic ? 'تاريخ مخصص' : 'Custom'),
+                      selected: selectedOption == 0,
+                      onSelected: (_) => setSheetState(() => selectedOption = 0),
+                    ),
+                  ],
+                ),
+                if (selectedOption == 0) ...[
+                  const SizedBox(height: 8),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.calendar_today_rounded),
+                    title: Text(
+                      '${selectedDateTime.year}-${selectedDateTime.month.toString().padLeft(2, '0')}-${selectedDateTime.day.toString().padLeft(2, '0')} ${selectedDateTime.hour.toString().padLeft(2, '0')}:${selectedDateTime.minute.toString().padLeft(2, '0')}',
+                    ),
+                    trailing: const Icon(Icons.edit_rounded, size: 18),
+                    onTap: () async {
+                      final pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDateTime,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 3650)),
+                      );
+                      if (pickedDate != null && context.mounted) {
+                        final pickedTime = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.fromDateTime(selectedDateTime),
+                        );
+                        if (pickedTime != null) {
+                          setSheetState(() {
+                            selectedDateTime = DateTime(
+                              pickedDate.year,
+                              pickedDate.month,
+                              pickedDate.day,
+                              pickedTime.hour,
+                              pickedTime.minute,
+                            );
+                          });
+                        }
+                      }
+                    },
+                  ),
+                ],
+                const SizedBox(height: 12),
+                TextField(
+                  controller: msgController,
+                  decoration: InputDecoration(
+                    labelText: isArabic ? 'نص التذكير' : 'Reminder note',
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () async {
+                      final now = DateTime.now().millisecondsSinceEpoch;
+                      final reminderId = await db.into(db.reminders).insert(
+                        RemindersCompanion.insert(
+                          ownerType: 'idea',
+                          ownerId: idea.id,
+                          kind: drift.Value(kind),
+                          triggerType: const drift.Value('absolute'),
+                          absoluteTime: drift.Value(selectedDateTime),
+                          message: drift.Value(msgController.text.trim().isNotEmpty ? msgController.text.trim() : idea.title),
+                          enabled: const drift.Value(true),
+                          createdAt: now,
+                          updatedAt: now,
+                        ),
+                      );
+
+                      final saved = await (db.select(db.reminders)..where((r) => r.id.equals(reminderId))).getSingle();
+                      await ReminderScheduler(db: db).scheduleReminder(
+                        reminder: saved,
+                        title: idea.title,
+                      );
+
+                      if (context.mounted) Navigator.of(ctx).pop();
+                    },
+                    child: Text(isArabic ? 'حفظ التذكير' : 'Save Reminder'),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   void _saveEdits(Idea idea) async {
@@ -339,6 +604,10 @@ class _IdeaDetailsScreenState extends ConsumerState<IdeaDetailsScreen> {
                     );
                   },
                 ),
+                const SizedBox(height: 16),
+
+                // Reminders Section (Round 3 Spec 3.3)
+                _buildIdeaRemindersSection(context, idea),
                 const SizedBox(height: 16),
 
                 // Conversion Actions (Spec 6.8)

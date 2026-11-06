@@ -48,9 +48,11 @@ class BackupPreview {
   final int schemaVersion;
   final DateTime? createdAt;
   final bool includesVoice;
+  final bool isEncrypted;
   final int tasksCount;
   final int goalsCount;
   final int ideasCount;
+  final int notesCount;
   final int voiceNotesCount;
   final int fileSizeBytes;
 
@@ -60,9 +62,11 @@ class BackupPreview {
     this.schemaVersion = 1,
     this.createdAt,
     this.includesVoice = false,
+    this.isEncrypted = false,
     this.tasksCount = 0,
     this.goalsCount = 0,
     this.ideasCount = 0,
+    this.notesCount = 0,
     this.voiceNotesCount = 0,
     this.fileSizeBytes = 0,
   });
@@ -71,6 +75,14 @@ class BackupPreview {
     return BackupPreview(
       isValid: false,
       errorMessage: error,
+    );
+  }
+
+  factory BackupPreview.encryptedNeedPassword({int fileSizeBytes = 0}) {
+    return BackupPreview(
+      isValid: true,
+      isEncrypted: true,
+      fileSizeBytes: fileSizeBytes,
     );
   }
 }

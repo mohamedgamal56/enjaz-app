@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../../core/db/app_database.dart';
 import '../../reminders/domain/notification_service.dart';
 import 'backup_models.dart';
+import 'backup_encryption_service.dart';
 
 class BackupService {
   BackupService._();
@@ -19,6 +20,7 @@ class BackupService {
   static Future<File> exportFullBackup({
     required AppDatabase db,
     required bool includeVoice,
+    String? password,
   }) async {
     final archive = Archive();
     final checksums = <String, String>{};
@@ -70,6 +72,7 @@ class BackupService {
       'idea_tags': (dataMap['idea_tags'] as List?)?.length ?? 0,
       'recurrences': (dataMap['recurrences'] as List?)?.length ?? 0,
       'voice_notes': voiceCount,
+      'notes': (dataMap['notes'] as List?)?.length ?? 0,
     };
 
     final manifest = BackupManifest(
@@ -86,35 +89,61 @@ class BackupService {
       ArchiveFile('manifest.json', manifestBytes.length, manifestBytes),
     );
 
-    // 4. Encode zip
+    // 4. Encode zip & apply optional encryption
     final zipEncoder = ZipEncoder();
-    final encodedZip = zipEncoder.encode(archive);
+    final encodedZip = zipEncoder.encode(archive) ?? <int>[];
+
+    List<int> finalBytes = encodedZip;
+    final isEncrypted = password != null && password.trim().isNotEmpty;
+    if (isEncrypted) {
+      finalBytes = await BackupEncryptionService.instance.encrypt(
+        plaintextBytes: encodedZip,
+        password: password.trim(),
+      );
+    }
 
     final tempDir = await getTemporaryDirectory();
     final timestamp = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-    final backupFileName = 'Enjaz_Backup_$timestamp.zip';
+    final ext = isEncrypted ? 'enjaz' : 'zip';
+    final backupFileName = 'Enjaz_Backup_$timestamp.$ext';
     final backupFile = File(p.join(tempDir.path, backupFileName));
-    await backupFile.writeAsBytes(encodedZip ?? <int>[]);
+    await backupFile.writeAsBytes(finalBytes);
 
     return backupFile;
   }
 
-  /// Inspect a picked backup .zip file and return preview information
-  static Future<BackupPreview> inspectBackupFile(File zipFile) async {
+  /// Inspect a picked backup file (.zip or encrypted .enjaz) and return preview information
+  static Future<BackupPreview> inspectBackupFile(File file, {String? password}) async {
     try {
-      if (!await zipFile.exists()) {
+      if (!await file.exists()) {
         return BackupPreview.invalid('الملف المحدد غير موجود.');
       }
 
-      final bytes = await zipFile.readAsBytes();
-      final archive = ZipDecoder().decodeBytes(bytes);
+      final bytes = await file.readAsBytes();
+      final isEncrypted = BackupEncryptionService.instance.isEncryptedBackup(bytes);
+
+      if (isEncrypted && (password == null || password.trim().isEmpty)) {
+        return BackupPreview.encryptedNeedPassword(fileSizeBytes: bytes.length);
+      }
+
+      final List<int> zipBytes;
+      if (isEncrypted) {
+        zipBytes = await BackupEncryptionService.instance.decrypt(
+          encryptedBytes: bytes,
+          password: password!.trim(),
+        );
+      } else {
+        zipBytes = bytes;
+      }
+
+      final archive = ZipDecoder().decodeBytes(zipBytes);
 
       ArchiveFile? manifestFile;
       ArchiveFile? dataFile;
 
-      for (final file in archive) {
-        if (file.name == 'manifest.json') manifestFile = file;
-        if (file.name == 'data.json') dataFile = file;
+      for (final f in archive) {
+        if (f.name == 'manifest.json') manifestFile = f;
+        if (f.name == 'data.json') dataFile = f;
       }
 
       if (dataFile == null) {
@@ -136,6 +165,7 @@ class BackupService {
       final tasksCount = (dataMap['tasks'] as List?)?.length ?? manifest?.counts['tasks'] ?? 0;
       final goalsCount = (dataMap['goals'] as List?)?.length ?? manifest?.counts['goals'] ?? 0;
       final ideasCount = (dataMap['ideas'] as List?)?.length ?? manifest?.counts['ideas'] ?? 0;
+      final notesCount = (dataMap['notes'] as List?)?.length ?? manifest?.counts['notes'] ?? 0;
       final voiceNotesCount = (dataMap['voice_notes'] as List?)?.length ?? manifest?.counts['voice_notes'] ?? 0;
 
       DateTime? createdAt;
@@ -147,15 +177,19 @@ class BackupService {
 
       return BackupPreview(
         isValid: true,
+        isEncrypted: isEncrypted,
         schemaVersion: manifest?.schemaVersion ?? (dataMap['schema_version'] as int? ?? 1),
         createdAt: createdAt,
         includesVoice: manifest?.includesVoice ?? false,
         tasksCount: tasksCount,
         goalsCount: goalsCount,
         ideasCount: ideasCount,
+        notesCount: notesCount,
         voiceNotesCount: voiceNotesCount,
         fileSizeBytes: bytes.length,
       );
+    } on BackupEncryptionException catch (e) {
+      return BackupPreview.invalid(e.message);
     } catch (e) {
       return BackupPreview.invalid('تعذر قراءة ملف النسخة الاحتياطية: $e');
     }
@@ -165,8 +199,25 @@ class BackupService {
   static Future<bool> restoreBackup({
     required AppDatabase db,
     required File zipFile,
+    String? password,
     bool createSafetySnapshot = true,
   }) async {
+    final rawBytes = await zipFile.readAsBytes();
+    final isEncrypted = BackupEncryptionService.instance.isEncryptedBackup(rawBytes);
+
+    final List<int> zipBytes;
+    if (isEncrypted) {
+      if (password == null || password.trim().isEmpty) {
+        throw const BackupEncryptionException('يرجى إدخال كلمة المرور لفك تشفير النسخة الاحتياطية.');
+      }
+      zipBytes = await BackupEncryptionService.instance.decrypt(
+        encryptedBytes: rawBytes,
+        password: password.trim(),
+      );
+    } else {
+      zipBytes = rawBytes;
+    }
+
     // 1. Create safety snapshot before restoration
     if (createSafetySnapshot) {
       try {
@@ -183,8 +234,7 @@ class BackupService {
       }
     }
 
-    final bytes = await zipFile.readAsBytes();
-    final archive = ZipDecoder().decodeBytes(bytes);
+    final archive = ZipDecoder().decodeBytes(zipBytes);
 
     ArchiveFile? dataFile;
     final voiceFiles = <ArchiveFile>[];

@@ -284,11 +284,37 @@ class SettingsScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
+                  if (!appLockState.hasDeviceSecurity) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.errorContainer.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline_rounded, color: theme.colorScheme.error),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              isArabic
+                                  ? 'لم يتم تعيين قفل للشاشة على جهازك (PIN أو بصمة). يرجى تعيين قفل شاشة من إعدادات الهاتف لتفعيل الحماية.'
+                                  : 'No screen lock (PIN, pattern or biometrics) is set on this phone. Please enable it in system settings first.',
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(l10n.appLockTitle),
                     subtitle: Text(
-                      l10n.appLockSettingSubtitle,
+                      isArabic
+                          ? 'قفل التطبيق ببصمة الهاتف أو رمز PIN أو النمط'
+                          : l10n.appLockSettingSubtitle,
                       style: TextStyle(fontSize: 12, color: theme.colorScheme.outline),
                     ),
                     value: appLockState.isEnabled,
@@ -305,6 +331,56 @@ class SettingsScreen extends ConsumerWidget {
                       }
                     },
                   ),
+                  if (appLockState.isEnabled) ...[
+                    const Divider(height: 16),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        isArabic ? 'مهلة القفل في الخلفية' : 'Background lock timeout',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      subtitle: Text(
+                        isArabic
+                            ? _formatTimeoutLabelAr(appLockState.timeoutSeconds)
+                            : _formatTimeoutLabelEn(appLockState.timeoutSeconds),
+                        style: TextStyle(fontSize: 12, color: theme.colorScheme.primary),
+                      ),
+                      trailing: DropdownButton<int>(
+                        value: appLockState.timeoutSeconds,
+                        underline: const SizedBox(),
+                        items: [
+                          DropdownMenuItem(value: 0, child: Text(isArabic ? 'فوراً' : 'Immediately')),
+                          DropdownMenuItem(value: 30, child: Text(isArabic ? '30 ثانية' : '30 seconds')),
+                          DropdownMenuItem(value: 60, child: Text(isArabic ? 'دقيقة واحدة' : '1 minute')),
+                          DropdownMenuItem(value: 300, child: Text(isArabic ? '5 دقائق' : '5 minutes')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) {
+                            ref.read(appLockProvider.notifier).setTimeoutSeconds(val);
+                          }
+                        },
+                      ),
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        isArabic
+                            ? 'إخفاء تفاصيل التنبيهات على شاشة القفل'
+                            : 'Hide notification details on lock screen',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      subtitle: Text(
+                        isArabic
+                            ? 'حماية خصوصية نصوص المهام والملاحظات عند قفل الشاشة'
+                            : 'Protects privacy of task & note text on phone lock screen',
+                        style: TextStyle(fontSize: 12, color: theme.colorScheme.outline),
+                      ),
+                      value: appLockState.hideNotificationDetails,
+                      onChanged: (val) {
+                        ref.read(appLockProvider.notifier).setHideNotificationDetails(val);
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -361,5 +437,35 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+String _formatTimeoutLabelAr(int seconds) {
+  switch (seconds) {
+    case 0:
+      return 'القفل فور الخروج من التطبيق';
+    case 30:
+      return 'القفل بعد 30 ثانية في الخلفية';
+    case 60:
+      return 'القفل بعد دقيقة واحدة في الخلفية';
+    case 300:
+      return 'القفل بعد 5 دقائق في الخلفية';
+    default:
+      return '$seconds ثانية';
+  }
+}
+
+String _formatTimeoutLabelEn(int seconds) {
+  switch (seconds) {
+    case 0:
+      return 'Lock immediately on exit';
+    case 30:
+      return 'Lock after 30 seconds';
+    case 60:
+      return 'Lock after 1 minute';
+    case 300:
+      return 'Lock after 5 minutes';
+    default:
+      return '$seconds seconds';
   }
 }

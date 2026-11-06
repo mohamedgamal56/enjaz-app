@@ -21,7 +21,16 @@ class BackupScreen extends ConsumerStatefulWidget {
 
 class _BackupScreenState extends ConsumerState<BackupScreen> {
   bool _includeVoice = true;
+  bool _isEncrypted = true;
+  bool _obscureExportPassword = true;
+  final TextEditingController _exportPasswordController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _exportPasswordController.dispose();
+    super.dispose();
+  }
 
   void _showLoading(String message) {
     setState(() => _isLoading = true);
@@ -33,6 +42,26 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
 
   Future<void> _exportBackup() async {
     final l10n = AppLocalizations.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    String? password;
+    if (_isEncrypted) {
+      final pwd = _exportPasswordController.text.trim();
+      if (pwd.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isArabic
+                  ? 'يرجى كتابة كلمة مرور لتشفير النسخة الاحتياطية'
+                  : 'Please enter a password to encrypt the backup',
+            ),
+          ),
+        );
+        return;
+      }
+      password = pwd;
+    }
+
     _showLoading(l10n.exportingBackup);
 
     try {
@@ -40,6 +69,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       final file = await BackupService.exportFullBackup(
         db: db,
         includeVoice: _includeVoice,
+        password: password,
       );
 
       _hideLoading();
@@ -62,9 +92,10 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     final l10n = AppLocalizations.of(context);
 
     try {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['zip'],
+        allowedExtensions: ['zip', 'enjaz'],
       );
 
       if (result == null || result.files.single.path == null) return;
@@ -72,7 +103,26 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       final file = File(result.files.single.path!);
       _showLoading(l10n.inspectingBackup);
 
-      final preview = await BackupService.inspectBackupFile(file);
+      var preview = await BackupService.inspectBackupFile(file);
+      String? enteredPassword;
+
+      if (preview.isEncrypted) {
+        _hideLoading();
+        if (!mounted) return;
+
+        enteredPassword = await _promptPasswordDialog(
+          title: isArabic ? 'نسخة احتياطية مشفرة' : 'Encrypted Backup',
+          message: isArabic
+              ? 'هذا الملف مشفر بكلمة سر. أدخل كلمة السر لفك التشفير وقراءة البيانات:'
+              : 'This file is password-encrypted. Enter password to decrypt:',
+        );
+
+        if (enteredPassword == null || enteredPassword.isEmpty) return;
+
+        _showLoading(l10n.inspectingBackup);
+        preview = await BackupService.inspectBackupFile(file, password: enteredPassword);
+      }
+
       _hideLoading();
       if (!mounted) return;
 
@@ -101,6 +151,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       await BackupService.restoreBackup(
         db: db,
         zipFile: file,
+        password: enteredPassword,
         createSafetySnapshot: true,
       );
 
@@ -123,6 +174,63 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         ),
       );
     }
+  }
+
+    Future<String?> _promptPasswordDialog({
+    required String title,
+    required String message,
+  }) {
+    final controller = TextEditingController();
+    var obscure = true;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDlgState) => AlertDialog(
+          title: Row(
+            children: [
+              const Icon(Icons.lock_rounded, color: Colors.amber),
+              const SizedBox(width: 8),
+              Expanded(child: Text(title)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(message),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                obscureText: obscure,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: isArabic ? 'كلمة المرور' : 'Password',
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.key_rounded),
+                  suffixIcon: IconButton(
+                    icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
+                    onPressed: () => setDlgState(() => obscure = !obscure),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(null),
+              child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+              child: Text(isArabic ? 'فك التشفير' : 'Decrypt'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<bool?> _showRestorePreviewDialog(BackupPreview preview) {
@@ -170,6 +278,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                   _previewRow(l10n.tasksCountLabel, '${preview.tasksCount}'),
                   _previewRow(l10n.goalsCountLabel, '${preview.goalsCount}'),
                   _previewRow(l10n.ideasCountLabel, '${preview.ideasCount}'),
+                  _previewRow(isArabic ? 'الملاحظات' : 'Notes', '${preview.notesCount}'),
                   _previewRow(l10n.voiceNotesCountLabel, '${preview.voiceNotesCount}'),
                   _previewRow(
                     l10n.fileSizeLabel,
@@ -258,6 +367,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
       appBar: AppBar(
@@ -310,6 +420,90 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                           setState(() => _includeVoice = val);
                         },
                       ),
+                      const Divider(height: 16),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Row(
+                          children: [
+                            Text(
+                              isArabic
+                                  ? 'مشفرة بكلمة سر (موصى بها)'
+                                  : 'Password-encrypted (recommended)',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(width: 6),
+                            const Icon(Icons.security_rounded, size: 18, color: Colors.green),
+                          ],
+                        ),
+                        subtitle: Text(
+                          isArabic
+                              ? 'تشفير AES-256 لحماية خصوصيتك وتسجيلاتك الصوتية'
+                              : 'AES-256 encryption to protect your privacy and voice notes',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.outline,
+                          ),
+                        ),
+                        value: _isEncrypted,
+                        onChanged: (val) async {
+                          if (!val) {
+                            final proceed = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: Row(
+                                  children: [
+                                    Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error),
+                                    const SizedBox(width: 8),
+                                    Text(isArabic ? 'تنبيه أمان' : 'Security Warning'),
+                                  ],
+                                ),
+                                content: Text(
+                                  isArabic
+                                      ? 'تصدير نسخة غير مشفرة يجعل بياناتك وملاحظاتك الشخصية قابلة للقراءة من أي شخص يملك الملف. هل أنت متأكد من المتابعة بدون كلمة سر؟'
+                                      : 'Exporting an unencrypted backup leaves your personal data and notes readable by anyone with the file. Proceed without password?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(ctx).pop(false),
+                                    child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () => Navigator.of(ctx).pop(true),
+                                    style: FilledButton.styleFrom(backgroundColor: theme.colorScheme.error),
+                                    child: Text(isArabic ? 'تصدير بدون تشفير' : 'Export unencrypted'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (proceed == true) {
+                              setState(() => _isEncrypted = false);
+                            }
+                          } else {
+                            setState(() => _isEncrypted = true);
+                          }
+                        },
+                      ),
+                      if (_isEncrypted) ...[
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _exportPasswordController,
+                          obscureText: _obscureExportPassword,
+                          decoration: InputDecoration(
+                            labelText: isArabic ? 'كلمة مرور النسخة الاحتياطية' : 'Backup Password',
+                            hintText: isArabic ? 'اكتب كلمة سر تتذكرها جيداً' : 'Enter a password you will remember',
+                            prefixIcon: const Icon(Icons.password_rounded),
+                            suffixIcon: IconButton(
+                              icon: Icon(_obscureExportPassword ? Icons.visibility_off : Icons.visibility),
+                              onPressed: () => setState(() => _obscureExportPassword = !_obscureExportPassword),
+                            ),
+                            border: const OutlineInputBorder(),
+                            helperText: isArabic
+                              ? 'تحذير: في حال نسيان كلمة المرور لن تتمكن من استرجاع البيانات'
+                              : 'Warning: If forgotten, the backup cannot be recovered',
+                            helperMaxLines: 2,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,

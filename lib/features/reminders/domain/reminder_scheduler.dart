@@ -157,6 +157,26 @@ class ReminderScheduler {
             languageCode: languageCode,
           );
         }
+      } else if (r.ownerType == 'goal') {
+        final goal = await _db.getGoalById(r.ownerId);
+        if (goal != null && goal.status != 'done' && goal.status != 'abandoned' && goal.deletedAt == null) {
+          await scheduleReminder(
+            reminder: r,
+            title: goal.title,
+            dueDate: goal.targetDate,
+            dueTime: '09:00',
+            languageCode: languageCode,
+          );
+        }
+      } else if (r.ownerType == 'idea') {
+        final idea = await _db.getIdeaById(r.ownerId);
+        if (idea != null && idea.status != 'converted' && idea.deletedAt == null) {
+          await scheduleReminder(
+            reminder: r,
+            title: idea.title,
+            languageCode: languageCode,
+          );
+        }
       }
     }
   }

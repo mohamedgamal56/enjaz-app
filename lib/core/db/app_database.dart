@@ -25,12 +25,13 @@ part 'app_database.g.dart';
   Settings,
   VoiceNotes,
   Reminders,
+  Notes,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -78,6 +79,18 @@ class AppDatabase extends _$AppDatabase {
               FROM tasks
               WHERE reminder_offset_minutes IS NOT NULL AND deleted_at IS NULL;
             ''');
+          }
+          if (from < 4) {
+            await m.createTable(notes);
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_notes_date ON notes (note_date);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_notes_pinned ON notes (pinned);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_notes_deleted ON notes (deleted_at);',
+            );
           }
         },
       );
@@ -581,6 +594,7 @@ class AppDatabase extends _$AppDatabase {
     final deletedTaskIds = (await (select(tasks)..where((t) => t.deletedAt.isNotNull())).get()).map((t) => t.id).toSet();
     final deletedGoalIds = (await (select(goals)..where((g) => g.deletedAt.isNotNull())).get()).map((g) => g.id).toSet();
     final deletedIdeaIds = (await (select(ideas)..where((i) => i.deletedAt.isNotNull())).get()).map((i) => i.id).toSet();
+    final deletedNoteIds = (await (select(notes)..where((n) => n.deletedAt.isNotNull())).get()).map((n) => n.id).toSet();
 
     final allVoiceNotes = await select(voiceNotes).get();
     final toDeleteVoiceNotes = allVoiceNotes.where((v) {
@@ -588,6 +602,7 @@ class AppDatabase extends _$AppDatabase {
       if (v.parentType == 'task' && deletedTaskIds.contains(v.parentId)) return true;
       if (v.parentType == 'goal' && deletedGoalIds.contains(v.parentId)) return true;
       if (v.parentType == 'idea' && deletedIdeaIds.contains(v.parentId)) return true;
+      if (v.parentType == 'note' && deletedNoteIds.contains(v.parentId)) return true;
       return false;
     }).toList();
 
@@ -619,6 +634,7 @@ class AppDatabase extends _$AppDatabase {
       itemsPurged += await (delete(goals)..where((g) => g.deletedAt.isNotNull())).go();
       itemsPurged += await (delete(milestones)..where((m) => m.deletedAt.isNotNull())).go();
       itemsPurged += await (delete(ideas)..where((i) => i.deletedAt.isNotNull())).go();
+      itemsPurged += await (delete(notes)..where((n) => n.deletedAt.isNotNull())).go();
     });
 
     return (itemsPurged, filesDeleted, bytesFreed);
@@ -771,6 +787,10 @@ class AppDatabase extends _$AppDatabase {
   /// Watch single idea by ID
   Stream<Idea?> watchIdeaById(int id) {
     return (select(ideas)..where((i) => i.id.equals(id))).watchSingleOrNull();
+  }
+
+  Future<Idea?> getIdeaById(int id) {
+    return (select(ideas)..where((i) => i.id.equals(id))).getSingleOrNull();
   }
 
   /// Watch all non-deleted tags
@@ -1242,6 +1262,8 @@ class AppDatabase extends _$AppDatabase {
     final recurrencesList = await select(recurrences).get();
     final settingsList = await select(settings).get();
     final voiceNotesList = await select(voiceNotes).get();
+    final notesList = await select(notes).get();
+    final remindersList = await select(reminders).get();
 
     return {
       'schema_version': schemaVersion,
@@ -1258,6 +1280,8 @@ class AppDatabase extends _$AppDatabase {
       'recurrences': recurrencesList.map((e) => e.toJson()).toList(),
       'settings': settingsList.map((e) => e.toJson()).toList(),
       'voice_notes': voiceNotesList.map((e) => e.toJson()).toList(),
+      'notes': notesList.map((e) => e.toJson()).toList(),
+      'reminders': remindersList.map((e) => e.toJson()).toList(),
     };
   }
 
@@ -1276,6 +1300,8 @@ class AppDatabase extends _$AppDatabase {
       await delete(reasons).go();
       await delete(ideas).go();
       await delete(settings).go();
+      await delete(notes).go();
+      await delete(reminders).go();
 
       if (data['reasons'] is List) {
         for (final item in (data['reasons'] as List)) {
@@ -1335,6 +1361,16 @@ class AppDatabase extends _$AppDatabase {
       if (data['settings'] is List) {
         for (final item in (data['settings'] as List)) {
           await into(settings).insert(Setting.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['notes'] is List) {
+        for (final item in (data['notes'] as List)) {
+          await into(notes).insert(Note.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
+      if (data['reminders'] is List) {
+        for (final item in (data['reminders'] as List)) {
+          await into(reminders).insert(Reminder.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
         }
       }
     });
@@ -1539,7 +1575,106 @@ class AppDatabase extends _$AppDatabase {
       await permanentlyDeleteTask(task.id);
       purged++;
     }
+    final oldNotes = await (select(notes)
+          ..where((n) => n.deletedAt.isNotNull() & n.deletedAt.isSmallerOrEqualValue(thirtyDaysAgoMs)))
+        .get();
+    for (final note in oldNotes) {
+      await permanentlyDeleteNote(note.id);
+      purged++;
+    }
     return purged;
+  }
+  // -------------------------------------------------------------
+  // NOTES QUERIES (Roadmap v2.0 Round 3)
+  // -------------------------------------------------------------
+  Stream<List<Note>> watchNotes({
+    String? searchQuery,
+    String? kind,
+    String? tag,
+  }) {
+    var query = select(notes)..where((n) => n.deletedAt.isNull());
+
+    if (searchQuery != null && searchQuery.trim().isNotEmpty) {
+      final term = '%${searchQuery.trim()}%';
+      query = query..where((n) => n.title.like(term) | n.body.like(term));
+    }
+    if (kind != null && kind.isNotEmpty && kind != 'all') {
+      query = query..where((n) => n.kind.equals(kind));
+    }
+    if (tag != null && tag.isNotEmpty) {
+      query = query..where((n) => n.tags.like('%$tag%'));
+    }
+
+    return (query
+          ..orderBy([
+            (n) => OrderingTerm(expression: n.pinned, mode: OrderingMode.desc),
+            (n) => OrderingTerm(expression: n.createdAt, mode: OrderingMode.desc),
+          ]))
+        .watch();
+  }
+
+  Future<List<Note>> getAllActiveNotes() {
+    return (select(notes)
+          ..where((n) => n.deletedAt.isNull())
+          ..orderBy([
+            (n) => OrderingTerm(expression: n.pinned, mode: OrderingMode.desc),
+            (n) => OrderingTerm(expression: n.createdAt, mode: OrderingMode.desc),
+          ]))
+        .get();
+  }
+
+  Stream<List<Note>> watchTrashNotes() {
+    return (select(notes)
+          ..where((n) => n.deletedAt.isNotNull())
+          ..orderBy([(n) => OrderingTerm(expression: n.deletedAt, mode: OrderingMode.desc)]))
+        .watch();
+  }
+
+  Future<Note?> getNoteById(int id) {
+    return (select(notes)..where((n) => n.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<int> insertNote(NotesCompanion entry) {
+    return into(notes).insert(entry);
+  }
+
+  Future<bool> updateNote(NotesCompanion entry) {
+    return update(notes).replace(entry);
+  }
+
+  Future<int> togglePinNote(int id, bool pinned) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(notes)..where((n) => n.id.equals(id))).write(
+      NotesCompanion(
+        pinned: Value(pinned),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<int> softDeleteNote(int id) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(notes)..where((n) => n.id.equals(id))).write(
+      NotesCompanion(
+        deletedAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<int> restoreNote(int id) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (update(notes)..where((n) => n.id.equals(id))).write(
+      NotesCompanion(
+        deletedAt: const Value(null),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<int> permanentlyDeleteNote(int id) async {
+    await deleteVoiceNotesForParent('note', id);
+    return (delete(notes)..where((n) => n.id.equals(id))).go();
   }
 }
 

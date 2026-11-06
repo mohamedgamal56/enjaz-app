@@ -10,6 +10,7 @@ import '../../tasks/presentation/task_details_screen.dart';
 import '../domain/goal_progress_service.dart';
 import '../../voice_notes/presentation/widgets/voice_notes_section.dart';
 import 'add_goal_sheet.dart';
+import '../../reminders/domain/reminder_scheduler.dart';
 
 class GoalDetailsScreen extends ConsumerStatefulWidget {
   final int goalId;
@@ -489,6 +490,10 @@ class _GoalDetailsScreenState extends ConsumerState<GoalDetailsScreen> {
                 _buildLinkedTasksSection(context, goal, formatNum),
                 const SizedBox(height: 16),
 
+                // Reminders Section (Round 3 Spec 3.3)
+                _buildRemindersSection(context, goal),
+                const SizedBox(height: 16),
+
                 // Voice Notes Section (Spec 14.4)
                 VoiceNotesSection(parentType: 'goal', parentId: goal.id),
                 const SizedBox(height: 32),
@@ -497,6 +502,264 @@ class _GoalDetailsScreenState extends ConsumerState<GoalDetailsScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildRemindersSection(BuildContext context, Goal goal) {
+    final theme = Theme.of(context);
+    final db = ref.watch(databaseProvider);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    return StreamBuilder<List<Reminder>>(
+      stream: db.watchRemindersForOwner('goal', goal.id),
+      builder: (context, snapshot) {
+        final reminders = snapshot.data ?? [];
+
+        return Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.alarm_rounded, color: theme.colorScheme.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          isArabic ? 'تنبيهات ومواعيد الهدف' : 'Goal Reminders',
+                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    if (reminders.length < 3)
+                      TextButton.icon(
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: Text(isArabic ? 'إضافة تنبيه' : 'Add reminder'),
+                        onPressed: () => _showAddGoalReminderSheet(context, goal),
+                      ),
+                  ],
+                ),
+                if (reminders.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      isArabic
+                          ? 'لا توجد تنبيهات مجدولة لهذا الهدف. يمكنك ضبط تنبيه عند موعد تحقيق الهدف أو مواعيد المراحل.'
+                          : 'No reminders scheduled. Add a reminder for the target date or milestones.',
+                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+                    ),
+                  )
+                else
+                  ...reminders.map((r) {
+                    final isAlarm = r.kind == 'alarm';
+                    String timeLabel = '';
+                    if (r.triggerType == 'absolute' && r.absoluteTime != null) {
+                      timeLabel = '${r.absoluteTime!.year}-${r.absoluteTime!.month.toString().padLeft(2, '0')}-${r.absoluteTime!.day.toString().padLeft(2, '0')} ${r.absoluteTime!.hour.toString().padLeft(2, '0')}:${r.absoluteTime!.minute.toString().padLeft(2, '0')}';
+                    } else if (goal.targetDate != null) {
+                      timeLabel = '${goal.targetDate!} 09:00';
+                    }
+
+                    return Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isAlarm ? Icons.alarm_rounded : Icons.notifications_active_rounded,
+                            color: isAlarm ? Colors.amber : Colors.teal,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  r.message ?? goal.title,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  timeLabel,
+                                  style: TextStyle(fontSize: 11, color: theme.colorScheme.outline),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline_rounded, size: 20, color: Colors.red),
+                            onPressed: () async {
+                              await ReminderScheduler(db: db).cancelReminder(r.id);
+                              await db.deleteReminder(r.id);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAddGoalReminderSheet(BuildContext context, Goal goal) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final db = ref.read(databaseProvider);
+    var kind = 'notification';
+    var selectedPreset = 'target'; // target | custom
+    DateTime selectedDateTime = DateTime.now().add(const Duration(days: 1));
+    final msgController = TextEditingController(text: goal.title);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isArabic ? 'إضافة تنبيه للهدف' : 'Add Goal Reminder',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    ChoiceChip(
+                      label: Text(isArabic ? 'إشعار عادي' : 'Notification'),
+                      selected: kind == 'notification',
+                      onSelected: (_) => setSheetState(() => kind = 'notification'),
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: Text(isArabic ? 'منبه مستمر' : 'Alarm'),
+                      selected: kind == 'alarm',
+                      onSelected: (_) => setSheetState(() => kind = 'alarm'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (goal.targetDate != null) ...[
+                  RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(isArabic ? 'في موعد تحقيق الهدف (${goal.targetDate} 09:00 ص)' : 'At target date (${goal.targetDate})'),
+                    value: 'target',
+                    groupValue: selectedPreset,
+                    onChanged: (v) => setSheetState(() => selectedPreset = v!),
+                  ),
+                ],
+                RadioListTile<String>(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(isArabic ? 'تاريخ ووقت مخصص' : 'Custom date & time'),
+                  value: 'custom',
+                  groupValue: selectedPreset,
+                  onChanged: (v) => setSheetState(() => selectedPreset = v!),
+                ),
+                if (selectedPreset == 'custom') ...[
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.calendar_today_rounded),
+                    title: Text(
+                      '${selectedDateTime.year}-${selectedDateTime.month.toString().padLeft(2, '0')}-${selectedDateTime.day.toString().padLeft(2, '0')} ${selectedDateTime.hour.toString().padLeft(2, '0')}:${selectedDateTime.minute.toString().padLeft(2, '0')}',
+                    ),
+                    trailing: const Icon(Icons.edit_rounded, size: 18),
+                    onTap: () async {
+                      final pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDateTime,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 3650)),
+                      );
+                      if (pickedDate != null && context.mounted) {
+                        final pickedTime = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.fromDateTime(selectedDateTime),
+                        );
+                        if (pickedTime != null) {
+                          setSheetState(() {
+                            selectedDateTime = DateTime(
+                              pickedDate.year,
+                              pickedDate.month,
+                              pickedDate.day,
+                              pickedTime.hour,
+                              pickedTime.minute,
+                            );
+                          });
+                        }
+                      }
+                    },
+                  ),
+                ],
+                const SizedBox(height: 12),
+                TextField(
+                  controller: msgController,
+                  decoration: InputDecoration(
+                    labelText: isArabic ? 'نص التنبيه' : 'Reminder message',
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () async {
+                      final now = DateTime.now().millisecondsSinceEpoch;
+                      final triggerType = (selectedPreset == 'target') ? 'offset' : 'absolute';
+                      final targetDate = (selectedPreset == 'target') ? goal.targetDate : null;
+
+                      final reminderId = await db.into(db.reminders).insert(
+                        RemindersCompanion.insert(
+                          ownerType: 'goal',
+                          ownerId: goal.id,
+                          kind: drift.Value(kind),
+                          triggerType: drift.Value(triggerType),
+                          offsetMinutes: drift.Value(0),
+                          absoluteTime: drift.Value(selectedPreset == 'custom' ? selectedDateTime : null),
+                          message: drift.Value(msgController.text.trim().isNotEmpty ? msgController.text.trim() : goal.title),
+                          enabled: const drift.Value(true),
+                          createdAt: now,
+                          updatedAt: now,
+                        ),
+                      );
+
+                      final saved = await (db.select(db.reminders)..where((r) => r.id.equals(reminderId))).getSingle();
+                      await ReminderScheduler(db: db).scheduleReminder(
+                        reminder: saved,
+                        title: goal.title,
+                        dueDate: targetDate,
+                        dueTime: '09:00',
+                      );
+
+                      if (context.mounted) Navigator.of(ctx).pop();
+                    },
+                    child: Text(isArabic ? 'حفظ التنبيه' : 'Save Reminder'),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 

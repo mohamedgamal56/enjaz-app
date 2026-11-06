@@ -171,3 +171,20 @@ class Reminders extends Table with CommonColumns {
   BoolColumn get enabled => boolean().withDefault(const Constant(true))();
 }
 
+// 14. Notes (Roadmap v2.0 Round 3 - Notes)
+@TableIndex(name: 'idx_notes_date', columns: {#noteDate})
+@TableIndex(name: 'idx_notes_pinned', columns: {#pinned})
+@TableIndex(name: 'idx_notes_deleted', columns: {#deletedAt})
+class Notes extends Table with CommonColumns {
+  TextColumn get title => text().nullable()();
+  TextColumn get body => text()();
+  TextColumn get kind => text().withDefault(const Constant('note'))(); // note | quote | info
+  TextColumn get color => text().nullable()();
+  BoolColumn get pinned => boolean().withDefault(const Constant(false))();
+  TextColumn get noteDate => text().nullable()(); // YYYY-MM-DD
+  TextColumn get tags => text().nullable()();
+  IntColumn get occurredAt => integer().nullable()();
+  TextColumn get localDate => text().nullable()();
+}
+
+

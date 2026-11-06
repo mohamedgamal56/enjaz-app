@@ -97,6 +97,42 @@ class TrashScreen extends ConsumerWidget {
     }
   }
 
+  void _permanentlyDeleteNote(BuildContext context, WidgetRef ref, Note note) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isArabic ? 'حذف نهائي' : 'Delete Permanently'),
+        content: Text(
+          isArabic
+              ? 'هل تريد حذف هذه الملاحظة نهائياً من الذاكرة؟ سيتم مسح أي تسجيلات صوتية تابعة لها.'
+              : 'Permanently delete this note? Audio files will be removed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            child: Text(isArabic ? 'حذف نهائي' : 'Delete Permanently'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final db = ref.read(databaseProvider);
+      await db.permanentlyDeleteNote(note.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(isArabic ? 'تم حذف الملاحظة نهائياً' : 'Note permanently deleted')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -105,18 +141,28 @@ class TrashScreen extends ConsumerWidget {
     final db = ref.watch(databaseProvider);
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isArabic ? 'سلة المحذوفات' : l10n.trash),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_forever_rounded),
-            tooltip: isArabic ? 'تفريغ السلة' : l10n.purgeTrash,
-            onPressed: () => _purgeTrash(context, ref),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(isArabic ? 'سلة المحذوفات' : l10n.trash),
+          bottom: TabBar(
+            tabs: [
+              Tab(text: isArabic ? 'المهام' : 'Tasks'),
+              Tab(text: isArabic ? 'الملاحظات' : 'Notes'),
+            ],
           ),
-        ],
-      ),
-      body: StreamBuilder<List<Task>>(
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.delete_forever_rounded),
+              tooltip: isArabic ? 'تفريغ السلة' : l10n.purgeTrash,
+              onPressed: () => _purgeTrash(context, ref),
+            ),
+          ],
+        ),
+        body: TabBarView(
+          children: [
+            StreamBuilder<List<Task>>(
         stream: db.watchTrashTasks(),
         builder: (context, snapshot) {
           final tasks = snapshot.data ?? [];
@@ -234,6 +280,89 @@ class TrashScreen extends ConsumerWidget {
           );
         },
       ),
-    );
+      // Tab 2: Notes in Trash
+      StreamBuilder<List<Note>>(
+        stream: db.watchTrashNotes(),
+        builder: (context, snapshot) {
+          final notes = snapshot.data ?? [];
+          if (notes.isEmpty) {
+            return Center(
+              child: Text(
+                isArabic ? 'لا توجد ملاحظات محذوفة' : 'No deleted notes',
+                style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.outline),
+              ),
+            );
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: notes.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, idx) {
+              final n = notes[idx];
+              final deletedDateStr = n.deletedAt != null
+                  ? AppFormatter.formatDateTime(
+                      DateTime.fromMillisecondsSinceEpoch(n.deletedAt!),
+                      locale: Localizations.localeOf(context).toString(),
+                      format: numeralsFormat,
+                    )
+                  : '';
+
+              return Card(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      const CircleAvatar(
+                        child: Icon(Icons.description_outlined, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              (n.title != null && n.title!.isNotEmpty) ? n.title! : n.body,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              isArabic ? 'حُذفت: $deletedDateStr' : 'Deleted: $deletedDateStr',
+                              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.restore_rounded, color: Colors.teal),
+                        tooltip: isArabic ? 'استرجاع' : 'Restore',
+                        onPressed: () async {
+                          await db.restoreNote(n.id);
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(isArabic ? 'تم استرجاع الملاحظة' : 'Note restored')),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete_forever_rounded, color: theme.colorScheme.error),
+                        tooltip: isArabic ? 'حذف نهائي' : 'Delete Permanently',
+                        onPressed: () => _permanentlyDeleteNote(context, ref, n),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    ],
+  ),
+  ),
+);
   }
 }
