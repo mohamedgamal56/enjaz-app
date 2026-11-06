@@ -98,7 +98,7 @@ class TrashScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final numeralsFormat = ref.watch(numeralsProvider);
