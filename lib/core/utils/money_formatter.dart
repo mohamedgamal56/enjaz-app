@@ -85,6 +85,23 @@ class MoneyFormatter {
     return '$amountStr $currency';
   }
 
+  /// Convenience alias for formatWithCurrency
+  static String formatMinorWithCurrency(
+    int minorUnits, {
+    String currency = 'ج.م',
+    bool masked = false,
+    NumeralsFormat format = NumeralsFormat.western,
+    bool showDecimals = true,
+  }) {
+    return formatWithCurrency(
+      minorUnits,
+      currency: currency,
+      masked: masked,
+      format: format,
+      showDecimals: showDecimals,
+    );
+  }
+
   /// Parses decimal text entered by user (e.g. "25.50" or "25,5" or Arabic digits "٢٥٫٥") into minor units
   static int parseToMinor(String input) {
     if (input.trim().isEmpty) return 0;
