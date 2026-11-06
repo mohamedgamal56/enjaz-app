@@ -52,6 +52,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   final _titleController = TextEditingController();
   final _notesController = TextEditingController();
   final _locationController = TextEditingController();
+  final _tagInputController = TextEditingController();
+  final List<String> _ideaTags = [];
   final _titleFocusNode = FocusNode();
 
   late String _selectedKind; // 'task' | 'errand' | 'goal' | 'idea'
@@ -66,6 +68,16 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   int _selectedDayOfMonth = 1;
   String? _selectedRecurrenceEndDate;
   bool _showRecurrencePanel = false;
+
+  void _addIdeaTag() {
+    final text = _tagInputController.text.trim();
+    if (text.isNotEmpty && !_ideaTags.contains(text)) {
+      setState(() {
+        _ideaTags.add(text);
+        _tagInputController.clear();
+      });
+    }
+  }
 
   Future<void> _recordVoiceNote() async {
     final result = await VoiceRecorderSheet.show(context);
@@ -97,6 +109,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     _titleController.dispose();
     _notesController.dispose();
     _locationController.dispose();
+    _tagInputController.dispose();
     _titleFocusNode.dispose();
     super.dispose();
   }
@@ -363,16 +376,13 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
           );
     } else if (_selectedKind == 'idea') {
       parentType = 'idea';
-      insertedId = await db.into(db.ideas).insert(
-            IdeasCompanion.insert(
-              title: title,
-              description: _notesController.text.trim().isNotEmpty
-                  ? drift.Value(_notesController.text.trim())
-                  : const drift.Value.absent(),
-              createdAt: now,
-              updatedAt: now,
-            ),
-          );
+      insertedId = await db.insertNewIdea(
+        title: title,
+        description: _notesController.text.trim().isNotEmpty
+            ? _notesController.text.trim()
+            : null,
+        tagNames: _ideaTags,
+      );
     }
 
     if (_recordedVoiceNote != null && insertedId != null) {
@@ -546,11 +556,12 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                       tooltip: l10n.addVoiceNote,
                       onPressed: _recordVoiceNote,
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.playlist_add_rounded),
-                      tooltip: l10n.importNotes,
-                      onPressed: () => _showMultiLineImportDialog(),
-                    ),
+                    if (_selectedKind == 'task' || _selectedKind == 'errand')
+                      IconButton(
+                        icon: const Icon(Icons.playlist_add_rounded),
+                        tooltip: l10n.importNotes,
+                        onPressed: () => _showMultiLineImportDialog(),
+                      ),
                   ],
                 ),
               ),
@@ -604,8 +615,107 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
               const SizedBox(height: 12),
             ],
 
-            // Date Selection Chips (For Task, Errand, Goal)
-            if (_selectedKind != 'idea') ...[
+            // Form for Goal (Section 0.6)
+            if (_selectedKind == 'goal') ...[
+              // Goal Description Input
+              TextField(
+                controller: _notesController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: isArabic ? 'وصف الهدف (اختياري)...' : 'Goal description (optional)...',
+                  prefixIcon: const Icon(Icons.notes_rounded),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Target Date Selector for Goal
+              Row(
+                children: [
+                  ActionChip(
+                    avatar: const Icon(Icons.flag_outlined, size: 16),
+                    label: Text(
+                      _selectedDate != null
+                          ? (isArabic
+                              ? 'تاريخ الهدف: ${AppFormatter.formatDate(DateTime.parse(_selectedDate!), locale: Localizations.localeOf(context).toString(), format: numeralsFormat)}'
+                              : 'Target: ${AppFormatter.formatDate(DateTime.parse(_selectedDate!), locale: Localizations.localeOf(context).toString(), format: numeralsFormat)}')
+                          : (isArabic ? 'تحديد تاريخ مستهدف (اختياري)' : 'Target date (optional)'),
+                    ),
+                    onPressed: _pickCustomDate,
+                  ),
+                  if (_selectedDate != null)
+                    IconButton(
+                      icon: const Icon(Icons.clear_rounded, size: 16),
+                      tooltip: isArabic ? 'إزالة التاريخ' : 'Clear date',
+                      onPressed: () => setState(() => _selectedDate = null),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            // Form for Idea (Section 0.6)
+            if (_selectedKind == 'idea') ...[
+              // Idea Details Input
+              TextField(
+                controller: _notesController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: isArabic ? 'تفاصيل الفكرة (اختياري)...' : 'Idea details (optional)...',
+                  prefixIcon: const Icon(Icons.notes_rounded),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Tags Input Row
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _tagInputController,
+                      onSubmitted: (_) => _addIdeaTag(),
+                      decoration: InputDecoration(
+                        hintText: l10n.tagHint,
+                        prefixIcon: const Icon(Icons.tag_rounded),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filledTonal(
+                    icon: const Icon(Icons.add_rounded),
+                    onPressed: _addIdeaTag,
+                  ),
+                ],
+              ),
+              if (_ideaTags.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: _ideaTags.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final tag = entry.value;
+                    return Chip(
+                      label: Text('#$tag'),
+                      deleteIcon: const Icon(Icons.close_rounded, size: 16),
+                      onDeleted: () {
+                        setState(() => _ideaTags.removeAt(idx));
+                      },
+                    );
+                  }).toList(),
+                ),
+              ],
+              const SizedBox(height: 12),
+            ],
+
+            // Form for Task & Errand (Section 0.6)
+            if (_selectedKind == 'task' || _selectedKind == 'errand') ...[
+              // Date Selection Chips
               Wrap(
                 spacing: 8,
                 runSpacing: 4,
@@ -747,10 +857,6 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                 ],
               ),
               const SizedBox(height: 12),
-            ],
-
-            // Reminders & Recurrence Controls (For Task & Errand)
-            if (_selectedKind == 'task' || _selectedKind == 'errand') ...[
               Row(
                 children: [
                   // Reminder Selector
@@ -1056,18 +1162,20 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
               ],
             ],
 
-            // Notes / details field
-            TextField(
-              controller: _notesController,
-              maxLines: 2,
-              decoration: InputDecoration(
-                hintText: l10n.notesHint,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+            // Notes field (For Task & Errand only)
+            if (_selectedKind == 'task' || _selectedKind == 'errand') ...[
+              TextField(
+                controller: _notesController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: l10n.notesHint,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.all(12),
                 ),
-                contentPadding: const EdgeInsets.all(12),
               ),
-            ),
+            ],
             const SizedBox(height: 20),
 
             // Action Buttons: Save & Save and Add Another

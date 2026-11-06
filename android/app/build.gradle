@@ -27,9 +27,26 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        release {
+            def keystoreFile = file("enjaz-release-key.jks")
+            if (keystoreFile.exists()) {
+                storeFile = keystoreFile
+                storePassword = System.getenv("ENJAZ_KEYSTORE_PASSWORD") ?: "enjaz_app_2026_release_secure_key"
+                keyAlias = System.getenv("ENJAZ_KEY_ALIAS") ?: "enjaz_release_key"
+                keyPassword = System.getenv("ENJAZ_KEY_PASSWORD") ?: "enjaz_app_2026_release_secure_key"
+            }
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            def keystoreFile = file("enjaz-release-key.jks")
+            if (keystoreFile.exists()) {
+                signingConfig = signingConfigs.release
+            } else {
+                signingConfig = signingConfigs.debug
+            }
             minifyEnabled = false
             shrinkResources = false
         }

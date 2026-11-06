@@ -349,7 +349,9 @@ class AppLocalizations {
       'recurrenceGenerated': 'مهمة متكررة',
       'backupAndSecurity': 'النسخ الاحتياطي والأمان',
       'fullBackupTitle': 'نسخة احتياطية شاملة (.zip)',
-      'fullBackupDescription': 'تصدير كامل بيانات التطبيق والتسجيلات الصوتية في ملف مضغوط واحد مشفر بترميز SHA-256',
+      'fullBackupDescription': 'ملف مضغوط فيه بيانات وتسجيلات، مع بصمة تحقق للتأكد إنه سليم',
+      'previousDay': 'اليوم السابق',
+      'nextDay': 'اليوم التالي',
       'includeVoiceNotesToggle': 'تضمين التسجيلات الصوتية',
       'includeVoiceNotesSub': 'تضمين جميع الملفات الصوتية المسجلة داخل ملف النسخة',
       'withoutVoiceNotesSub': 'تصدير نسخة خفيفة للبيانات فقط بدون التسجيلات الصوتية',
@@ -727,7 +729,9 @@ class AppLocalizations {
       'recurrenceGenerated': 'Recurring',
       'backupAndSecurity': 'Backup & Security',
       'fullBackupTitle': 'Full Backup Archive (.zip)',
-      'fullBackupDescription': 'Export all application data and audio recordings into a single zip archive verified with SHA-256',
+      'fullBackupDescription': 'Compressed file with a checksum for integrity',
+      'previousDay': 'Previous day',
+      'nextDay': 'Next day',
       'includeVoiceNotesToggle': 'Include Voice Notes',
       'includeVoiceNotesSub': 'Include all recorded audio files in archive',
       'withoutVoiceNotesSub': 'Export lightweight backup of data only without audio',
@@ -1161,6 +1165,8 @@ class AppLocalizations {
   String get goalsCountLabel => _get('goalsCountLabel');
   String get ideasCountLabel => _get('ideasCountLabel');
   String get fileSizeLabel => _get('fileSizeLabel');
+  String get previousDay => _get('previousDay');
+  String get nextDay => _get('nextDay');
 
   String getStatusLabel(String status) {
     switch (status) {

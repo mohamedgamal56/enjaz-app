@@ -39,6 +39,11 @@ migrate_working_dir/
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
 
+# Keystore & signing
+*.jks
+*.keystore
+key.properties
+
 # Temporary zip files
 *.zip
 test_font.ttf

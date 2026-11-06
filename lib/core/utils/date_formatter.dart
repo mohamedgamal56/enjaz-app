@@ -52,10 +52,23 @@ class AppFormatter {
     '9': '٩',
   };
 
+  static const Map<String, String> _arabicToWesternDigits = {
+    '٠': '0',
+    '١': '1',
+    '٢': '2',
+    '٣': '3',
+    '٤': '4',
+    '٥': '5',
+    '٦': '6',
+    '٧': '7',
+    '٨': '8',
+    '٩': '9',
+  };
+
   static String formatNumber(num number, {NumeralsFormat format = NumeralsFormat.western}) {
     final str = number.toString();
     if (format == NumeralsFormat.western) {
-      return str;
+      return str.split('').map((char) => _arabicToWesternDigits[char] ?? char).join();
     }
     return str.split('').map((char) => _westernToArabicDigits[char] ?? char).join();
   }
@@ -65,7 +78,7 @@ class AppFormatter {
     if (format == NumeralsFormat.arabicIndic) {
       return formatted.split('').map((char) => _westernToArabicDigits[char] ?? char).join();
     }
-    return formatted;
+    return formatted.split('').map((char) => _arabicToWesternDigits[char] ?? char).join();
   }
 
   static String formatDateTime(DateTime date, {required String locale, NumeralsFormat format = NumeralsFormat.western}) {
@@ -73,7 +86,7 @@ class AppFormatter {
     if (format == NumeralsFormat.arabicIndic) {
       return formatted.split('').map((char) => _westernToArabicDigits[char] ?? char).join();
     }
-    return formatted;
+    return formatted.split('').map((char) => _arabicToWesternDigits[char] ?? char).join();
   }
 
   static String formatWeekday(DateTime date, {required String locale}) {

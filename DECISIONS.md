@@ -137,3 +137,18 @@
     - `AppLockNotifier` observes `WidgetsBindingObserver` lifecycle: when app is paused/backgrounded, it locks immediately, showing `AppLockScreen` upon resumption.
   - Trash Physical File Cleanup:
     - `db.purgeTrashDetailed()` identifies all voice notes that were soft-deleted or whose parent task/goal/idea was soft-deleted, deletes the SQLite records, and permanently deletes the `.m4a` files from device storage via `File.delete()`.
+
+## Decision 13: Round 0 Fixed Release Keystore, ABI Split & Data Continuity
+- **Context**: The Phase 7 APK was signed with an ephemeral debug key that changes on every build, preventing in-place Android updates. Furthermore, the universal APK carried 3 CPU architectures (79 MB), Today numerals were mismatched due to default intl Arabic-Indic date formatting, and the Quick Add sheet lacked dedicated forms for Goals and Ideas.
+- **Decision**:
+  - Release Keystore & Secrets:
+    - Configured `signingConfigs.release` in `android/app/build.gradle` reading `enjaz-release-key.jks`.
+    - Added an automated CI step that decodes from `ENJAZ_RELEASE_KEYSTORE_BASE64` or deterministically provisions the fixed release keystore.
+    - Added `.jks` and `.keystore` to `.gitignore`.
+    - Documented two offline copies strategy in `README.md`.
+  - Architecture Split:
+    - Added `--split-per-abi` in `flutter build apk`, outputting `app-arm64-v8a-release.apk` (packaged as `enjaz-app-arm64.apk` and `enjaz-app.apk`), shrinking download size from 79 MB down to ~20-25 MB.
+  - Numerals Normalization:
+    - In `AppFormatter`, added bidirectional mapping `_arabicToWesternDigits` to ensure that when `NumeralsFormat.western` is active (the default), any Arabic-Indic digits produced by `DateFormat` in Arabic locale are normalized to Western digits (e.g. "6 نوفمبر 2026").
+  - Quick Add Architecture:
+    - Segregated form state in `QuickAddSheet` to dynamically render dedicated form controls for Goals (target date, description) and Ideas (tags, details) while hiding Task-only controls, and restricted the multi-line import action exclusively to Tasks and Errands.

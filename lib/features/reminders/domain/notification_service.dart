@@ -87,7 +87,7 @@ class NotificationService {
         await androidImplementation.createNotificationChannel(
           const AndroidNotificationChannel(
             channelTaskReminders,
-            'تنبيهات المهام (Task Reminders)',
+            'تنبيهات المهام',
             description: 'تنبيهات مواعيد المهام والمشاوير المحددة',
             importance: Importance.max,
             enableVibration: true,
@@ -97,7 +97,7 @@ class NotificationService {
         await androidImplementation.createNotificationChannel(
           const AndroidNotificationChannel(
             channelDailyReminders,
-            'الموجز اليومي والمراجعة (Daily Summary & Review)',
+            'الموجز اليومي والمراجعة',
             description: 'ملخص الصباح ومراجعة المساء لمهام اليوم',
             importance: Importance.defaultImportance,
           ),
@@ -106,7 +106,7 @@ class NotificationService {
         await androidImplementation.createNotificationChannel(
           const AndroidNotificationChannel(
             channelWeeklyReport,
-            'تذكير تقرير الإكسيل (Weekly Report)',
+            'تذكير تقرير الإكسيل الأسبوعي',
             description: 'تذكير مراجعة وتصدير تقرير الإكسيل الأسبوعي',
             importance: Importance.defaultImportance,
           ),

@@ -103,7 +103,7 @@ class BackupService {
   static Future<BackupPreview> inspectBackupFile(File zipFile) async {
     try {
       if (!await zipFile.exists()) {
-        return BackupPreview.invalid('الملف المحدد غير موجود / Selected file does not exist.');
+        return BackupPreview.invalid('الملف المحدد غير موجود.');
       }
 
       final bytes = await zipFile.readAsBytes();

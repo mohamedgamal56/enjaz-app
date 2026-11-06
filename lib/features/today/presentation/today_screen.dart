@@ -223,7 +223,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.chevron_left_rounded),
-                        tooltip: 'Previous day',
+                        tooltip: l10n.previousDay,
                         onPressed: _previousDay,
                       ),
                       InkWell(
@@ -278,7 +278,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.chevron_right_rounded),
-                        tooltip: 'Next day',
+                        tooltip: l10n.nextDay,
                         onPressed: _nextDay,
                       ),
                     ],
@@ -320,7 +320,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                             label: Text(
                               isArabic
                                   ? '${AppFormatter.formatNumber(doneCount, format: numeralsFormat)} من ${AppFormatter.formatNumber(totalTasks, format: numeralsFormat)} تمت'
-                                  : '$doneCount of $totalTasks done',
+                                  : '${AppFormatter.formatNumber(doneCount, format: numeralsFormat)} of ${AppFormatter.formatNumber(totalTasks, format: numeralsFormat)} done',
                             ),
                           ),
                         ],
@@ -408,16 +408,6 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                                         style: theme.textTheme.titleMedium,
                                         textAlign: TextAlign.center,
                                       ),
-                                      const SizedBox(height: 4),
-                                      if (isArabic)
-                                        Text(
-                                          'Nothing planned today',
-                                          style:
-                                              theme.textTheme.bodySmall?.copyWith(
-                                            color: theme.colorScheme.outline,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
                                       const SizedBox(height: 8),
                                       Text(
                                         l10n.emptyTodaySubtitle,
@@ -532,7 +522,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                                           : Icons.expand_less_rounded,
                                     ),
                                     title: Text(
-                                      '${l10n.sectionWaitingAndPostponed} (${waitingAndPostponed.length})',
+                                      '${l10n.sectionWaitingAndPostponed} (${AppFormatter.formatNumber(waitingAndPostponed.length, format: numeralsFormat)})',
                                       style: theme.textTheme.titleSmall,
                                     ),
                                     onTap: () {
@@ -559,7 +549,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                                           : Icons.expand_less_rounded,
                                     ),
                                     title: Text(
-                                      '${l10n.sectionDoneToday} (${doneTasks.length})',
+                                      '${l10n.sectionDoneToday} (${AppFormatter.formatNumber(doneTasks.length, format: numeralsFormat)})',
                                       style: theme.textTheme.titleSmall,
                                     ),
                                     onTap: () {
