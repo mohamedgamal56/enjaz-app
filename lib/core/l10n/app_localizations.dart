@@ -69,6 +69,7 @@ class AppLocalizations {
       'taskTitleHint': 'عنوان المهمة أو المشوار...',
       'notesHint': 'ملاحظات وتفاصيل إضافية...',
       'dateToday': 'اليوم',
+      'yesterday': 'أمس',
       'dateTomorrow': 'بكرة',
       'datePick': 'اختر تاريخ',
       'dateNoDate': 'بدون تاريخ',
@@ -449,6 +450,7 @@ class AppLocalizations {
       'taskTitleHint': 'Task or errand title...',
       'notesHint': 'Notes & additional details...',
       'dateToday': 'Today',
+      'yesterday': 'Yesterday',
       'dateTomorrow': 'Tomorrow',
       'datePick': 'Pick date',
       'dateNoDate': 'No date',
@@ -835,6 +837,10 @@ class AppLocalizations {
   String get taskTitleHint => _get('taskTitleHint');
   String get notesHint => _get('notesHint');
   String get dateToday => _get('dateToday');
+  String get today => _get('dateToday');
+  String get yesterday => _get('yesterday');
+  String get sortOldestFirst => _get('sortOldest');
+  String get sortNewestFirst => _get('sortNewest');
   String get dateTomorrow => _get('dateTomorrow');
   String get datePick => _get('datePick');
   String get dateNoDate => _get('dateNoDate');

@@ -58,10 +58,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final target = DateTime(dt.year, dt.month, dt.day);
     final numeralsFormat = ref.watch(numeralsProvider);
 
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (target == today) {
-      return l10n.today;
+      return isArabic ? 'اليوم' : l10n.dateToday;
     } else if (target == yesterday) {
-      return l10n.yesterday;
+      return isArabic ? 'أمس' : 'Yesterday';
     } else {
       return AppFormatter.formatDate(
         target,
@@ -171,7 +172,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                           size: 16,
                         ),
                         label: Text(
-                          _oldestFirst ? l10n.sortOldestFirst : l10n.sortNewestFirst,
+                          _oldestFirst ? l10n.sortOldest : l10n.sortNewest,
                         ),
                         onPressed: () {
                           setState(() {
