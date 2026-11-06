@@ -6,27 +6,98 @@ import 'package:enjaz/features/health/domain/health_service.dart';
 import 'package:enjaz/features/timeline/domain/timeline_models.dart';
 import 'package:enjaz/core/utils/money_formatter.dart';
 import 'package:enjaz/core/utils/date_formatter.dart';
+import 'package:enjaz/core/db/app_database.dart';
 
 void main() {
   group('Enjaz v2.0 - Section 14 Complete Acceptance Verification', () {
     test('Round 4 Acceptance: Habit completion rules, streaks, and missed days', () {
-      const habitsService = HabitsService();
-
       // Check habit logged => complete
-      expect(habitsService.isCompleted(type: 'check', logValue: 1.0), isTrue);
-      expect(habitsService.isCompleted(type: 'check', logValue: null), isFalse);
+      expect(
+        HabitsService.isDayCompleted(
+          type: 'check',
+          dailyTarget: null,
+          totalLoggedValue: 1.0,
+          totalChecklistItems: 0,
+          doneChecklistItems: 0,
+        ),
+        isTrue,
+      );
+      expect(
+        HabitsService.isDayCompleted(
+          type: 'check',
+          dailyTarget: null,
+          totalLoggedValue: 0.0,
+          totalChecklistItems: 0,
+          doneChecklistItems: 0,
+        ),
+        isFalse,
+      );
 
       // Count habit: target 8 cups => complete when >= 8
-      expect(habitsService.isCompleted(type: 'count', target: 8.0, logValue: 8.0), isTrue);
-      expect(habitsService.isCompleted(type: 'count', target: 8.0, logValue: 7.0), isFalse);
+      expect(
+        HabitsService.isDayCompleted(
+          type: 'count',
+          dailyTarget: 8.0,
+          totalLoggedValue: 8.0,
+          totalChecklistItems: 0,
+          doneChecklistItems: 0,
+        ),
+        isTrue,
+      );
+      expect(
+        HabitsService.isDayCompleted(
+          type: 'count',
+          dailyTarget: 8.0,
+          totalLoggedValue: 7.0,
+          totalChecklistItems: 0,
+          doneChecklistItems: 0,
+        ),
+        isFalse,
+      );
 
       // Amount habit: target 30 min => complete when >= 30
-      expect(habitsService.isCompleted(type: 'amount', target: 30.0, logValue: 30.0), isTrue);
-      expect(habitsService.isCompleted(type: 'amount', target: 30.0, logValue: 25.0), isFalse);
+      expect(
+        HabitsService.isDayCompleted(
+          type: 'amount',
+          dailyTarget: 30.0,
+          totalLoggedValue: 30.0,
+          totalChecklistItems: 0,
+          doneChecklistItems: 0,
+        ),
+        isTrue,
+      );
+      expect(
+        HabitsService.isDayCompleted(
+          type: 'amount',
+          dailyTarget: 30.0,
+          totalLoggedValue: 25.0,
+          totalChecklistItems: 0,
+          doneChecklistItems: 0,
+        ),
+        isFalse,
+      );
 
       // Checklist habit: all items checked => complete
-      expect(habitsService.isCompleted(type: 'checklist', checklistTotalItems: 5, checklistDoneItems: 5), isTrue);
-      expect(habitsService.isCompleted(type: 'checklist', checklistTotalItems: 5, checklistDoneItems: 4), isFalse);
+      expect(
+        HabitsService.isDayCompleted(
+          type: 'checklist',
+          dailyTarget: null,
+          totalLoggedValue: 0.0,
+          totalChecklistItems: 5,
+          doneChecklistItems: 5,
+        ),
+        isTrue,
+      );
+      expect(
+        HabitsService.isDayCompleted(
+          type: 'checklist',
+          dailyTarget: null,
+          totalLoggedValue: 0.0,
+          totalChecklistItems: 5,
+          doneChecklistItems: 4,
+        ),
+        isFalse,
+      );
     });
 
     test('Round 5 Acceptance: Finance calculations, essential vs side, savings rate & masking eye', () {
@@ -60,21 +131,33 @@ void main() {
       expect(duration.format(true), 'محتاج من 3 شهر');
 
       // 2. Treatment adherence calculation (9 days taken out of 10 days = 90%)
+      final checks = List.generate(
+        9,
+        (i) => TreatmentCheck(
+          id: i + 1,
+          treatmentId: 1,
+          checkDate: '2026-11-0${i + 1}',
+          taken: true,
+          createdAt: 0,
+          updatedAt: 0,
+        ),
+      );
       final adherence = healthService.calculateTreatmentAdherence(
         startDate: '2026-11-01',
+        endDate: '2026-11-10',
+        checks: checks,
         today: DateTime(2026, 11, 10),
-        takenDaysCount: 9,
       );
-      expect(adherence.elapsedDays, 10);
+      expect(adherence.totalDays, 10);
       expect(adherence.takenDays, 9);
-      expect(adherence.percentage, 90.0);
+      expect(adherence.adherencePercent, 90.0);
 
       // 3. Repeating checkup next date calculation (repeat every 6 months)
       final nextDate = healthService.getNextRecurringDate(
-        doneDate: DateTime(2026, 11, 6),
-        repeatEveryMonths: 6,
+        DateTime(2026, 11, 6),
+        6,
       );
-      expect(nextDate, '2027-05-06');
+      expect(nextDate, DateTime(2027, 5, 6));
     });
 
     test('Round 7 Acceptance: Timeline 2026-2046 bounds, module colors, and entry ordering', () {
