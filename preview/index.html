@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>إنجاز - Enjaz (Phase 7 Final Release Preview)</title>
+  <title>إنجاز - Enjaz (v1.0.1 - Round 0 Preview)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1011,7 +1011,7 @@
         </div>
 
         <!-- Multi-line Import Button -->
-        <div style="display: flex; justify-content: flex-end;">
+        <div id="qaMultiLineBox" style="display: flex; justify-content: flex-end;">
           <button type="button" class="chip" onclick="openMultiLineImport()" style="background: none; border-color: var(--accent); color: var(--accent);">
             <span class="material-symbols-rounded" style="font-size: 16px;">playlist_add</span>
             <span>استيراد ملاحظات (متعدد الأسطر)</span>
@@ -1040,21 +1040,39 @@
           <input type="text" id="qaLocationInput" class="form-input" placeholder="المكان أو العنوان..." />
         </div>
 
-        <!-- Date Chips -->
-        <div class="chips-row" style="flex-wrap: wrap;">
-          <div class="chip active" id="qaChipToday" onclick="setQADate('today')">اليوم</div>
-          <div class="chip" id="qaChipTomorrow" onclick="setQADate('tomorrow')">بكرة</div>
-          <div class="chip" id="qaChipNoDate" onclick="setQADate('nodate')">بدون تاريخ</div>
+        <!-- Task & Errand Date / Time / Priority Box (Round 0) -->
+        <div id="qaTaskErrandBox" style="display: block;">
+          <!-- Date Chips -->
+          <div class="chips-row" style="flex-wrap: wrap;">
+            <div class="chip active" id="qaChipToday" onclick="setQADate('today')">اليوم</div>
+            <div class="chip" id="qaChipTomorrow" onclick="setQADate('tomorrow')">بكرة</div>
+            <div class="chip" id="qaChipNoDate" onclick="setQADate('nodate')">بدون تاريخ</div>
+          </div>
+
+          <!-- Time & Priority -->
+          <div style="display: flex; gap: 8px;">
+            <input type="time" id="qaTimeInput" class="form-input" style="flex: 1;" />
+            <select id="qaPrioritySelect" class="form-input" style="flex: 1;">
+              <option value="normal">عادية (Normal)</option>
+              <option value="high">عالية (High)</option>
+              <option value="low">منخفضة (Low)</option>
+            </select>
+          </div>
         </div>
 
-        <!-- Time & Priority -->
-        <div style="display: flex; gap: 8px;">
-          <input type="time" id="qaTimeInput" class="form-input" style="flex: 1;" />
-          <select id="qaPrioritySelect" class="form-input" style="flex: 1;">
-            <option value="normal">عادية (Normal)</option>
-            <option value="high">عالية (High)</option>
-            <option value="low">منخفضة (Low)</option>
-          </select>
+        <!-- Goal Dedicated Fields (Round 0) -->
+        <div id="qaGoalBox" style="display: none; flex-direction: column; gap: 8px;">
+          <textarea id="qaGoalDescInput" class="form-input" style="height: 60px; resize: none;" placeholder="وصف الهدف وتفاصيله..."></textarea>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <label style="font-size: 12px; color: var(--text-muted); white-space: nowrap;">تاريخ مستهدف:</label>
+            <input type="date" id="qaGoalTargetDate" class="form-input" style="flex: 1;" />
+          </div>
+        </div>
+
+        <!-- Idea Dedicated Fields (Round 0) -->
+        <div id="qaIdeaBox" style="display: none; flex-direction: column; gap: 8px;">
+          <textarea id="qaIdeaDetailsInput" class="form-input" style="height: 60px; resize: none;" placeholder="تفاصيل الفكرة وملاحظاتها..."></textarea>
+          <input type="text" id="qaIdeaTagsInput" class="form-input" placeholder="الوسوم مفصولة بفواصل (مثلاً: مشاريع, كتب)..." />
         </div>
 
         <!-- Buttons -->
@@ -1279,7 +1297,7 @@
             <span>النسخ الاحتياطي والأمان (Backup & Restore)</span>
           </div>
           <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
-            تصدير واسترجاع كامل البيانات كملف مضغوط .zip يشمل التسجيلات الصوتية وmanifest.json والتحقق بـ SHA-256.
+            ملف مضغوط فيه بيانات وتسجيلات، مع بصمة تحقق للتأكد إنه سليم.
           </div>
           <div style="display:flex; flex-direction:column; gap:8px;">
             <button class="chip active" onclick="simulateFullBackupExport()" style="width:100%; justify-content:center; background:var(--accent); color:white;">
@@ -1651,6 +1669,10 @@
       if (target) target.classList.add('active');
 
       document.getElementById('qaLocationBox').style.display = kind === 'errand' ? 'block' : 'none';
+      if (document.getElementById('qaMultiLineBox')) document.getElementById('qaMultiLineBox').style.display = (kind === 'task' || kind === 'errand') ? 'flex' : 'none';
+      if (document.getElementById('qaTaskErrandBox')) document.getElementById('qaTaskErrandBox').style.display = (kind === 'task' || kind === 'errand') ? 'block' : 'none';
+      if (document.getElementById('qaGoalBox')) document.getElementById('qaGoalBox').style.display = kind === 'goal' ? 'flex' : 'none';
+      if (document.getElementById('qaIdeaBox')) document.getElementById('qaIdeaBox').style.display = kind === 'idea' ? 'flex' : 'none';
       document.getElementById('qaTitleInput').placeholder = kind === 'errand' ? 'اسم المشوار...' : (kind === 'goal' ? 'عنوان الهدف...' : (kind === 'idea' ? 'عنوان الفكرة...' : 'عنوان المهمة...'));
     }
 
@@ -1666,36 +1688,83 @@
       const title = document.getElementById('qaTitleInput').value.trim();
       if (!title) return;
 
-      const loc = document.getElementById('qaLocationInput').value.trim();
-      const time = document.getElementById('qaTimeInput').value;
-      const priority = document.getElementById('qaPrioritySelect').value;
+      if (qaKind === 'goal') {
+        const desc = document.getElementById('qaGoalDescInput') ? document.getElementById('qaGoalDescInput').value.trim() : '';
+        const targetDate = document.getElementById('qaGoalTargetDate') ? document.getElementById('qaGoalTargetDate').value : '';
+        const newGoal = {
+          id: Date.now(),
+          title: title,
+          description: desc,
+          targetDate: targetDate || null,
+          progress: 0,
+          status: 'in_progress',
+          milestones: []
+        };
+        goals.unshift(newGoal);
+        saveGoalsToStorage();
+        if (pendingQAVoiceNote) {
+          pendingQAVoiceNote.parentType = 'goal';
+          pendingQAVoiceNote.parentId = newGoal.id;
+          voiceNotes.unshift(pendingQAVoiceNote);
+          saveVoiceNotesToStorage();
+          pendingQAVoiceNote = null;
+          document.getElementById('qaVoicePreview').style.display = 'none';
+        }
+        showToast('تمت إضافة الهدف بنجاح 🎯');
+      } else if (qaKind === 'idea') {
+        const details = document.getElementById('qaIdeaDetailsInput') ? document.getElementById('qaIdeaDetailsInput').value.trim() : '';
+        const tagsRaw = document.getElementById('qaIdeaTagsInput') ? document.getElementById('qaIdeaTagsInput').value.trim() : '';
+        const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+        const newIdea = {
+          id: Date.now(),
+          title: title,
+          details: details,
+          tags: tags,
+          createdAt: new Date().toISOString()
+        };
+        ideas.unshift(newIdea);
+        saveIdeasToStorage();
+        if (pendingQAVoiceNote) {
+          pendingQAVoiceNote.parentType = 'idea';
+          pendingQAVoiceNote.parentId = newIdea.id;
+          voiceNotes.unshift(pendingQAVoiceNote);
+          saveVoiceNotesToStorage();
+          pendingQAVoiceNote = null;
+          document.getElementById('qaVoicePreview').style.display = 'none';
+        }
+        showToast('تمت إضافة الفكرة بنجاح 💡');
+      } else {
+        const loc = document.getElementById('qaLocationInput').value.trim();
+        const time = document.getElementById('qaTimeInput').value;
+        const priority = document.getElementById('qaPrioritySelect').value;
 
-      const newTask = {
-        id: Date.now(),
-        title: title,
-        kind: qaKind,
-        date: qaDate,
-        time: time || null,
-        location: loc || null,
-        priority: priority,
-        status: 'todo',
-        progress: 0,
-        reason: null,
-      };
+        const newTask = {
+          id: Date.now(),
+          title: title,
+          kind: qaKind,
+          date: qaDate,
+          time: time || null,
+          location: loc || null,
+          priority: priority,
+          status: 'todo',
+          progress: 0,
+          reason: null,
+        };
 
-      tasks.unshift(newTask);
-      saveTasksToStorage();
+        tasks.unshift(newTask);
+        saveTasksToStorage();
 
-      if (pendingQAVoiceNote) {
-        pendingQAVoiceNote.parentType = qaKind === 'idea' ? 'idea' : (qaKind === 'goal' ? 'goal' : 'task');
-        pendingQAVoiceNote.parentId = newTask.id;
-        voiceNotes.unshift(pendingQAVoiceNote);
-        saveVoiceNotesToStorage();
-        pendingQAVoiceNote = null;
-        document.getElementById('qaVoicePreview').style.display = 'none';
+        if (pendingQAVoiceNote) {
+          pendingQAVoiceNote.parentType = 'task';
+          pendingQAVoiceNote.parentId = newTask.id;
+          voiceNotes.unshift(pendingQAVoiceNote);
+          saveVoiceNotesToStorage();
+          pendingQAVoiceNote = null;
+          document.getElementById('qaVoicePreview').style.display = 'none';
+        }
+
+        showToast(currentLang === 'ar' ? 'تمت إضافة المهمة بنجاح' : 'Task added successfully');
       }
-
-      showToast(currentLang === 'ar' ? 'تمت إضافة المهمة بنجاح' : 'Task added successfully');
 
       if (addAnother) {
         document.getElementById('qaTitleInput').value = '';
@@ -3267,7 +3336,7 @@
     }
 
     function simulateFullBackupExport() {
-      showToast('جاري تجميع البيانات والملفات وحساب SHA-256...');
+      showToast('جاري تجميع البيانات والملفات والتحقق من سلامتها...');
       setTimeout(() => {
         showToast('تم تصدير النسخة بنجاح: Enjaz_Backup_20261103_0200.zip (شامل data.json و voice/) 📦');
       }, 1000);
