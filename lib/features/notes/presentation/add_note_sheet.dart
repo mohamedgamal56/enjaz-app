@@ -49,9 +49,7 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
   bool _pinned = false;
   final List<String> _tags = [];
 
-  File? _recordedAudioFile;
-  int _audioDurationMs = 0;
-  int _audioSizeBytes = 0;
+  VoiceRecordingResult? _recordedVoiceResult;
 
   static const List<String> _colorOptions = [
     '#FFFFFF', // default
@@ -123,15 +121,13 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
     final result = await VoiceRecorderSheet.show(context);
     if (result != null) {
       setState(() {
-        _recordedAudioFile = result.file;
-        _audioDurationMs = result.durationMs;
-        _audioSizeBytes = result.sizeBytes;
+        _recordedVoiceResult = result;
 
         // Voice-only auto title
         if (_titleController.text.trim().isEmpty) {
           final isAr = Localizations.localeOf(context).languageCode == 'ar';
           _titleController.text = VoiceNoteService.generateVoiceOnlyTitle(
-            DateTime.now(),
+            date: DateTime.now(),
             isArabic: isAr,
           );
         }
@@ -147,7 +143,7 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
     final body = _bodyController.text.trim();
     final title = _titleController.text.trim();
 
-    if (body.isEmpty && _recordedAudioFile == null) {
+    if (body.isEmpty && _recordedVoiceResult == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -197,21 +193,15 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
       );
 
       // Attach voice note if recorded
-      if (_recordedAudioFile != null) {
-        final savedVn = await VoiceNoteService.saveVoiceNoteFile(
-          tempFile: _recordedAudioFile!,
-          durationMs: _audioDurationMs,
-          sizeBytes: _audioSizeBytes,
-        );
-
-        await db.into(db.voiceNotes).insert(
+      if (_recordedVoiceResult != null) {
+        await db.insertVoiceNote(
           VoiceNotesCompanion.insert(
             parentType: 'note',
             parentId: noteId,
-            fileName: savedVn.fileName,
-            durationMs: drift.Value(savedVn.durationMs),
-            sizeBytes: drift.Value(savedVn.sizeBytes),
-            recordedAt: savedVn.recordedAt,
+            fileName: _recordedVoiceResult!.relativeFileName,
+            durationMs: drift.Value(_recordedVoiceResult!.durationMs),
+            sizeBytes: drift.Value(_recordedVoiceResult!.sizeBytes),
+            recordedAt: now,
             createdAt: now,
             updatedAt: now,
           ),
@@ -367,7 +357,7 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
             const SizedBox(height: 12),
 
             // Voice recorder attachment
-            if (_recordedAudioFile != null)
+            if (_recordedVoiceResult != null)
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -381,14 +371,14 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
                     Expanded(
                       child: Text(
                         isArabic
-                            ? 'تسجيل صوتي مرفق (${VoiceNoteService.formatDuration(_audioDurationMs)})'
-                            : 'Voice note attached (${VoiceNoteService.formatDuration(_audioDurationMs)})',
+                            ? 'تسجيل صوتي مرفق (${VoiceNoteService.formatDuration(_recordedVoiceResult!.durationMs)})'
+                            : 'Voice note attached (${VoiceNoteService.formatDuration(_recordedVoiceResult!.durationMs)})',
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                       ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
-                      onPressed: () => setState(() => _recordedAudioFile = null),
+                      onPressed: () => setState(() => _recordedVoiceResult = null),
                     ),
                   ],
                 ),

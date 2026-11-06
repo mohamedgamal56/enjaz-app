@@ -237,6 +237,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final numeralsFormat = ref.read(numeralsProvider);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     final dateStr = preview.createdAt != null
         ? AppFormatter.formatDateTime(

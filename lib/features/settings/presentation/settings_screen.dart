@@ -25,6 +25,7 @@ class SettingsScreen extends ConsumerWidget {
     final currentThemeMode = ref.watch(themeModeProvider);
     final currentNumerals = ref.watch(numeralsProvider);
     final appLockState = ref.watch(appLockProvider);
+    final isArabic = (currentLocale?.languageCode ?? Localizations.localeOf(context).languageCode) == 'ar';
 
     return Scaffold(
       appBar: AppBar(
