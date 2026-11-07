@@ -340,7 +340,7 @@ class ActionPlanner {
   ActionPlan _planLogExpense(AssistantIntent intent) {
     final amount = intent.amount ?? 0.0;
     final category = intent.category ?? 'طعام ومطاعم';
-    final isEssential = intent.isEssential;
+    final isEssential = intent.isEssential ?? false;
     final title = intent.title ?? category;
     final dateStr = intent.dateStr;
 
@@ -395,7 +395,7 @@ class ActionPlanner {
     final habitKey = intent.habitKey ?? 'coffee';
     final habitName = _habitDisplayNames[habitKey] ?? habitKey;
     final quantity = intent.quantity ?? 1.0;
-    final action = intent.action ?? 'add';
+    final action = intent.slots['action'] as String? ?? 'add';
 
     final buffer = StringBuffer('عادة — $habitName');
     if (action == 'tick') {

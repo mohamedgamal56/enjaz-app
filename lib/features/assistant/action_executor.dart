@@ -396,7 +396,7 @@ class ActionExecutor {
     } else {
       final times = quantity.round().clamp(1, 100);
       for (int i = 0; i < times; i++) {
-        await db.incrementHabitCount(habitId, todayStr);
+        await db.logHabitCount(habitId, todayStr);
       }
     }
 

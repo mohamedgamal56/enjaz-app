@@ -1,6 +1,8 @@
+import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:enjaz/core/db/app_database.dart';
+import 'package:enjaz/features/assistant/action_plan.dart';
 import 'package:enjaz/features/assistant/action_executor.dart';
 import 'package:enjaz/features/assistant/action_planner.dart';
 import 'package:enjaz/features/assistant/rule_based_intent_parser.dart';

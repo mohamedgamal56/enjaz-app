@@ -187,7 +187,7 @@ class ConfirmationCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: actionColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: BorderSide(color: actionColor.withValues(alpha: 0.2)),
+                border: Border.all(color: actionColor.withValues(alpha: 0.2)),
               ),
               child: Text(
                 plan.descriptionInWords,
@@ -221,7 +221,7 @@ class ConfirmationCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isSelected ? actionColor.withValues(alpha: 0.15) : colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(10),
-                        border: BorderSide(
+                        border: Border.all(
                           color: isSelected ? actionColor : Colors.transparent,
                           width: 1.5,
                         ),
