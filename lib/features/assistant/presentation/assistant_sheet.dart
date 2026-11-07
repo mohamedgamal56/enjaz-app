@@ -113,7 +113,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
           _voiceState = state;
         });
         if (state == VoiceInputState.listening) {
-          if (!_pulseController.isAnimating) {
+          if (!_pulseController.isAnimating && WidgetsBinding.instance is WidgetsFlutterBinding) {
             _pulseController.repeat(reverse: true);
           }
         } else {

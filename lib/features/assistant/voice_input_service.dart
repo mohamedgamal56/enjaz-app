@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
@@ -144,9 +145,11 @@ class VoiceInputService {
     }
 
     // Trigger brief haptic vibration per Section 2.3
-    try {
-      await HapticFeedback.lightImpact();
-    } catch (_) {}
+    if (WidgetsBinding.instance is WidgetsFlutterBinding) {
+      try {
+        await HapticFeedback.lightImpact();
+      } catch (_) {}
+    }
 
     // Initialize recognizer
     final initSuccess = await _source.initialize(
@@ -172,11 +175,13 @@ class VoiceInputService {
 
     // 60-second maximum timeout per Section 3.2
     _safetyTimeoutTimer?.cancel();
-    _safetyTimeoutTimer = Timer(maxSessionDuration, () {
-      if (_isUserIntendedListening) {
-        stopListening();
-      }
-    });
+    if (WidgetsBinding.instance is WidgetsFlutterBinding) {
+      _safetyTimeoutTimer = Timer(maxSessionDuration, () {
+        if (_isUserIntendedListening) {
+          stopListening();
+        }
+      });
+    }
 
     return _startSingleRecognizerSession();
   }
