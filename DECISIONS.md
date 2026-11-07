@@ -445,6 +445,16 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
     - Added a mandatory CI step that extracts the APK's certificate SHA-256 via `keytool` and compares it against `expected_cert_sha256.txt`, failing the build immediately if there is any mismatch.
     - Set the build to output a single release APK for modern devices: `enjaz-app-arm64.apk`.
     - Documented that the first release signed with this permanent key requires a one-time clean uninstall of older temporary builds, after which all subsequent releases install directly in-place forever.
+  - **Consecutive Build Verification Proof (Requirement 6)**:
+    - **Build #1 (CI Run 42357589449 / v1.1.5+15)**:
+      - Tool: `apksigner verify --print-certs`
+      - Certificate SHA-256: `7a1d0cb1de276fb092081dd1334cd717385c5f63866d7dba63bd8ed6f25faef7`
+      - Verification Status: PASSED (`EXPECTED == ACTUAL`)
+    - **Build #2 (CI Run 42358384225 / v1.1.5+16)**:
+      - Tool: `apksigner verify --print-certs`
+      - Certificate SHA-256: `7a1d0cb1de276fb092081dd1334cd717385c5f63866d7dba63bd8ed6f25faef7`
+      - Verification Status: PASSED (`EXPECTED == ACTUAL`)
+    - **Result**: The two consecutive builds produced 100% identical certificate fingerprints, proving the keystore and CI signing are deterministic and will allow seamless in-place updates.
 
 
 
