@@ -76,9 +76,10 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> {
     final intent = parser.parse(trimmed);
 
     // Fetch open tasks for status matching
-    final openTasks = await (db.select(db.tasks)
-          ..where((t) => t.status.isNotValue('done') & t.deletedAt.isNull()))
+    final activeTasks = await (db.select(db.tasks)
+          ..where((t) => t.deletedAt.isNull()))
         .get();
+    final openTasks = activeTasks.where((t) => t.status != 'done').toList();
 
     final candidateTasks = openTasks
         .map((t) => CandidateTask(
@@ -179,7 +180,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> {
       case 'income':
         AddTransactionSheet.show(
           context,
-          defaultKind: plan.actionType == 'expense' ? 'expense' : 'income',
+          initialKind: plan.actionType == 'expense' ? 'expense' : 'income',
         );
         break;
 

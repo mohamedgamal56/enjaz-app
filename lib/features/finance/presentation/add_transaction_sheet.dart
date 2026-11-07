@@ -19,6 +19,24 @@ class AddTransactionSheet extends ConsumerStatefulWidget {
     this.initialDate,
   });
 
+  static Future<void> show(
+    BuildContext context, {
+    Transaction? existingTransaction,
+    String? initialKind,
+    String? initialDate,
+  }) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AddTransactionSheet(
+        existingTransaction: existingTransaction,
+        initialKind: initialKind,
+        initialDate: initialDate,
+      ),
+    );
+  }
+
   @override
   ConsumerState<AddTransactionSheet> createState() => _AddTransactionSheetState();
 }
