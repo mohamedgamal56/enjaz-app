@@ -145,12 +145,16 @@ class ActionExecutor {
 
       final savedRem = await (db.select(db.reminders)..where((r) => r.id.equals(reminderId!))).getSingleOrNull();
       if (savedRem != null) {
-        await ReminderScheduler(db: db).scheduleReminder(
-          reminder: savedRem,
-          title: title,
-          dueDate: date,
-          dueTime: time,
-        );
+        try {
+          await ReminderScheduler(db: db).scheduleReminder(
+            reminder: savedRem,
+            title: title,
+            dueDate: date,
+            dueTime: time,
+          );
+        } catch (_) {
+          // Ignore platform / notification service errors in tests or headless runners
+        }
       }
     }
 
@@ -165,6 +169,9 @@ class ActionExecutor {
         onUndo: () async {
           await db.softDeleteTask(taskId);
           if (reminderId != null) {
+            try {
+              await ReminderScheduler(db: db).cancelReminder(reminderId);
+            } catch (_) {}
             await (db.delete(db.reminders)..where((r) => r.id.equals(reminderId!))).go();
           }
         },

@@ -512,33 +512,61 @@ class ActionPlanner {
   // TASK LOOKUP & SCORING (VOICE.md Section 5.3)
   // =========================================================================
 
+  static Set<String> _extractTokens(String text) {
+    final tokens = <String>{};
+    for (final raw in text.split(' ')) {
+      final t = raw.trim();
+      if (t.length > 1) {
+        tokens.add(t);
+        if (t.startsWith('ال') && t.length > 3) {
+          tokens.add(t.substring(2));
+        }
+      }
+    }
+    return tokens;
+  }
+
+  static String _stripArticle(String text) {
+    return text.split(' ').map((w) {
+      if (w.startsWith('ال') && w.length > 3) {
+        return w.substring(2);
+      }
+      return w;
+    }).join(' ');
+  }
+
   _TaskMatchResult _findMatchingTasks(String requestedTitle, List<CandidateTask> openTasks, DateTime now) {
     if (openTasks.isEmpty || requestedTitle.isEmpty) {
       return const _TaskMatchResult(bestTask: null, isAmbiguous: false, candidates: []);
     }
 
     final queryNorm = TextNormalizer.normalize(requestedTitle);
-    final queryTokens = queryNorm.split(' ').where((t) => t.length > 1).toSet();
+    final queryTokens = _extractTokens(queryNorm);
     if (queryTokens.isEmpty) {
       return const _TaskMatchResult(bestTask: null, isAmbiguous: false, candidates: []);
     }
 
+    final strippedQuery = _stripArticle(queryNorm);
     final todayStr = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
     final scored = <({CandidateTask task, double score})>[];
 
     for (final task in openTasks) {
       final taskNorm = TextNormalizer.normalize(task.title);
-      final taskTokens = taskNorm.split(' ').where((t) => t.length > 1).toSet();
+      final taskTokens = _extractTokens(taskNorm);
       if (taskTokens.isEmpty) continue;
 
-      // Jaccard similarity
+      // Jaccard similarity across expanded tokens
       final intersection = queryTokens.intersection(taskTokens).length;
       final union = queryTokens.union(taskTokens).length;
       double score = union > 0 ? (intersection / union) : 0.0;
 
-      // Substring bonus
-      if (taskNorm.contains(queryNorm) || queryNorm.contains(taskNorm)) {
+      // Substring bonus (checking both raw normalized and stripped article)
+      final strippedTask = _stripArticle(taskNorm);
+      if (taskNorm.contains(queryNorm) ||
+          queryNorm.contains(taskNorm) ||
+          strippedTask.contains(strippedQuery) ||
+          strippedQuery.contains(strippedTask)) {
         score = (score + 0.5).clamp(0.0, 1.0);
       }
 

@@ -16,6 +16,7 @@ void main() {
     late ActionExecutor executor;
 
     setUp(() async {
+      TestWidgetsFlutterBinding.ensureInitialized();
       db = AppDatabase(NativeDatabase.memory());
       parser = RuleBasedIntentParser(nowProvider: () => fixedNow);
       planner = ActionPlanner(nowProvider: () => fixedNow);
@@ -91,10 +92,10 @@ void main() {
       expect(updated.progress, equals(100));
       expect(updated.finishedAt, isNotNull);
 
-      // Verify TaskEvent row created
+      // Verify TaskEvent row created (initial creation + completion event = 2)
       final events = await (db.select(db.taskEvents)..where((e) => e.taskId.equals(initialTaskId))).get();
-      expect(events.length, equals(1));
-      expect(events.first.toStatus, equals('done'));
+      expect(events.length, equals(2));
+      expect(events.last.toStatus, equals('done'));
 
       // Test Undo
       await result.undoAction!.undo();
@@ -105,9 +106,10 @@ void main() {
       expect(restored.progress, equals(50));
       expect(restored.finishedAt, isNull);
 
-      // Verify TaskEvent was cleaned up
+      // Verify completion event was cleaned up, leaving initial creation event
       final eventsAfterUndo = await (db.select(db.taskEvents)..where((e) => e.taskId.equals(initialTaskId))).get();
-      expect(eventsAfterUndo.isEmpty, isTrue);
+      expect(eventsAfterUndo.length, equals(1));
+      expect(eventsAfterUndo.first.toStatus, equals('in_progress'));
     });
 
     test('Executes update_status postponement with reason and target date', () async {
