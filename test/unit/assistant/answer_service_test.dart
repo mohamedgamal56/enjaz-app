@@ -205,7 +205,7 @@ void main() {
     });
 
     test('builds health_pending answer with waiting duration', () async {
-      await db.insertHealthItem(
+      await db.insertHealthItemWithEvent(
         HealthItemsCompanion.insert(
           title: 'كشف أسنان',
           kind: 'dental',
