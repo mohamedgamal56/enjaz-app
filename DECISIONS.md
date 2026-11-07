@@ -368,6 +368,27 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
   - **Version & Build**:
     - Bumped version to `1.1.1+11` in `pubspec.yaml` ensuring smooth in-place update over production v1.1.0+10.
 
+## Decision 23: Voice Assistant Step 2 — RuleBasedIntentParser & 150-Phrase Corpus (VOICE.md Section 4, 5, 6, 10.1)
+- **Context**: Implementation of Step 2 of the Voice Assistant specification `VOICE.md`. Step 2 builds the rule-based natural language parser supporting all 16 commands and questions, with entity and slot extraction, safety guards blocking voice deletions, and verification across a committed Egyptian Arabic phrase corpus of at least 150 entries.
+- **Decision & Implementation**:
+  - **Intent Architecture & Data Model (`assistant_intent.dart` & `intent_parser.dart`)**:
+    - `AssistantIntentType`: Enumeration defining all 16 operational intents across commands (`createTask`, `createErrand`, `createReminder`, `updateStatus`, `logExpense`, `logIncome`, `logHabit`, `createNote`, `createIdea`, `recordVoiceNote`, `createWishlistItem`, `createHealthItem`), questions (`agenda`, `recap`, `spending`, `habitStatus`, `pending`, `obligations`, `healthPending`, `wishlist`), blocked safety intent (`unsupportedDelete`), and fallback (`unrecognized`).
+    - `AssistantIntent`: Structured data model with typed slot accessors (`title`, `dateStr`, `timeStr`, `amount`, `currency`, `category`, `isEssential`, `status`, `reason`, `location`, `noteKind`, `voiceNoteKind`, `habitKey`, `healthStatus`, `reminderOffsetMinutes`, `statusFilter`, `periodStr`, `progress`).
+  - **Synonyms & Categorization Engine (`assistant_dictionary.dart` & `assets/assistant/`)**:
+    - Created structured JSON assets: `categories.json`, `habits.json`, `reasons.json`, and `patterns.json`, declared in `pubspec.yaml`.
+    - Pure Dart dictionary mappings with fast lookup and canonical normalization for expense categories, essential expense classification, habit keys, and status reasons.
+  - **Parser Implementation (`RuleBasedIntentParser`)**:
+    - Pure Dart implementation of `IntentParser`.
+    - Strict voice deletion guard (Section 7 & 11 #12): voice commands to delete ("امسح", "احذف", "شيل") are intercepted and mapped to `unsupportedDelete` ("ده مش متاح بالصوت").
+    - Preservation of transcript spelling: task and errand titles preserve original spelling from the raw transcript while cleanly stripping command words, temporal expressions, and conversational filler words ("أنا", "عايز", "لازم", "إني").
+    - Entity extraction: integrates `NumberWordsAr` for financial amounts, `DateTimeResolver` for dates, times, periods, and reminder offsets, and dictionary matching for categories and reasons.
+  - **Corpus & Verification**:
+    - Created `test/assistant_corpus_ar.json` containing 236 phrases (> 150 required) covering all specification examples, Egyptian dialect variations, and the owner's 10 sentences.
+    - Added unit test suite `test/unit/assistant/rule_based_intent_parser_test.dart` and corpus suite `test/unit/assistant/corpus_test.dart`.
+  - **Version & Build**:
+    - Bumped application version to `1.1.2+12` in `pubspec.yaml`.
+
+
 
 
 

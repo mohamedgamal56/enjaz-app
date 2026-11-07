@@ -1,0 +1,2045 @@
+[
+  {
+    "phrase": "أنا بكرة عايز أعمل مونتاج الإعلان الساعة 4 العصر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "مونتاج الإعلان",
+      "date": "2026-11-08",
+      "time": "16:00"
+    }
+  },
+  {
+    "phrase": "سجل مشوار النهارده أروح السنترال الساعة 1",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_errand",
+    "expected_slots": {
+      "title": "السنترال",
+      "date": "2026-11-07",
+      "time": "13:00"
+    }
+  },
+  {
+    "phrase": "فكرني يوم الخميس أكلم دكتور أحمد الساعة 7 بالليل",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_reminder",
+    "expected_slots": {
+      "title": "أكلم دكتور أحمد",
+      "date": "2026-11-12",
+      "time": "19:00"
+    }
+  },
+  {
+    "phrase": "صرفت 100 جنيه بنزين للموتوسيكل النهارده",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 100.0,
+      "category": "بنزين ومواصلات",
+      "date": "2026-11-07"
+    }
+  },
+  {
+    "phrase": "سجل شاي وقهوة بـ 25 جنيه",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 25.0,
+      "category": "شاي وقهوة"
+    }
+  },
+  {
+    "phrase": "خلصت مهمة تسليم الفيديوهات",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "done",
+      "title": "تسليم الفيديوهات"
+    }
+  },
+  {
+    "phrase": "أجل مهمة مراجعة الحسابات لبكرة عشان مضغوط في الشغل",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "postponed",
+      "title": "مراجعة الحسابات",
+      "date": "2026-11-08",
+      "reason": "مضغوط في الشغل"
+    }
+  },
+  {
+    "phrase": "ورايا إيه النهارده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "date": "2026-11-07"
+    }
+  },
+  {
+    "phrase": "صرفت كام الشهر ده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "spending",
+    "expected_slots": {
+      "period": "2026-11-01 to 2026-11-30"
+    }
+  },
+  {
+    "phrase": "إيه المهام المتأخرة عندي؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "pending",
+    "expected_slots": {
+      "statusFilter": "overdue"
+    }
+  },
+  {
+    "phrase": "سجّل بكرة أكلم العميل الساعة 5",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "أكلم العميل",
+      "date": "2026-11-08",
+      "time": "17:00"
+    }
+  },
+  {
+    "phrase": "انا بكرة عايز اعمل مونتاج الاعلان",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "مونتاج الاعلان",
+      "date": "2026-11-08"
+    }
+  },
+  {
+    "phrase": "يوم الخميس هقابل الدكتور",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "الدكتور",
+      "date": "2026-11-12"
+    }
+  },
+  {
+    "phrase": "ضيف مهمة اراجع الفاتورة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "اراجع الفاتورة"
+    }
+  },
+  {
+    "phrase": "سجّل مشوار بكرة اجيب البنزين",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_errand",
+    "expected_slots": {
+      "title": "اجيب البنزين",
+      "date": "2026-11-08"
+    }
+  },
+  {
+    "phrase": "مشوار النهارده البنك الساعة 12",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_errand",
+    "expected_slots": {
+      "title": "البنك",
+      "date": "2026-11-07",
+      "time": "12:00"
+    }
+  },
+  {
+    "phrase": "فكرني بكرة الساعة 9 اكلم احمد",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_reminder",
+    "expected_slots": {
+      "title": "اكلم احمد",
+      "date": "2026-11-08",
+      "time": "09:00"
+    }
+  },
+  {
+    "phrase": "نبهني بعد يومين ادفع الفاتورة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_reminder",
+    "expected_slots": {
+      "title": "ادفع الفاتورة",
+      "date": "2026-11-09"
+    }
+  },
+  {
+    "phrase": "خلصت مهمة التقرير",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "done",
+      "title": "التقرير"
+    }
+  },
+  {
+    "phrase": "ابتديت المونتاج",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "in_progress",
+      "title": "المونتاج"
+    }
+  },
+  {
+    "phrase": "اجّل مهمة التقرير لبكرة لان مفيش فلوس",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "postponed",
+      "title": "التقرير",
+      "date": "2026-11-08",
+      "reason": "مفيش فلوس"
+    }
+  },
+  {
+    "phrase": "مهمة العميل مستنية رد الدكتور",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "waiting",
+      "title": "العميل",
+      "reason": "رد الدكتور"
+    }
+  },
+  {
+    "phrase": "وقفت مهمة الاعلان بسبب الميزانية",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "stopped",
+      "title": "الاعلان",
+      "reason": "الميزانية"
+    }
+  },
+  {
+    "phrase": "عملت نص مهمة التصميم لاني تعبت",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "partial",
+      "title": "التصميم",
+      "reason": "تعبت"
+    }
+  },
+  {
+    "phrase": "سجّل شاي بعشرة جنيه",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 10.0,
+      "category": "شاي وقهوة"
+    }
+  },
+  {
+    "phrase": "صرفت 50 على اكل بره",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 50.0,
+      "category": "طعام ومطاعم"
+    }
+  },
+  {
+    "phrase": "دفعت 300 فاتورة النت امبارح",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 300.0,
+      "category": "فواتير واشتراكات",
+      "date": "2026-11-06"
+    }
+  },
+  {
+    "phrase": "دخل 5000 من عميل",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_income",
+    "expected_slots": {
+      "amount": 5000.0,
+      "title": "عميل"
+    }
+  },
+  {
+    "phrase": "قبضت 8000 مرتب",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_income",
+    "expected_slots": {
+      "amount": 8000.0,
+      "title": "مرتب"
+    }
+  },
+  {
+    "phrase": "شربت قهوة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "coffee"
+    }
+  },
+  {
+    "phrase": "كوبايتين قهوة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "coffee"
+    }
+  },
+  {
+    "phrase": "قريت 5 صفحات قران",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "quran"
+    }
+  },
+  {
+    "phrase": "صليت الفجر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "fajr"
+    }
+  },
+  {
+    "phrase": "عملت اذكار الصباح",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "azkar"
+    }
+  },
+  {
+    "phrase": "ملاحظة اللي بيذاكر بيتعلم الصبر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_note",
+    "expected_slots": {
+      "noteKind": "note",
+      "title": "اللي بيذاكر بيتعلم الصبر"
+    }
+  },
+  {
+    "phrase": "حكمة اللي ما يشوفش من الغربال",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_note",
+    "expected_slots": {
+      "noteKind": "quote",
+      "title": "اللي ما يشوفش من الغربال"
+    }
+  },
+  {
+    "phrase": "فكرة تطبيق للمشاوير",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_idea",
+    "expected_slots": {
+      "title": "تطبيق للمشاوير"
+    }
+  },
+  {
+    "phrase": "سجّل فكرة متجر الكتروني",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_idea",
+    "expected_slots": {
+      "title": "متجر الكتروني"
+    }
+  },
+  {
+    "phrase": "سجّل فكرة صوتية",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "record_voice_note",
+    "expected_slots": {
+      "voiceNoteKind": "idea"
+    }
+  },
+  {
+    "phrase": "سجّل ملاحظة صوتية",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "record_voice_note",
+    "expected_slots": {
+      "voiceNoteKind": "note"
+    }
+  },
+  {
+    "phrase": "ضيف للمشتريات سماعة بألف وخمسمية",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_wishlist_item",
+    "expected_slots": {
+      "title": "سماعة",
+      "amount": 1500.0
+    }
+  },
+  {
+    "phrase": "عايز اشتري كاميرا",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_wishlist_item",
+    "expected_slots": {
+      "title": "كاميرا"
+    }
+  },
+  {
+    "phrase": "فكرني اروح كشف الاسنان يوم الخميس",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_health_item",
+    "expected_slots": {
+      "title": "كشف الاسنان",
+      "date": "2026-11-12",
+      "healthStatus": "scheduled"
+    }
+  },
+  {
+    "phrase": "محتاج اعمل تحليل سكر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_health_item",
+    "expected_slots": {
+      "title": "تحليل سكر",
+      "healthStatus": "needed"
+    }
+  },
+  {
+    "phrase": "ورايا ايه النهارده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "date": "2026-11-07"
+    }
+  },
+  {
+    "phrase": "ايه ورايا بعد يومين؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "date": "2026-11-09"
+    }
+  },
+  {
+    "phrase": "ايه عندي يوم الخميس؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "date": "2026-11-12"
+    }
+  },
+  {
+    "phrase": "ايه ورايا الاسبوع ده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "period": "2026-11-07 to 2026-11-13"
+    }
+  },
+  {
+    "phrase": "ايه عملت امبارح؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "recap",
+    "expected_slots": {
+      "date": "2026-11-06"
+    }
+  },
+  {
+    "phrase": "الاسبوع اللي فات عملت ايه؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "recap",
+    "expected_slots": {
+      "period": "2026-10-31 to 2026-11-06"
+    }
+  },
+  {
+    "phrase": "ايه اللي حصل يوم 12/9؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "recap",
+    "expected_slots": {
+      "date": "2026-09-12"
+    }
+  },
+  {
+    "phrase": "ملخص الشهر ده",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "recap",
+    "expected_slots": {
+      "period": "2026-11-01 to 2026-11-30"
+    }
+  },
+  {
+    "phrase": "صرفت كام على اكل بره الشهر ده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "spending",
+    "expected_slots": {
+      "category": "طعام ومطاعم",
+      "period": "2026-11-01 to 2026-11-30"
+    }
+  },
+  {
+    "phrase": "اكتر حاجة بصرف عليها؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "spending",
+    "expected_slots": {}
+  },
+  {
+    "phrase": "مصروف النهارده كام؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "spending",
+    "expected_slots": {
+      "date": "2026-11-07"
+    }
+  },
+  {
+    "phrase": "شربت كام قهوة النهارده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "habit_status",
+    "expected_slots": {
+      "habitKey": "coffee",
+      "date": "2026-11-07"
+    }
+  },
+  {
+    "phrase": "صليت ايه النهارده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "habit_status",
+    "expected_slots": {
+      "date": "2026-11-07"
+    }
+  },
+  {
+    "phrase": "التزامي بالقران الاسبوع ده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "habit_status",
+    "expected_slots": {
+      "habitKey": "quran",
+      "period": "2026-11-07 to 2026-11-13"
+    }
+  },
+  {
+    "phrase": "ايه المتأخر عندي؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "pending",
+    "expected_slots": {
+      "statusFilter": "overdue"
+    }
+  },
+  {
+    "phrase": "ايه المؤجل؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "pending",
+    "expected_slots": {
+      "statusFilter": "postponed"
+    }
+  },
+  {
+    "phrase": "ايه اللي مستنيه؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "pending",
+    "expected_slots": {
+      "statusFilter": "waiting"
+    }
+  },
+  {
+    "phrase": "ايه عليا الشهر ده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "obligations",
+    "expected_slots": {
+      "period": "2026-11-01 to 2026-11-30"
+    }
+  },
+  {
+    "phrase": "ايه الالتزامات المتأخرة؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "obligations",
+    "expected_slots": {
+      "statusFilter": "overdue"
+    }
+  },
+  {
+    "phrase": "ايه الكشوفات المؤجلة؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "health_pending",
+    "expected_slots": {}
+  },
+  {
+    "phrase": "اجمالي المشتريات اللي عايزها كام؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "wishlist",
+    "expected_slots": {}
+  },
+  {
+    "phrase": "امسح مهمة التقرير",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "unsupported_delete",
+    "expected_slots": {}
+  },
+  {
+    "phrase": "احذف مصروف الشاي",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "unsupported_delete",
+    "expected_slots": {}
+  },
+  {
+    "phrase": "امسح كل المهام",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "unsupported_delete",
+    "expected_slots": {}
+  },
+  {
+    "phrase": "سجل مهمة مراجعة الكود بكرة الساعة 10 الصبح",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "مراجعة الكود",
+      "date": "2026-11-08",
+      "time": "10:00"
+    }
+  },
+  {
+    "phrase": "بكرة الصبح هروح المرور أجدد الرخصة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "أجدد الرخصة",
+      "date": "2026-11-08"
+    }
+  },
+  {
+    "phrase": "سجل مهمة شراء كتب يوم الاحد الساعة 6",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "شراء كتب",
+      "date": "2026-11-08",
+      "time": "18:00"
+    }
+  },
+  {
+    "phrase": "أنا عايز اعمل اجتماع الفريق يوم الاتنين",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "اجتماع الفريق",
+      "date": "2026-11-09"
+    }
+  },
+  {
+    "phrase": "سجل مهمة تسليم المقال بعد بكرة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "تسليم المقال",
+      "date": "2026-11-09"
+    }
+  },
+  {
+    "phrase": "لازم اكتب التقرير المالي يوم 12/9",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "اكتب التقرير المالي",
+      "date": "2026-09-12"
+    }
+  },
+  {
+    "phrase": "سجل مهمة زيارة مصطفى يوم الجمعه الساعة 8 بالليل",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "زيارة مصطفى",
+      "date": "2026-11-13",
+      "time": "20:00"
+    }
+  },
+  {
+    "phrase": "ضيف مهمة تصليح شاشة اللابتوب",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "تصليح شاشة اللابتوب"
+    }
+  },
+  {
+    "phrase": "سجل مهمة تجديد باقة الموبايل يوم 15 نوفمبر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "تجديد باقة الموبايل",
+      "date": "2026-11-15"
+    }
+  },
+  {
+    "phrase": "ناوي اذاكر الفصل الثالث بكرة بعد الضهر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "اذاكر الفصل الثالث",
+      "date": "2026-11-08"
+    }
+  },
+  {
+    "phrase": "سجل مهمة دفع اشتراك الجيم بعد 3 ايام",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "دفع اشتراك الجيم",
+      "date": "2026-11-10"
+    }
+  },
+  {
+    "phrase": "سجل مشوار بكرة السوبرماركت اشتري جبنة ولبن",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_errand",
+    "expected_slots": {
+      "title": "السوبرماركت اشتري جبنة ولبن",
+      "date": "2026-11-08"
+    }
+  },
+  {
+    "phrase": "عندي مشوار يوم التلات اروح الشهر العقاري",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_errand",
+    "expected_slots": {
+      "title": "اروح الشهر العقاري",
+      "date": "2026-11-10"
+    }
+  },
+  {
+    "phrase": "مشوار بكرة عند المحامي الساعة 5",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_errand",
+    "expected_slots": {
+      "title": "المحامي",
+      "date": "2026-11-08",
+      "time": "17:00"
+    }
+  },
+  {
+    "phrase": "سجل مشوار استلام الطرد من البريد بعد يومين",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_errand",
+    "expected_slots": {
+      "title": "استلام الطرد من البريد",
+      "date": "2026-11-09"
+    }
+  },
+  {
+    "phrase": "مشوار يوم الاربع مصلحة الضرائب الساعة 9 الصبح",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_errand",
+    "expected_slots": {
+      "title": "مصلحة الضرائب",
+      "date": "2026-11-11",
+      "time": "09:00"
+    }
+  },
+  {
+    "phrase": "فكرني بكرة الساعة 2 اكلم مروان",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_reminder",
+    "expected_slots": {
+      "title": "اكلم مروان",
+      "date": "2026-11-08",
+      "time": "14:00"
+    }
+  },
+  {
+    "phrase": "نبهني بعد اسبوع اجدد اقامة العمل",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_reminder",
+    "expected_slots": {
+      "title": "اجدد اقامة العمل",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "phrase": "فكرني يوم السبت الساعة 5 اروح التمرين",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_reminder",
+    "expected_slots": {
+      "title": "اروح التمرين",
+      "date": "2026-11-14",
+      "time": "17:00"
+    }
+  },
+  {
+    "phrase": "فكرني قبلها بساعة اتصل بالبنك",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_reminder",
+    "expected_slots": {
+      "title": "اتصل بالبنك",
+      "reminderOffsetMinutes": 60
+    }
+  },
+  {
+    "phrase": "نبهني قبلها بنص ساعة اجهز الشنطة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_reminder",
+    "expected_slots": {
+      "title": "اجهز الشنطة",
+      "reminderOffsetMinutes": 30
+    }
+  },
+  {
+    "phrase": "خلصت مهمة تجهيز العرض التقديمي",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "done",
+      "title": "تجهيز العرض التقديمي"
+    }
+  },
+  {
+    "phrase": "انهيت كتابة المقال الاسبوعي",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "done",
+      "title": "كتابة المقال الاسبوعي"
+    }
+  },
+  {
+    "phrase": "ابتديت كورس الفلاتر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "in_progress",
+      "title": "كورس الفلاتر"
+    }
+  },
+  {
+    "phrase": "بدأت في تصميم واجهة المستخدم",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "in_progress",
+      "title": "تصميم واجهة المستخدم"
+    }
+  },
+  {
+    "phrase": "اجل مهمة الصيانة لبكرة بسبب المطر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "postponed",
+      "title": "الصيانة",
+      "date": "2026-11-08"
+    }
+  },
+  {
+    "phrase": "أخر مهمة الطباعة لبعد بكرة عشان الحبر خلص",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "postponed",
+      "title": "الطباعة",
+      "date": "2026-11-09"
+    }
+  },
+  {
+    "phrase": "مهمة التعاقد مستنية العميل",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "waiting",
+      "title": "التعاقد"
+    }
+  },
+  {
+    "phrase": "وقفت كورس الانجليزي لاني تعبان",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "stopped",
+      "title": "كورس الانجليزي",
+      "reason": "تعبت"
+    }
+  },
+  {
+    "phrase": "عملت نص مهمة مراجعة الكود",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "partial",
+      "title": "مراجعة الكود"
+    }
+  },
+  {
+    "phrase": "صرفت 45 جنيه قهوة ومياه",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 45.0,
+      "category": "شاي وقهوة"
+    }
+  },
+  {
+    "phrase": "صرفت 150 جنيه غدا في الشغل",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 150.0,
+      "category": "طعام ومطاعم"
+    }
+  },
+  {
+    "phrase": "دفعت 200 جنيه فاتورة الكهرباء",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 200.0,
+      "category": "فواتير واشتراكات"
+    }
+  },
+  {
+    "phrase": "اشتريت طلبات البيت بـ 400 جنيه",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 400.0,
+      "category": "بقالة ومستلزمات منزل"
+    }
+  },
+  {
+    "phrase": "صرفت 80 جنيه اوبر مشوار الجامعة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 80.0,
+      "category": "بنزين ومواصلات"
+    }
+  },
+  {
+    "phrase": "دفعت 60 جنيه علاج الصداع من الصيدلية",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 60.0,
+      "category": "صحة وعلاج"
+    }
+  },
+  {
+    "phrase": "سجل قهوة بـ 15 جنيه",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 15.0,
+      "category": "شاي وقهوة"
+    }
+  },
+  {
+    "phrase": "صرفت ميتين جنيه بنزين للعربية",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 200.0,
+      "category": "بنزين ومواصلات"
+    }
+  },
+  {
+    "phrase": "دفعت 120 جنيه فاتورة التليفون امبارح",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 120.0,
+      "category": "فواتير واشتراكات",
+      "date": "2026-11-06"
+    }
+  },
+  {
+    "phrase": "دخل 3000 جنيه من مشروع حر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_income",
+    "expected_slots": {
+      "amount": 3000.0
+    }
+  },
+  {
+    "phrase": "قبضت مكافأة 1500 جنيه",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_income",
+    "expected_slots": {
+      "amount": 1500.0
+    }
+  },
+  {
+    "phrase": "استلمت 10000 ارباح الاسهم",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_income",
+    "expected_slots": {
+      "amount": 10000.0
+    }
+  },
+  {
+    "phrase": "جالي دخل 2500 من استشارة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_income",
+    "expected_slots": {
+      "amount": 2500.0
+    }
+  },
+  {
+    "phrase": "شربت ازازة ميه",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "water"
+    }
+  },
+  {
+    "phrase": "شربت كوبايتين ميه",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "water"
+    }
+  },
+  {
+    "phrase": "قريت 10 صفحات في كتاب علم النفس",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "reading"
+    }
+  },
+  {
+    "phrase": "صليت الظهر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "prayers"
+    }
+  },
+  {
+    "phrase": "صليت العصر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "prayers"
+    }
+  },
+  {
+    "phrase": "عملت اذكار المساء",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "azkar"
+    }
+  },
+  {
+    "phrase": "اتمرنت في الجيم ساعة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "exercise"
+    }
+  },
+  {
+    "phrase": "ملاحظة افضل وقت للتركيز في الصباح الباكر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_note",
+    "expected_slots": {
+      "noteKind": "note",
+      "title": "افضل وقت للتركيز في الصباح الباكر"
+    }
+  },
+  {
+    "phrase": "حكمة الوقت كالسيف ان لم تقطعه قطعك",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_note",
+    "expected_slots": {
+      "noteKind": "quote",
+      "title": "الوقت كالسيف ان لم تقطعه قطعك"
+    }
+  },
+  {
+    "phrase": "اقتباس لا تؤجل عمل اليوم الى الغد",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_note",
+    "expected_slots": {
+      "noteKind": "quote",
+      "title": "لا تؤجل عمل اليوم الى الغد"
+    }
+  },
+  {
+    "phrase": "سجل ملاحظة رقم بطاقة العميل 1234",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_note",
+    "expected_slots": {
+      "noteKind": "note",
+      "title": "رقم بطاقة العميل 1234"
+    }
+  },
+  {
+    "phrase": "فكرة قناة يوتيوب للبرمجة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_idea",
+    "expected_slots": {
+      "title": "قناة يوتيوب للبرمجة"
+    }
+  },
+  {
+    "phrase": "سجل فكرة بوت تليجرام للتذكير بالمهام",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_idea",
+    "expected_slots": {
+      "title": "بوت تليجرام للتذكير بالمهام"
+    }
+  },
+  {
+    "phrase": "ضيف للمشتريات شاشة كمبيوتر بـ 4000 جنيه",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_wishlist_item",
+    "expected_slots": {
+      "title": "شاشة كمبيوتر",
+      "amount": 4000.0
+    }
+  },
+  {
+    "phrase": "عايز اشتري كيبورد ميكانيكي",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_wishlist_item",
+    "expected_slots": {
+      "title": "كيبورد ميكانيكي"
+    }
+  },
+  {
+    "phrase": "عايز اشتري كرسي مريح للمكتب بـ 3500 جنيه",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_wishlist_item",
+    "expected_slots": {
+      "title": "كرسي مريح للمكتب",
+      "amount": 3500.0
+    }
+  },
+  {
+    "phrase": "فكرني اروح كشف رمد يوم الاحد",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_health_item",
+    "expected_slots": {
+      "title": "كشف رمد",
+      "date": "2026-11-08",
+      "healthStatus": "scheduled"
+    }
+  },
+  {
+    "phrase": "محتاج اعمل فحص دوري شامل",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_health_item",
+    "expected_slots": {
+      "title": "فحص دوري شامل",
+      "healthStatus": "needed"
+    }
+  },
+  {
+    "phrase": "عايز اعمل كشف باطنة الاسبوع الجاي",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_health_item",
+    "expected_slots": {
+      "title": "كشف باطنة",
+      "healthStatus": "needed"
+    }
+  },
+  {
+    "phrase": "ورايا ايه بكرة؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "date": "2026-11-08"
+    }
+  },
+  {
+    "phrase": "ايه ورايا بعد تلات ايام؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "date": "2026-11-10"
+    }
+  },
+  {
+    "phrase": "ايه عندي يوم الاحد؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "date": "2026-11-08"
+    }
+  },
+  {
+    "phrase": "ايه عندي يوم الاتنين؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "date": "2026-11-09"
+    }
+  },
+  {
+    "phrase": "ايه عندي يوم الجمعه؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "phrase": "جدول بكرة ايه؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "date": "2026-11-08"
+    }
+  },
+  {
+    "phrase": "ايه عملت اول امبارح؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "recap",
+    "expected_slots": {
+      "date": "2026-11-05"
+    }
+  },
+  {
+    "phrase": "ايه اللي حصل يوم 5/11؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "recap",
+    "expected_slots": {
+      "date": "2026-11-05"
+    }
+  },
+  {
+    "phrase": "ملخص الاسبوع اللي فات",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "recap",
+    "expected_slots": {
+      "period": "2026-10-31 to 2026-11-06"
+    }
+  },
+  {
+    "phrase": "صرفت كام على البنزين الشهر ده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "spending",
+    "expected_slots": {
+      "category": "بنزين ومواصلات",
+      "period": "2026-11-01 to 2026-11-30"
+    }
+  },
+  {
+    "phrase": "صرفت كام على الفواتير الشهر ده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "spending",
+    "expected_slots": {
+      "category": "فواتير واشتراكات",
+      "period": "2026-11-01 to 2026-11-30"
+    }
+  },
+  {
+    "phrase": "شربت كام كوباية ميه النهارده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "habit_status",
+    "expected_slots": {
+      "habitKey": "water",
+      "date": "2026-11-07"
+    }
+  },
+  {
+    "phrase": "قريت كام صفحة قران الاسبوع ده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "habit_status",
+    "expected_slots": {
+      "habitKey": "quran",
+      "period": "2026-11-07 to 2026-11-13"
+    }
+  },
+  {
+    "phrase": "ايه المهام المؤجلة عندي؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "pending",
+    "expected_slots": {
+      "statusFilter": "postponed"
+    }
+  },
+  {
+    "phrase": "ايه الاقساط اللي عليا الشهر ده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "obligations",
+    "expected_slots": {
+      "period": "2026-11-01 to 2026-11-30"
+    }
+  },
+  {
+    "phrase": "ايه التحاليل المؤجلة؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "health_pending",
+    "expected_slots": {}
+  },
+  {
+    "phrase": "احذف كل المهام",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "unsupported_delete",
+    "expected_slots": {}
+  },
+  {
+    "phrase": "شيل مهمة التقرير",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "unsupported_delete",
+    "expected_slots": {}
+  },
+  {
+    "phrase": "سجل مهمة تجهيز حقيبة السفر يوم الاربع",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "تجهيز حقيبة السفر",
+      "date": "2026-11-11"
+    }
+  },
+  {
+    "phrase": "سجل مهمة تنظيف المكتب بكرة الساعة 9",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "تنظيف المكتب",
+      "date": "2026-11-08",
+      "time": "09:00"
+    }
+  },
+  {
+    "phrase": "مشوار بكرة محطة القطر الساعة 3 العصر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_errand",
+    "expected_slots": {
+      "title": "محطة القطر",
+      "date": "2026-11-08",
+      "time": "15:00"
+    }
+  },
+  {
+    "phrase": "سجل مشوار تجديد الباسبور يوم الخميس",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_errand",
+    "expected_slots": {
+      "title": "تجديد الباسبور",
+      "date": "2026-11-12"
+    }
+  },
+  {
+    "phrase": "فكرني بعد 5 ايام ادفع قسط الشقة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_reminder",
+    "expected_slots": {
+      "title": "ادفع قسط الشقة",
+      "date": "2026-11-12"
+    }
+  },
+  {
+    "phrase": "فكرني يوم التلات الساعة 1 اروح البنك",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_reminder",
+    "expected_slots": {
+      "title": "اروح البنك",
+      "date": "2026-11-10",
+      "time": "13:00"
+    }
+  },
+  {
+    "phrase": "خلصت مهمة تنظيف العربية",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "done",
+      "title": "تنظيف العربية"
+    }
+  },
+  {
+    "phrase": "ابتديت قراءة كتاب العادات الذرية",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "in_progress",
+      "title": "قراءة كتاب العادات الذرية"
+    }
+  },
+  {
+    "phrase": "اجل مهمة المقابلة لبكرة عشان ظروف شخصية",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "postponed",
+      "title": "المقابلة",
+      "date": "2026-11-08"
+    }
+  },
+  {
+    "phrase": "صرفت 35 جنيه قهوة ومشروبات",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 35.0,
+      "category": "شاي وقهوة"
+    }
+  },
+  {
+    "phrase": "دفعت 500 جنيه فاتورة الغاز",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 500.0,
+      "category": "فواتير واشتراكات"
+    }
+  },
+  {
+    "phrase": "دخل 12000 مرتب الشهر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_income",
+    "expected_slots": {
+      "amount": 12000.0
+    }
+  },
+  {
+    "phrase": "صليت المغرب",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "prayers"
+    }
+  },
+  {
+    "phrase": "صليت العشا",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "prayers"
+    }
+  },
+  {
+    "phrase": "فكرة تطبيق توصيل طلبات الصيدليات",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_idea",
+    "expected_slots": {
+      "title": "تطبيق توصيل طلبات الصيدليات"
+    }
+  },
+  {
+    "phrase": "ضيف للمشتريات ساعة ذكية بـ 2000 جنيه",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_wishlist_item",
+    "expected_slots": {
+      "title": "ساعة ذكية",
+      "amount": 2000.0
+    }
+  },
+  {
+    "phrase": "محتاج اعمل تحليل وظائف كبد",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_health_item",
+    "expected_slots": {
+      "title": "تحليل وظائف كبد",
+      "healthStatus": "needed"
+    }
+  },
+  {
+    "phrase": "ورايا ايه يوم الاربع؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "date": "2026-11-11"
+    }
+  },
+  {
+    "phrase": "عملت ايه الاسبوع اللي فات؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "recap",
+    "expected_slots": {
+      "period": "2026-10-31 to 2026-11-06"
+    }
+  },
+  {
+    "phrase": "صرفت كام على الاكل بره النهارده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "spending",
+    "expected_slots": {
+      "category": "طعام ومطاعم",
+      "date": "2026-11-07"
+    }
+  },
+  {
+    "phrase": "ايه الديون اللي عليا؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "obligations",
+    "expected_slots": {}
+  },
+  {
+    "phrase": "سجل مهمة تصوير الفيديو الجديد بكرة الساعة 11 الصبح",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "تصوير الفيديو الجديد",
+      "date": "2026-11-08",
+      "time": "11:00"
+    }
+  },
+  {
+    "phrase": "سجل مشوار تجديد رخصة الموتوسيكل يوم التلات",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_errand",
+    "expected_slots": {
+      "title": "تجديد رخصة الموتوسيكل",
+      "date": "2026-11-10"
+    }
+  },
+  {
+    "phrase": "فكرني بكرة الساعة 8 بالليل اخد الدوا",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_reminder",
+    "expected_slots": {
+      "title": "اخد الدوا",
+      "date": "2026-11-08",
+      "time": "20:00"
+    }
+  },
+  {
+    "phrase": "خلصت مهمة حل مشاكل الاصدار",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "done",
+      "title": "حل مشاكل الاصدار"
+    }
+  },
+  {
+    "phrase": "صرفت 75 جنيه غدا كشري وسلطة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 75.0,
+      "category": "طعام ومطاعم"
+    }
+  },
+  {
+    "phrase": "دخل 4000 جنيه من تصميم موقع",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_income",
+    "expected_slots": {
+      "amount": 4000.0
+    }
+  },
+  {
+    "phrase": "قريت 20 صفحة في الرواية",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "reading"
+    }
+  },
+  {
+    "phrase": "ملاحظة الفكرة الجيدة تحتاج الى تخطيط دقيق",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_note",
+    "expected_slots": {
+      "noteKind": "note",
+      "title": "الفكرة الجيدة تحتاج الى تخطيط دقيق"
+    }
+  },
+  {
+    "phrase": "ضيف للمشتريات هارد خارجي بـ 1800 جنيه",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_wishlist_item",
+    "expected_slots": {
+      "title": "هارد خارجي",
+      "amount": 1800.0
+    }
+  },
+  {
+    "phrase": "محتاج اعمل كشف نظر جديد",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_health_item",
+    "expected_slots": {
+      "title": "كشف نظر جديد",
+      "healthStatus": "needed"
+    }
+  },
+  {
+    "phrase": "ورايا ايه يوم التلات؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "date": "2026-11-10"
+    }
+  },
+  {
+    "phrase": "صرفت كام على المواصلات الشهر ده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "spending",
+    "expected_slots": {
+      "category": "بنزين ومواصلات",
+      "period": "2026-11-01 to 2026-11-30"
+    }
+  },
+  {
+    "phrase": "ايه المعلق عندي؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "pending",
+    "expected_slots": {
+      "statusFilter": "waiting"
+    }
+  },
+  {
+    "phrase": "احذف مهمة تنظيف المكتب",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "unsupported_delete",
+    "expected_slots": {}
+  },
+  {
+    "phrase": "سجل مهمة مراجعة التقارير الشهرية يوم الخميس الساعة 2",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "مراجعة التقارير الشهرية",
+      "date": "2026-11-12",
+      "time": "14:00"
+    }
+  },
+  {
+    "phrase": "مشوار النهارده اروح لعم أحمد اسلم الأمانة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_errand",
+    "expected_slots": {
+      "title": "اروح لعم أحمد اسلم الأمانة",
+      "date": "2026-11-07"
+    }
+  },
+  {
+    "phrase": "فكرني بكرة الساعة 6 اصحي مصطفى للمدرسة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_reminder",
+    "expected_slots": {
+      "title": "اصحي مصطفى للمدرسة",
+      "date": "2026-11-08",
+      "time": "18:00"
+    }
+  },
+  {
+    "phrase": "خلصت مهمة إرسال الإيميلات",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "done",
+      "title": "إرسال الإيميلات"
+    }
+  },
+  {
+    "phrase": "صرفت 110 جنيه بيتزا عشاء",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 110.0,
+      "category": "طعام ومطاعم"
+    }
+  },
+  {
+    "phrase": "قبضت سلفة 2000 جنيه من العمل",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_income",
+    "expected_slots": {
+      "amount": 2000.0
+    }
+  },
+  {
+    "phrase": "شربت فنجان قهوة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "coffee"
+    }
+  },
+  {
+    "phrase": "سجل فكرة موقع لمقارنة اسعار السلع",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_idea",
+    "expected_slots": {
+      "title": "موقع لمقارنة اسعار السلع"
+    }
+  },
+  {
+    "phrase": "عايز اشتري ماوس بلوتوث",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_wishlist_item",
+    "expected_slots": {
+      "title": "ماوس بلوتوث"
+    }
+  },
+  {
+    "phrase": "فكرني اروح كشف اسنان يوم الاتنين",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_health_item",
+    "expected_slots": {
+      "title": "كشف اسنان",
+      "date": "2026-11-09",
+      "healthStatus": "scheduled"
+    }
+  },
+  {
+    "phrase": "ورايا ايه يوم الجمعه؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "phrase": "ايه اللي حصل امبارح؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "recap",
+    "expected_slots": {
+      "date": "2026-11-06"
+    }
+  },
+  {
+    "phrase": "صرفت كام على طلبات البيت الشهر ده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "spending",
+    "expected_slots": {
+      "category": "بقالة ومستلزمات منزل",
+      "period": "2026-11-01 to 2026-11-30"
+    }
+  },
+  {
+    "phrase": "سجل مهمة تجهيز ملفات الضرائب بعد يومين",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "تجهيز ملفات الضرائب",
+      "date": "2026-11-09"
+    }
+  },
+  {
+    "phrase": "مشوار بكرة عند دكتور العيون الساعة 4",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_errand",
+    "expected_slots": {
+      "title": "دكتور العيون",
+      "date": "2026-11-08",
+      "time": "16:00"
+    }
+  },
+  {
+    "phrase": "فكرني يوم الخميس الساعة 4 العصر اكلم المورد",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_reminder",
+    "expected_slots": {
+      "title": "اكلم المورد",
+      "date": "2026-11-12",
+      "time": "16:00"
+    }
+  },
+  {
+    "phrase": "خلصت مهمة المذاكرة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "done",
+      "title": "المذاكرة"
+    }
+  },
+  {
+    "phrase": "صرفت 90 جنيه حلويات للبيت",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 90.0,
+      "category": "طعام ومطاعم"
+    }
+  },
+  {
+    "phrase": "دخل 6000 من بيع اجهزة قديمة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_income",
+    "expected_slots": {
+      "amount": 6000.0
+    }
+  },
+  {
+    "phrase": "شربت 3 كوبايات قهوة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "coffee"
+    }
+  },
+  {
+    "phrase": "ملاحظة كتابة الافكار تساعد على تنظيم العقل",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_note",
+    "expected_slots": {
+      "noteKind": "note",
+      "title": "كتابة الافكار تساعد على تنظيم العقل"
+    }
+  },
+  {
+    "phrase": "عايز اشتري حقيبة لابتوب جلد",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_wishlist_item",
+    "expected_slots": {
+      "title": "حقيبة لابتوب جلد"
+    }
+  },
+  {
+    "phrase": "محتاج اعمل تحليل فيتامين د",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_health_item",
+    "expected_slots": {
+      "title": "تحليل فيتامين د",
+      "healthStatus": "needed"
+    }
+  },
+  {
+    "phrase": "ورايا ايه النهارده بالليل؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "date": "2026-11-07"
+    }
+  },
+  {
+    "phrase": "صرفت كام الاسبوع ده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "spending",
+    "expected_slots": {
+      "period": "2026-11-07 to 2026-11-13"
+    }
+  },
+  {
+    "phrase": "ايه اللي متأخر في الشغل؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "pending",
+    "expected_slots": {
+      "statusFilter": "overdue"
+    }
+  },
+  {
+    "phrase": "سجل مهمة مراجعة العقود يوم 18 نوفمبر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "مراجعة العقود",
+      "date": "2026-11-18"
+    }
+  },
+  {
+    "phrase": "مشوار بكرة المستشفى ازور صاحبي",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_errand",
+    "expected_slots": {
+      "title": "المستشفى ازور صاحبي",
+      "date": "2026-11-08"
+    }
+  },
+  {
+    "phrase": "فكرني يوم السبت الساعة 11 الصبح اجتماع الزوم",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_reminder",
+    "expected_slots": {
+      "title": "اجتماع الزوم",
+      "date": "2026-11-14",
+      "time": "11:00"
+    }
+  },
+  {
+    "phrase": "خلصت مهمة طباعة الملفات",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "done",
+      "title": "طباعة الملفات"
+    }
+  },
+  {
+    "phrase": "صرفت 65 جنيه شحن كارت الكهربا",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 65.0,
+      "category": "فواتير واشتراكات"
+    }
+  },
+  {
+    "phrase": "جالي دخل 7500 جنيه ارباح متجر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_income",
+    "expected_slots": {
+      "amount": 7500.0
+    }
+  },
+  {
+    "phrase": "صليت الفجر حاضر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "fajr"
+    }
+  },
+  {
+    "phrase": "سجل فكرة اداة لتنظيم الميزانية الشهرية",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_idea",
+    "expected_slots": {
+      "title": "اداة لتنظيم الميزانية الشهرية"
+    }
+  },
+  {
+    "phrase": "عايز اشتري ميكروفون احترافي لتسجيل الصوت بـ 2500 جنيه",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_wishlist_item",
+    "expected_slots": {
+      "title": "ميكروفون احترافي لتسجيل الصوت",
+      "amount": 2500.0
+    }
+  },
+  {
+    "phrase": "فكرني اروح كشف باطنة يوم الاربع",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_health_item",
+    "expected_slots": {
+      "title": "كشف باطنة",
+      "date": "2026-11-11",
+      "healthStatus": "scheduled"
+    }
+  },
+  {
+    "phrase": "عندي ايه بعد بكرة؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {
+      "date": "2026-11-09"
+    }
+  },
+  {
+    "phrase": "صرفت كام على العلاج الشهر ده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "spending",
+    "expected_slots": {
+      "category": "صحة وعلاج",
+      "period": "2026-11-01 to 2026-11-30"
+    }
+  },
+  {
+    "phrase": "ايه الاقساط المتأخرة عليا؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "obligations",
+    "expected_slots": {
+      "statusFilter": "overdue"
+    }
+  },
+  {
+    "phrase": "سجل مهمة تسليم التقرير النهائي يوم 30 نوفمبر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_task",
+    "expected_slots": {
+      "title": "تسليم التقرير النهائي",
+      "date": "2026-11-30"
+    }
+  },
+  {
+    "phrase": "مشوار بكرة النادي مع الاولاد الساعة 5",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_errand",
+    "expected_slots": {
+      "title": "النادي مع الاولاد",
+      "date": "2026-11-08",
+      "time": "17:00"
+    }
+  },
+  {
+    "phrase": "فكرني يوم الاحد الساعة 10 الصبح اتصل بشركة التأمين",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_reminder",
+    "expected_slots": {
+      "title": "اتصل بشركة التأمين",
+      "date": "2026-11-08",
+      "time": "10:00"
+    }
+  },
+  {
+    "phrase": "خلصت مهمة تصميم اللوجو",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "update_status",
+    "expected_slots": {
+      "status": "done",
+      "title": "تصميم اللوجو"
+    }
+  },
+  {
+    "phrase": "صرفت 55 جنيه عصير وفطيرة",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_expense",
+    "expected_slots": {
+      "amount": 55.0,
+      "category": "طعام ومطاعم"
+    }
+  },
+  {
+    "phrase": "استلمت 15000 مرتب الشهر",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_income",
+    "expected_slots": {
+      "amount": 15000.0
+    }
+  },
+  {
+    "phrase": "قريت سورة الكهف",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "log_habit",
+    "expected_slots": {
+      "habitKey": "quran"
+    }
+  },
+  {
+    "phrase": "ملاحظة الاستمرار هو سر النجاح في اي عمل",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_note",
+    "expected_slots": {
+      "noteKind": "note",
+      "title": "الاستمرار هو سر النجاح في اي عمل"
+    }
+  },
+  {
+    "phrase": "عايز اشتري راوتر انترنت حديث بـ 1200 جنيه",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_wishlist_item",
+    "expected_slots": {
+      "title": "راوتر انترنت حديث",
+      "amount": 1200.0
+    }
+  },
+  {
+    "phrase": "محتاج اعمل اشعة على الاسنان",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "create_health_item",
+    "expected_slots": {
+      "title": "اشعة على الاسنان",
+      "healthStatus": "needed"
+    }
+  },
+  {
+    "phrase": "ورايا ايه الاسبوع اللي جاي؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "agenda",
+    "expected_slots": {}
+  },
+  {
+    "phrase": "صرفت كام على الشاي والقهوة الشهر ده؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "spending",
+    "expected_slots": {
+      "category": "شاي وقهوة",
+      "period": "2026-11-01 to 2026-11-30"
+    }
+  },
+  {
+    "phrase": "ايه المهام المتأخرة في الشغل؟",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "pending",
+    "expected_slots": {
+      "statusFilter": "overdue"
+    }
+  },
+  {
+    "phrase": "امسح كل الملاحظات",
+    "now": "2026-11-07T10:00:00.000",
+    "expected_intent": "unsupported_delete",
+    "expected_slots": {}
+  }
+]
