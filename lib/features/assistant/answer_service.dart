@@ -327,7 +327,7 @@ class AnswerService {
     // Specific category query?
     final catQuery = intent.category;
     final allCats = await db.select(db.financeCategories).get();
-    final catMap = {for (final c in allCats) c.id: c.nameAr};
+    final catMap = {for (final c in allCats) c.id: c};
 
     num totalAmount = 0;
     List<({String name, num amount})> topCategories = [];
@@ -351,7 +351,7 @@ class AnswerService {
       final catSpendings = financeService.calculateCategorySpendings(periodTxs, catMap);
       topCategories = catSpendings
           .take(3)
-          .map((c) => (name: c.categoryName, amount: c.totalAmountMinor / 100))
+          .map((c) => (name: c.nameAr, amount: c.amountMinor / 100))
           .toList();
 
       final natureShare = financeService.calculateNatureShare(periodTxs);
@@ -406,9 +406,9 @@ class AnswerService {
 
     // Get today's logs
     final allLogs = await (db.select(db.habitLogs)
-          ..where((l) => l.habitId.equals(habitId) & l.logDate.equals(todayStr)))
+          ..where((l) => l.habitId.equals(habitId)))
         .get();
-    final todayLogs = allLogs.where((l) => l.deletedAt == null).toList();
+    final todayLogs = allLogs.where((l) => l.logDate == todayStr && l.deletedAt == null).toList();
 
     num todayCount = 0;
     if (matched != null && matched.type == 'check') {
