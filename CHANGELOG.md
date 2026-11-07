@@ -1,5 +1,20 @@
 # سجل التغييرات (CHANGELOG)
 
+## [v1.1.5 - Permanent Keystore Signing & SHA-256 Fingerprint Verification] - 2026-11-07
+
+### Security & Release Infrastructure
+- **تثبيت مفتاح التوقيع الدائم الموحد**:
+  - إنشاء مفتاح التوقيع الدائم (`enjaz-release-key.jks`) بمعمارية RSA 2048 وبصلاحية 10,000 يوم بكلمة سر عشوائية عالية الأمان تتكون من 40 خانة.
+  - تأمين مفتاح التوقيع وكلمات السر ضمن GitHub Repository Secrets مشفرة (`ENJAZ_RELEASE_KEYSTORE_BASE64`, `ENJAZ_KEYSTORE_PASSWORD`, `ENJAZ_KEY_ALIAS`, `ENJAZ_KEY_PASSWORD`).
+  - توثيق بصمة الشهادة العامة SHA-256 في `android/expected_cert_sha256.txt`:
+    `7A:1D:0C:B1:DE:27:6F:B0:92:08:1D:D1:33:4C:D7:17:38:5C:5F:63:86:6D:7D:BA:63:BD:8E:D6:F2:5F:AE:F7`
+- **إصلاح مسار البناء (CI/CD Pipeline)**:
+  - إزالة التوليد المؤقت للمفاتيح والكلمات الافتراضية من `.github/workflows/build_apk.yml` و `android/app/build.gradle` نهائياً.
+  - تطبيق فحص أمني صارم (Fail-Fast) يسقط البناء في حال غياب أي من الـ Secrets الأربعة.
+  - إضافة خطوة فحص تطابق بصمة التوقيع (Fingerprint Verification) التي تقارن شهادة ملف الـ APK مع البصمة المعتمدة لمنع خروج أي بناء موقّع بمفتاح مختلف للأبد.
+  - قصر مخرجات الإصدار على حزمة واحدة لمعمارية الهواتف الحديثة: `enjaz-app-arm64.apk`.
+  - تحويل مستودع GitHub إلى **Private** لحماية الكود والخصوصية.
+
 ## [v1.1.4 - Voice Assistant Step 4 Answers & SpeechComposer] - 2026-11-07
 
 ### Added (Voice Assistant Step 4 — Answers: Answer cards and SpeechComposer, text only)

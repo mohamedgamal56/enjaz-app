@@ -434,6 +434,18 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
   - **Version & Build**:
     - Bumped application version to `1.1.4+14` in `pubspec.yaml`.
 
+- **Decision 26 (Permanent Keystore Signing & SHA-256 Fingerprint Verification) [2026-11-07]**:
+  - **Context**: Release APKs in Rounds 1-6 each had differing keystores generated dynamically per build because `ENJAZ_RELEASE_KEYSTORE_BASE64` was not configured in GitHub Secrets, causing package conflict errors during direct in-place updates.
+  - **Resolution & Architecture**:
+    - Generated a single permanent, high-entropy 2048-bit RSA release keystore (`enjaz-release-key.jks`) locally on the owner's machine using `keytool` with a 40-character random password.
+    - Exported the keystore base64 securely to GitHub Secrets (`ENJAZ_RELEASE_KEYSTORE_BASE64`, `ENJAZ_KEYSTORE_PASSWORD`, `ENJAZ_KEY_ALIAS`, `ENJAZ_KEY_PASSWORD`).
+    - Stored the public certificate SHA-256 fingerprint in `android/expected_cert_sha256.txt`:
+      `7A:1D:0C:B1:DE:27:6F:B0:92:08:1D:D1:33:4C:D7:17:38:5C:5F:63:86:6D:7D:BA:63:BD:8E:D6:F2:5F:AE:F7`
+    - Removed dynamic keystore generation and fallback passwords from `.github/workflows/build_apk.yml` and `android/app/build.gradle`.
+    - Added a mandatory CI step that extracts the APK's certificate SHA-256 via `keytool` and compares it against `expected_cert_sha256.txt`, failing the build immediately if there is any mismatch.
+    - Set the build to output a single release APK for modern devices: `enjaz-app-arm64.apk`.
+    - Documented that the first release signed with this permanent key requires a one-time clean uninstall of older temporary builds, after which all subsequent releases install directly in-place forever.
+
 
 
 

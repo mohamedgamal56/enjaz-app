@@ -51,37 +51,40 @@ jobs:
           KEY_ALIAS: ${{ secrets.ENJAZ_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ENJAZ_KEY_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "Decoding release keystore from GitHub Secret..."
-            echo "$KEYSTORE_BASE64" | base64 -d > android/app/enjaz-release-key.jks
-          else
-            echo "Generating permanent fixed release keystore..."
-            keytool -genkeypair -v -keystore android/app/enjaz-release-key.jks \
-              -alias "${KEY_ALIAS:-enjaz_release_key}" \
-              -keyalg RSA -keysize 2048 -validity 10000 \
-              -storepass "${KEYSTORE_PASSWORD:-enjaz_app_2026_release_secure_key}" \
-              -keypass "${KEY_PASSWORD:-enjaz_app_2026_release_secure_key}" \
-              -dname "CN=Enjaz, OU=Enjaz Mobile, O=Enjaz, L=Cairo, S=Cairo, C=EG"
-            echo "::notice title=ENJAZ_RELEASE_KEYSTORE_BASE64::$(base64 -w 0 android/app/enjaz-release-key.jks)"
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "::error::Required release signing secrets are missing! Please configure ENJAZ_RELEASE_KEYSTORE_BASE64, ENJAZ_KEYSTORE_PASSWORD, ENJAZ_KEY_ALIAS, and ENJAZ_KEY_PASSWORD in GitHub Repository Secrets."
+            exit 1
           fi
+          echo "Decoding release keystore from GitHub Secret..."
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/enjaz-release-key.jks
 
-      - name: Build Release APK (Split per ABI)
+      - name: Build Release APK (arm64 only)
         env:
-          ENJAZ_KEYSTORE_PASSWORD: ${{ secrets.ENJAZ_KEYSTORE_PASSWORD || 'enjaz_app_2026_release_secure_key' }}
-          ENJAZ_KEY_ALIAS: ${{ secrets.ENJAZ_KEY_ALIAS || 'enjaz_release_key' }}
-          ENJAZ_KEY_PASSWORD: ${{ secrets.ENJAZ_KEY_PASSWORD || 'enjaz_app_2026_release_secure_key' }}
+          ENJAZ_KEYSTORE_PASSWORD: ${{ secrets.ENJAZ_KEYSTORE_PASSWORD }}
+          ENJAZ_KEY_ALIAS: ${{ secrets.ENJAZ_KEY_ALIAS }}
+          ENJAZ_KEY_PASSWORD: ${{ secrets.ENJAZ_KEY_PASSWORD }}
         run: flutter build apk --release --split-per-abi --no-tree-shake-icons --android-skip-build-dependency-validation
 
-      - name: Prepare APKs
+      - name: Prepare APK
         run: |
           cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk enjaz-app-arm64.apk
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk enjaz-app.apk
-          if [ -f build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk ]; then
-            cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk enjaz-app-armeabi-v7a.apk
+
+      - name: Verify APK Signature Fingerprint
+        run: |
+          EXPECTED_SHA256=$(cat android/expected_cert_sha256.txt | tr -d '[:space:]' | tr '[:lower:]' '[:upper:]')
+          ACTUAL_SHA256=$(keytool -printcert -jarfile enjaz-app-arm64.apk | grep -i "SHA256:" | head -n 1 | awk '{print $2}' | tr -d '[:space:]' | tr '[:lower:]' '[:upper:]')
+          
+          echo "Expected SHA-256: $EXPECTED_SHA256"
+          echo "Actual   SHA-256: $ACTUAL_SHA256"
+          
+          if [ -z "$ACTUAL_SHA256" ] || [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
+            echo "::error::APK signature verification failed! Expected $EXPECTED_SHA256 but got $ACTUAL_SHA256"
+            exit 1
           fi
+          echo "✅ APK signature verified successfully: $ACTUAL_SHA256"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: enjaz-app-apk
-          path: enjaz-app*.apk
+          path: enjaz-app-arm64.apk
