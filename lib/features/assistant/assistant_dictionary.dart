@@ -375,7 +375,7 @@ class AssistantDictionary {
 
   static bool _containsPhrase(String text, String phrase) {
     if (text == phrase) return true;
-    final reg = RegExp('(^|[\\s،,])${RegExp.escape(phrase)}([\\s،,]|\$)');
+    final reg = RegExp('(^|[\\s،,])(?:و|ال|وال)?${RegExp.escape(phrase)}([\\s،,]|\$)');
     return reg.hasMatch(text);
   }
 }
