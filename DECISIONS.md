@@ -456,6 +456,31 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
       - Verification Status: PASSED (`EXPECTED == ACTUAL`)
     - **Result**: The two consecutive builds produced 100% identical certificate fingerprints, proving the keystore and CI signing are deterministic and will allow seamless in-place updates.
 
+- **Decision 27 (Step 5 — Voice Input: Chained Sessions & 30-Sentence Recognition Report) [2026-11-08]**:
+  - **Context**: Implement Step 5 of `VOICE.md` (Tap to start / Tap to stop, chained recognition sessions, live transcript streaming, offline boundary deduplication, and the Section 10.3 speech recognition test protocol).
+  - **Architecture & Implementation**:
+    - **Speech Engine Integration**:
+      - Integrated `speech_to_text: ^7.3.0` wrapping Android's local `SpeechRecognizer`.
+      - Declared `<queries>` for `RecognitionService` in `AndroidManifest.xml` (Android 11+ visibility).
+      - Zero `INTERNET` permission — 100% local operation using on-device packages.
+      - Preferred locale: Egyptian Arabic `ar-EG`, with fallback to `ar`.
+    - **Chained Sessions Engine (`VoiceInputService`)**:
+      - Automatically restarts listening sessions when Android silences after brief pauses while user is still in listening mode (Tap-to-start / Tap-to-stop).
+      - Enforces a 60-second maximum duration safety timeout (Section 3.2).
+      - Implemented `WordMergeHelper` with boundary suffix/prefix word matching to prevent duplicated words or dropped words at session transitions.
+      - Emits live transcript stream to render words dynamically in `AssistantSheet`.
+    - **Interactive Test Wizard (`VoiceTestScreen`)**:
+      - Built an interactive in-app wizard loaded with the 30 test sentences (10 amounts, 10 dates/times, 5 questions, 5 Egyptian dialect words).
+      - Enables testing in both Normal mode and Airplane mode (وضع الطيران).
+      - Automatically tests intent recognition, number extraction, and date/time resolution, and generates a one-click Markdown summary report.
+  - **Testing**:
+    - Created `test/unit/assistant/word_merge_helper_test.dart` verifying boundary deduplication.
+    - Created `test/widget/assistant/voice_input_widget_test.dart` verifying `AssistantSheet` live speech updates and `VoiceTestScreen`.
+    - Created test script protocol in `test/voice_test_script.md`.
+  - **Version & Build**:
+    - Bumped application version to `1.1.6+17` in `pubspec.yaml`.
+    - Maintained permanent keystore signing and SHA-256 fingerprint verification in CI.
+
 
 
 

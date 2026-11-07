@@ -1,5 +1,26 @@
 # سجل التغييرات (CHANGELOG)
 
+## [v1.1.6 - Voice Assistant Step 5 Voice Input & 30-Sentence Test Wizard] - 2026-11-08
+
+### Added (Voice Assistant Step 5 — Voice Input & Chained Sessions)
+- **محرك التعرف الصوتي المحلي أوفلاين (Android SpeechRecognizer)**:
+  - ربط التعرف الصوتي المحلي بالعامية المصرية (`ar-EG`) مع التحويل التلقائي للعربية (`ar`) عند الحاجة عبر مكتبة `speech_to_text`.
+  - إضافة استعلام الحزم `<queries>` لـ `RecognitionService` و Google Voice Search في `AndroidManifest.xml` للتوافق مع أندرويد 11 فما فوق.
+  - تأكيد الأمان التام: صلاحية `RECORD_AUDIO` فقط وبدون أي إذن إنترنت نهائياً (`INTERNET = NONE`).
+- **نظام الجلسات المترابطة (Chained Sessions Engine)**:
+  - دعم نظام الضغط للبدء والضغط للإيقاف (Tap to start / Tap to stop) مع سقف زمني أقصى **60 ثانية**.
+  - إعادة تشغيل جلسات الاستماع أوتوماتيكياً عند فترات الصمت لضمان استمرار الاستماع طالما لم يضغط المستخدم على إيقاف.
+  - خوارزمية الدمج الذكي بدون تكرار (`WordMergeHelper`) لمنع تكرار الكلمات عند حدود الجلسات أو فقدانها.
+  - بث النص اللحظي (Live Transcript Stream) وعرض الكلمات المنطوقة لحظة بلحظة داخل شيت المساعد.
+- **أداة وشاشة اختبار الـ 30 جملة (VoiceTestScreen - القسم 10.3)**:
+  - شاشة اختبار تفاعلية متضمنة الجمل الـ 30 (10 مبالغ، 10 أوقات وتواريخ، 5 أسئلة، 5 مفردات عامية).
+  - دعم التبديل بين الوضع العادي ووضع الطيران (Airplane Mode).
+  - تقييم فوري لصحة النية وصحة الأرقام وصحة التواريخ مع زر لنسخ التقرير الكامل كـ Markdown.
+- **التوثيق والاختبارات**:
+  - إضافة اختبارات الوحدة لخوارزمية دمج الكلمات `word_merge_helper_test.dart`.
+  - إضافة اختبارات الواجهة `voice_input_widget_test.dart` بمصدر صوتي محاكي.
+  - إعداد دليل واسكريبت الاختبار في `test/voice_test_script.md`.
+
 ## [v1.1.5 - Permanent Keystore Signing & SHA-256 Fingerprint Verification] - 2026-11-07
 
 ### Security & Release Infrastructure

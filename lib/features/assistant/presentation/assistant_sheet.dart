@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,14 +16,18 @@ import '../action_plan.dart';
 import '../action_planner.dart';
 import '../answer_service.dart';
 import '../rule_based_intent_parser.dart';
+import '../voice_input_service.dart';
+import 'voice_test_screen.dart';
 import 'widgets/answer_card.dart';
 import 'widgets/confirmation_card.dart';
 
-/// Modal bottom sheet for the Voice Assistant (VOICE.md Section 2.2 & Step 3).
-/// In Step 3, provides typed input, suggestion chips, confirmation card preview,
-/// direct execution into Drift database tables, and the Undo snackbar.
+/// Modal bottom sheet for the Voice Assistant (VOICE.md Section 2.2 & Step 5).
+/// Features a large microphone button with chained sessions, live transcript streaming,
+/// fallback text input, suggestion chips, confirmation and answer cards.
 class AssistantSheet extends ConsumerStatefulWidget {
-  const AssistantSheet({super.key});
+  final VoiceInputService? voiceService;
+
+  const AssistantSheet({super.key, this.voiceService});
 
   static Future<void> show(BuildContext context) {
     return showModalBottomSheet(
@@ -37,14 +42,24 @@ class AssistantSheet extends ConsumerStatefulWidget {
   ConsumerState<AssistantSheet> createState() => _AssistantSheetState();
 }
 
-class _AssistantSheetState extends ConsumerState<AssistantSheet> {
+class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTickerProviderStateMixin {
   final _inputController = TextEditingController();
   final _focusNode = FocusNode();
+
+  late final VoiceInputService _voiceService;
+  StreamSubscription<String>? _transcriptSub;
+  StreamSubscription<VoiceInputState>? _stateSub;
+  StreamSubscription<String>? _errorSub;
 
   ActionPlan? _currentPlan;
   AnswerCardData? _currentAnswer;
   bool _isProcessing = false;
   String? _statusFeedback;
+  String _liveVoiceTranscript = '';
+  VoiceInputState _voiceState = VoiceInputState.idle;
+
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
 
   static const List<String> _suggestedPhrases = [
     'ورايا إيه النهارده؟',
@@ -71,10 +86,83 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _voiceService = widget.voiceService ?? VoiceInputService();
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _transcriptSub = _voiceService.transcriptStream.listen((text) {
+      if (mounted) {
+        setState(() {
+          _liveVoiceTranscript = text;
+        });
+      }
+    });
+
+    _stateSub = _voiceService.stateStream.listen((state) {
+      if (mounted) {
+        setState(() {
+          _voiceState = state;
+        });
+      }
+    });
+
+    _errorSub = _voiceService.errorStream.listen((error) {
+      if (mounted) {
+        setState(() {
+          _statusFeedback = error;
+        });
+      }
+    });
+  }
+
+  @override
   void dispose() {
+    _transcriptSub?.cancel();
+    _stateSub?.cancel();
+    _errorSub?.cancel();
+    _pulseController.dispose();
+    _voiceService.cancel();
     _inputController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _toggleVoiceListening() async {
+    if (_voiceService.isListening) {
+      // Tap to stop
+      final finalTranscript = await _voiceService.stopListening();
+      final textToProcess = finalTranscript.isNotEmpty ? finalTranscript : _liveVoiceTranscript;
+      setState(() {
+        _liveVoiceTranscript = '';
+      });
+      if (textToProcess.trim().isNotEmpty) {
+        _inputController.text = textToProcess;
+        _handleInput(textToProcess);
+      }
+    } else {
+      // Tap to start
+      setState(() {
+        _statusFeedback = null;
+        _liveVoiceTranscript = '';
+        _currentPlan = null;
+        _currentAnswer = null;
+      });
+      final started = await _voiceService.startListening();
+      if (!started && mounted) {
+        setState(() {
+          _statusFeedback = 'تعذر تشغيل الميكروفون، يرجى التأكد من الصلاحية.';
+        });
+      }
+    }
   }
 
   void _handleAnswerNavigation(String? navTarget) {
@@ -381,6 +469,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final mediaQuery = MediaQuery.of(context);
+    final isListening = _voiceState == VoiceInputState.listening;
 
     return Container(
       padding: EdgeInsets.only(
@@ -411,7 +500,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> {
                 ),
               ),
 
-              // Title and Header
+              // Title and Header with Test Wizard shortcut
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -420,12 +509,12 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
+                          color: isListening ? Colors.red.shade100 : colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
-                          Icons.keyboard_outlined,
-                          color: colorScheme.onPrimaryContainer,
+                          isListening ? Icons.mic_rounded : Icons.graphic_eq_rounded,
+                          color: isListening ? Colors.red : colorScheme.onPrimaryContainer,
                           size: 22,
                         ),
                       ),
@@ -434,27 +523,124 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'المساعد الذكي (أوامر وأسئلة)',
+                            'المساعد الصوتي الذكي (Voice Assistant)',
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
-                            'إدخال نصي وبطاقات التأكيد والإجابة (Step 4)',
+                            isListening ? 'جارِ الاستماع... اضغط لإيقاف التسجيل' : 'تحدث بالصوت أو اكتب نصاً أوفلاين',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
+                              color: isListening ? Colors.red : colorScheme.onSurfaceVariant,
+                              fontWeight: isListening ? FontWeight.bold : FontWeight.normal,
                             ),
                           ),
                         ],
                       ),
                     ],
                   ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
+                  Row(
+                    children: [
+                      IconButton(
+                        tooltip: 'أداة اختبار الـ 30 جملة (Voice Test)',
+                        icon: const Icon(Icons.science_outlined, color: Colors.teal),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => VoiceTestScreen(voiceService: _voiceService),
+                            ),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+
+              // Large Microphone Button with Chained Sessions (VOICE.md Section 2.2 & 3.2)
+              Center(
+                child: Column(
+                  children: [
+                    ScaleTransition(
+                      scale: isListening ? _pulseAnimation : const AlwaysStoppedAnimation(1.0),
+                      child: GestureDetector(
+                        onTap: _toggleVoiceListening,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isListening ? Colors.red : colorScheme.primary,
+                            boxShadow: [
+                              BoxShadow(
+                                color: (isListening ? Colors.red : colorScheme.primary).withValues(alpha: 0.35),
+                                blurRadius: isListening ? 20 : 10,
+                                spreadRadius: isListening ? 6 : 2,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            isListening ? Icons.stop_rounded : Icons.mic_rounded,
+                            size: 40,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isListening ? 'اضغط للإيقاف والمعالجة' : 'اضغط على المايك وابدأ الكلام',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: isListening ? Colors.red : colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Live Transcript Display Area (VOICE.md Section 2.2)
+              if (_liveVoiceTranscript.isNotEmpty || isListening) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isListening ? Colors.red.shade50 : colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isListening ? Colors.red.shade300 : colorScheme.outlineVariant,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        isListening ? Icons.hearing_rounded : Icons.record_voice_over_rounded,
+                        size: 20,
+                        color: isListening ? Colors.red : colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _liveVoiceTranscript.isEmpty ? 'جاري الاستماع إليك...' : _liveVoiceTranscript,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: isListening ? Colors.red.shade900 : colorScheme.onSurface,
+                            fontStyle: _liveVoiceTranscript.isEmpty ? FontStyle.italic : FontStyle.normal,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 16),
 
               // Text Input Field (VOICE.md Section 2.2)
@@ -464,7 +650,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> {
                 textInputAction: TextInputAction.send,
                 onSubmitted: _handleInput,
                 decoration: InputDecoration(
-                  hintText: 'اكتب أمراً هنا (مثال: سجل شاي وقهوة بـ 25 جنيه)...',
+                  hintText: 'أو اكتب أمراً هنا (مثال: سجل شاي وقهوة بـ 25 جنيه)...',
                   prefixIcon: const Icon(Icons.edit_note_rounded),
                   suffixIcon: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -531,95 +717,71 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Progress Indicator
-              if (_isProcessing) ...[
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: CircularProgressIndicator(),
+              // Status / Loading Indicator
+              if (_isProcessing)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 12),
+                        Text('جاري المعالجة محلياً...'),
+                      ],
+                    ),
                   ),
                 ),
-              ] else if (_statusFeedback != null) ...[
+
+              // Feedback message
+              if (_statusFeedback != null)
                 Container(
+                  margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: colorScheme.errorContainer.withValues(alpha: 0.5),
+                    color: colorScheme.errorContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
-                    _statusFeedback!,
-                    style: TextStyle(color: colorScheme.error),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: colorScheme.onErrorContainer),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _statusFeedback!,
+                          style: TextStyle(color: colorScheme.onErrorContainer),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ] else if (_currentAnswer != null) ...[
+
+              // Answer Card Preview (Step 4 & Section 6)
+              if (_currentAnswer != null)
                 AnswerCard(
                   data: _currentAnswer!,
-                  onNavigate: _currentAnswer!.navTarget != null
-                      ? () => _handleAnswerNavigation(_currentAnswer!.navTarget)
-                      : null,
-                  onClose: () => setState(() => _currentAnswer = null),
+                  onNavigate: _handleAnswerNavigation,
+                  onClose: () {
+                    setState(() {
+                      _currentAnswer = null;
+                    });
+                  },
                 ),
-              ] else if (_currentPlan != null) ...[
-                // Card View Area
-                if (_currentPlan!.isUnrecognized) ...[
-                  // Not understood fallback card (VOICE.md Section 2.7)
-                  Card(
-                    color: colorScheme.surfaceContainerHighest,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.help_outline_rounded, color: colorScheme.secondary),
-                              const SizedBox(width: 8),
-                              Text(
-                                'سمعت... مفهمتش',
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(_currentPlan!.descriptionInWords),
-                          const SizedBox(height: 14),
-                          FilledButton.icon(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              QuickAddSheet.show(
-                                context,
-                                initialTitle: _currentPlan!.fallbackTitle,
-                              );
-                            },
-                            icon: const Icon(Icons.add_task_rounded),
-                            label: const Text('افتح الإضافة ده بالنص'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ] else ...[
-                  ConfirmationCard(
-                    plan: _currentPlan!,
-                    onConfirm: _executeCurrentPlan,
-                    onEdit: _handleEdit,
-                    onCancel: () {
-                      setState(() {
-                        _currentPlan = null;
-                        _inputController.clear();
-                      });
-                    },
-                    onDateChipSelected: _handleDateChipSelected,
-                    onReasonSelected: _handleReasonSelected,
-                    onCandidateSelected: _handleCandidateSelected,
-                  ),
-                ],
-              ],
+
+              // Confirmation Card Preview (Step 3 & Section 5)
+              if (_currentPlan != null)
+                ConfirmationCard(
+                  plan: _currentPlan!,
+                  onConfirm: _executeCurrentPlan,
+                  onEdit: _handleEdit,
+                  onCancel: () {
+                    setState(() {
+                      _currentPlan = null;
+                    });
+                  },
+                  onDateChipSelected: _handleDateChipSelected,
+                  onReasonSelected: _handleReasonSelected,
+                  onCandidateSelected: _handleCandidateSelected,
+                ),
             ],
           ),
         ),
