@@ -126,13 +126,10 @@ class AnswerService {
     // 2. Overdue count (only if viewing today or future)
     int overdueCount = 0;
     if (targetDateStr.compareTo(todayStr) >= 0) {
-      final overdueTasks = await (db.select(db.tasks)
-            ..where((t) =>
-                t.status.isNotValue('done') &
-                t.dueDate.isSmallerThanValue(todayStr) &
-                t.deletedAt.isNull()))
+      final activeTasks = await (db.select(db.tasks)
+            ..where((t) => t.deletedAt.isNull()))
           .get();
-      overdueCount = overdueTasks.length;
+      overdueCount = activeTasks.where((t) => t.status != 'done' && t.dueDate != null && t.dueDate!.compareTo(todayStr) < 0).length;
     }
 
     // 3. Obligations due
@@ -147,13 +144,14 @@ class AnswerService {
     final pendingHabits = <String>[];
     if (isToday) {
       final activeHabits = await (db.select(db.habits)..where((h) => h.deletedAt.isNull())).get();
-      final todayLogs = await (db.select(db.habitLogs)
-            ..where((l) => l.logDate.equals(todayStr) & l.deletedAt.isNull()))
+      final allLogs = await (db.select(db.habitLogs)
+            ..where((l) => l.logDate.equals(todayStr)))
           .get();
+      final todayLogs = allLogs.where((l) => l.deletedAt == null).toList();
       final loggedIds = todayLogs.map((l) => l.habitId).toSet();
       for (final h in activeHabits) {
         if (!loggedIds.contains(h.id)) {
-          pendingHabits.add(h.name);
+          pendingHabits.add(h.nameAr);
         }
       }
     }
@@ -399,17 +397,18 @@ class AnswerService {
 
     // Map habitKey to Arabic name
     final matched = allHabits.cast<Habit?>().firstWhere(
-      (h) => h!.name.contains(habitKey) || (habitKey == 'coffee' && h.name.contains('قهوة')) || (habitKey == 'water' && h.name.contains('مياه')),
+      (h) => h!.nameAr.contains(habitKey) || (habitKey == 'coffee' && h.nameAr.contains('قهوة')) || (habitKey == 'water' && h.nameAr.contains('مياه')),
       orElse: () => allHabits.isNotEmpty ? allHabits.first : null,
     );
 
-    final habitName = matched?.name ?? 'القهوة';
+    final habitName = matched?.nameAr ?? 'القهوة';
     final habitId = matched?.id ?? 1;
 
     // Get today's logs
-    final todayLogs = await (db.select(db.habitLogs)
-          ..where((l) => l.habitId.equals(habitId) & l.logDate.equals(todayStr) & l.deletedAt.isNull()))
+    final allLogs = await (db.select(db.habitLogs)
+          ..where((l) => l.habitId.equals(habitId) & l.logDate.equals(todayStr)))
         .get();
+    final todayLogs = allLogs.where((l) => l.deletedAt == null).toList();
 
     num todayCount = 0;
     if (matched != null && matched.type == 'check') {
@@ -470,9 +469,10 @@ class AnswerService {
       filterType = 'waiting';
     }
 
-    final allTasks = await (db.select(db.tasks)
-          ..where((t) => t.status.isNotValue('done') & t.deletedAt.isNull()))
+    final allActiveTasks = await (db.select(db.tasks)
+          ..where((t) => t.deletedAt.isNull()))
         .get();
+    final allTasks = allActiveTasks.where((t) => t.status != 'done').toList();
 
     final filtered = <({String title, String? reason, String? dueDate})>[];
     for (final t in allTasks) {

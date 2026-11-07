@@ -127,10 +127,10 @@ void main() {
     test('builds habit_status answer with count and streak', () async {
       final habitId = await db.insertHabit(
         HabitsCompanion.insert(
-          name: 'قهوة',
-          kind: const Value('coffee'),
+          nameAr: 'قهوة',
+          builtinKey: const Value('coffee'),
           type: 'count',
-          targetCount: const Value(2),
+          dailyTarget: const Value(2),
           createdAt: fixedNow.millisecondsSinceEpoch,
           updatedAt: fixedNow.millisecondsSinceEpoch,
         ),
