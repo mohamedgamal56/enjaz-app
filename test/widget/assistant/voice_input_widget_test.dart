@@ -95,7 +95,7 @@ void main() {
   group('Voice Input UI Tests (VOICE.md Step 5 & Section 10.4)', () {
     testWidgets('AssistantSheet renders mic button and updates on live speech transcript', (tester) async {
       await tester.pumpWidget(createTestWidget(AssistantSheet(voiceService: voiceService)));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // Verify microphone button exists
       expect(find.byIcon(Icons.mic_rounded), findsOneWidget);
@@ -107,12 +107,14 @@ void main() {
       // Tap mic to start listening
       await tester.tap(find.byIcon(Icons.mic_rounded));
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
 
       expect(voiceService.isListening, isTrue);
 
       // Simulate spoken words
       fakeSource.emitTranscript('صرفت 100 جنيه بنزين للموتوسيكل');
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
 
       // Verify transcript is rendered
       expect(find.text('صرفت 100 جنيه بنزين للموتوسيكل'), findsOneWidget);

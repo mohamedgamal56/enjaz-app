@@ -93,7 +93,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
-    )..repeat(reverse: true);
+    );
 
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
@@ -112,6 +112,16 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
         setState(() {
           _voiceState = state;
         });
+        if (state == VoiceInputState.listening) {
+          if (!_pulseController.isAnimating) {
+            _pulseController.repeat(reverse: true);
+          }
+        } else {
+          if (_pulseController.isAnimating) {
+            _pulseController.stop();
+            _pulseController.reset();
+          }
+        }
       }
     });
 
