@@ -204,6 +204,12 @@ class AssistantIntent {
   /// True if parser successfully resolved an intent
   bool get isRecognized => type != AssistantIntentType.unrecognized;
 
+  /// True if intent is an action command (Section 5)
+  bool get isCommand => type.isCommand;
+
+  /// True if intent is a question (Section 6)
+  bool get isQuestion => type.isQuestion;
+
   @override
   String toString() {
     return 'AssistantIntent(type: ${type.nameStr}, confidence: $confidence, slots: $slots)';
