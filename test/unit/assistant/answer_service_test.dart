@@ -83,11 +83,14 @@ void main() {
       );
 
       // Spending yesterday
+      final yestDateStr =
+          '${yest.year.toString().padLeft(4, '0')}-${yest.month.toString().padLeft(2, '0')}-${yest.day.toString().padLeft(2, '0')}';
       await db.insertTransaction(
         TransactionsCompanion.insert(
           kind: 'expense',
           amountMinor: 25000, // 250 EGP
           categoryId: 1,
+          localDate: yestDateStr,
           occurredAt: yest.millisecondsSinceEpoch,
           createdAt: yest.millisecondsSinceEpoch,
           updatedAt: yest.millisecondsSinceEpoch,
@@ -104,11 +107,14 @@ void main() {
     });
 
     test('builds spending answer matching monthly totals and categories', () async {
+      final todayDateStr =
+          '${fixedNow.year.toString().padLeft(4, '0')}-${fixedNow.month.toString().padLeft(2, '0')}-${fixedNow.day.toString().padLeft(2, '0')}';
       await db.insertTransaction(
         TransactionsCompanion.insert(
           kind: 'expense',
           amountMinor: 50000, // 500 EGP
           categoryId: 1,
+          localDate: todayDateStr,
           nature: const Value('essential'),
           occurredAt: fixedNow.millisecondsSinceEpoch,
           createdAt: fixedNow.millisecondsSinceEpoch,
