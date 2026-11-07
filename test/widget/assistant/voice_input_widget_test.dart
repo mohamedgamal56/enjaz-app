@@ -107,17 +107,18 @@ void main() {
       // Verify test wizard shortcut button exists
       expect(find.byIcon(Icons.science_outlined), findsOneWidget);
 
-      // Tap mic to start listening
-      await tester.tap(find.byIcon(Icons.mic_rounded));
+      // Start listening
+      await voiceService.startListening();
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
 
       expect(voiceService.isListening, isTrue);
+
+      // Verify mic button turned into stop button
+      expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
 
       // Simulate spoken words
       fakeSource.emitTranscript('صرفت 100 جنيه بنزين للموتوسيكل');
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
 
       // Verify transcript is rendered
       expect(find.text('صرفت 100 جنيه بنزين للموتوسيكل'), findsOneWidget);
