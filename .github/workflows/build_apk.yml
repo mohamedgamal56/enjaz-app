@@ -71,8 +71,15 @@ jobs:
 
       - name: Verify APK Signature Fingerprint
         run: |
-          EXPECTED_SHA256=$(cat android/expected_cert_sha256.txt | tr -d '[:space:]' | tr '[:lower:]' '[:upper:]')
-          ACTUAL_SHA256=$(keytool -printcert -jarfile enjaz-app-arm64.apk | grep -i "SHA256:" | head -n 1 | awk '{print $2}' | tr -d '[:space:]' | tr '[:lower:]' '[:upper:]')
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f 2>/dev/null | sort -V | tail -n 1)
+          if [ -z "$APKSIGNER" ]; then
+            APKSIGNER=$(which apksigner 2>/dev/null || find /usr/local/lib/android/sdk/build-tools -name apksigner -type f 2>/dev/null | sort -V | tail -n 1)
+          fi
+          
+          echo "Using apksigner tool: $APKSIGNER"
+          EXPECTED_SHA256=$(cat android/expected_cert_sha256.txt | tr -d '[:space:]:' | tr '[:upper:]' '[:lower:]')
+          ACTUAL_RAW=$("$APKSIGNER" verify --print-certs enjaz-app-arm64.apk | grep -i "certificate SHA-256 digest:" | head -n 1 | awk '{print $NF}')
+          ACTUAL_SHA256=$(echo "$ACTUAL_RAW" | tr -d '[:space:]:' | tr '[:upper:]' '[:lower:]')
           
           echo "Expected SHA-256: $EXPECTED_SHA256"
           echo "Actual   SHA-256: $ACTUAL_SHA256"
@@ -81,7 +88,7 @@ jobs:
             echo "::error::APK signature verification failed! Expected $EXPECTED_SHA256 but got $ACTUAL_SHA256"
             exit 1
           fi
-          echo "✅ APK signature verified successfully: $ACTUAL_SHA256"
+          echo "✅ APK signature verified successfully: $ACTUAL_RAW"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
