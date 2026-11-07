@@ -59,7 +59,7 @@ class RealSpeechToTextSource implements SpeechRecognizerSource {
     required void Function(String recognizedWords, bool isFinal) onResult,
     String? localeId,
   }) async {
-    return _stt.listen(
+    await _stt.listen(
       onResult: (SpeechRecognitionResult result) {
         onResult(result.recognizedWords, result.finalResult);
       },
@@ -69,6 +69,7 @@ class RealSpeechToTextSource implements SpeechRecognizerSource {
       cancelOnError: false,
       pauseFor: const Duration(seconds: 3),
     );
+    return true;
   }
 
   @override

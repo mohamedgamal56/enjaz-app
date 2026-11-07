@@ -759,7 +759,9 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
               if (_currentAnswer != null)
                 AnswerCard(
                   data: _currentAnswer!,
-                  onNavigate: _handleAnswerNavigation,
+                  onNavigate: _currentAnswer!.navTarget != null
+                      ? () => _handleAnswerNavigation(_currentAnswer!.navTarget)
+                      : null,
                   onClose: () {
                     setState(() {
                       _currentAnswer = null;
