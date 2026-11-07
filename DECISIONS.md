@@ -410,6 +410,31 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
   - **Version & Build**:
     - Bumped application version to `1.1.3+13` in `pubspec.yaml`.
 
+- **Decision 25 (Step 4 — Answers: Answer Cards and SpeechComposer) [2026-11-07]**:
+  - **Context**: Implement Step 4 of `VOICE.md` (Answers: Answer cards and SpeechComposer - text only - for all 8 questions, exactly matching dashboard calculations and providing direct screen navigation).
+  - **Architecture & Implementation**:
+    - **SpeechComposer (`lib/features/assistant/speech_composer.dart`)**:
+      - Pure Dart template composer for all 8 voice assistant questions: `agenda`, `recap`, `spending`, `habit_status`, `pending`, `obligations`, `health_pending`, and `wishlist`.
+      - Enforces strict Arabic pluralization rules via extended `PluralAr` (tasks, days, pounds, months, cups, times, obligations, checkups, notes, ideas, items).
+      - Explicit dates in words ('يوم الخميس 12 نوفمبر 2026' or 'النهارده') for all date-based inquiries.
+      - Enforces Section 3.4 limit: mentions at most 5 items before appending "وكمان N".
+      - Provides human-friendly, encouraging Egyptian Arabic feedback for empty states (e.g. "معندكش مهام متأخرة حالياً، عاش!").
+    - **AnswerService (`lib/features/assistant/answer_service.dart`)**:
+      - Generates structured `AnswerCardData` using the exact same calculations and services as dashboards (`FinanceService`, `HealthService`, `HabitsService`, `TaskStatusService`), guaranteeing 100% data consistency.
+      - Includes metric summary chips, item detail lists, and designated deep-navigation targets (`timeline`, `finance`, `habits`, `tasks`, `health`).
+    - **AnswerCard Widget (`lib/features/assistant/presentation/widgets/answer_card.dart`)**:
+      - Interactive card with question icon, title, stylized spoken text container, metric chips, detail list, and prominent navigation button.
+    - **AssistantSheet Updates (`lib/features/assistant/presentation/assistant_sheet.dart`)**:
+      - Added question routing to `AnswerService` and rendering of `AnswerCard`.
+      - Added quick suggestion chips for questions (including the owner's questions: "ورايا إيه النهارده؟", "صرفت كام الشهر ده؟", "إيه المهام المتأخرة عندي؟", "عملت إيه إمبارح؟", "شربت كام قهوة النهارده؟").
+      - Wires navigation button to dismiss the sheet and push the appropriate destination screen.
+  - **Testing**:
+    - Created `test/unit/assistant/speech_composer_test.dart` and `test/unit/assistant/answer_service_test.dart`.
+    - Created `test/widget/assistant/answer_card_test.dart`.
+  - **Version & Build**:
+    - Bumped application version to `1.1.4+14` in `pubspec.yaml`.
+
+
 
 
 

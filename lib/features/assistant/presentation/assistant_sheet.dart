@@ -3,13 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/db/app_database.dart';
 import '../../finance/presentation/add_transaction_sheet.dart';
+import '../../finance/presentation/finance_screen.dart';
+import '../../habits/presentation/habits_screen.dart';
+import '../../health/presentation/health_screen.dart';
 import '../../ideas/presentation/add_idea_sheet.dart';
 import '../../notes/presentation/add_note_sheet.dart';
 import '../../tasks/presentation/quick_add_sheet.dart';
+import '../../timeline/presentation/timeline_calendar_screen.dart';
 import '../action_executor.dart';
 import '../action_plan.dart';
 import '../action_planner.dart';
+import '../answer_service.dart';
 import '../rule_based_intent_parser.dart';
+import 'widgets/answer_card.dart';
 import 'widgets/confirmation_card.dart';
 
 /// Modal bottom sheet for the Voice Assistant (VOICE.md Section 2.2 & Step 3).
@@ -36,10 +42,19 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> {
   final _focusNode = FocusNode();
 
   ActionPlan? _currentPlan;
+  AnswerCardData? _currentAnswer;
   bool _isProcessing = false;
   String? _statusFeedback;
 
   static const List<String> _suggestedPhrases = [
+    'ورايا إيه النهارده؟',
+    'صرفت كام الشهر ده؟',
+    'إيه المهام المتأخرة عندي؟',
+    'عملت إيه إمبارح؟',
+    'إيه اللي عليا الشهر ده؟',
+    'شربت كام قهوة النهارده؟',
+    'إيه الكشوفات المؤجلة؟',
+    'إجمالي المشتريات اللي عايزها كام؟',
     'أنا بكرة عايز أعمل مونتاج الإعلان الساعة 4 العصر',
     'سجل مشوار النهارده أروح السنترال الساعة 1',
     'فكرني يوم الخميس أكلم دكتور أحمد الساعة 7 بالليل',
@@ -62,6 +77,39 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> {
     super.dispose();
   }
 
+  void _handleAnswerNavigation(String? navTarget) {
+    if (navTarget == null) return;
+    Navigator.of(context).pop();
+
+    switch (navTarget) {
+      case 'timeline':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const TimelineCalendarScreen()),
+        );
+        break;
+      case 'finance':
+      case 'obligations':
+      case 'wishlist':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const FinanceScreen()),
+        );
+        break;
+      case 'habits':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const HabitsScreen()),
+        );
+        break;
+      case 'health':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const HealthScreen()),
+        );
+        break;
+      case 'tasks':
+      default:
+        break;
+    }
+  }
+
   Future<void> _handleInput(String text) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
@@ -69,11 +117,24 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> {
     setState(() {
       _isProcessing = true;
       _statusFeedback = null;
+      _currentPlan = null;
+      _currentAnswer = null;
     });
 
     final db = ref.read(databaseProvider);
     final parser = RuleBasedIntentParser();
     final intent = parser.parse(trimmed);
+
+    // If intent is a question, query AnswerService (Step 4 & Section 6)
+    if (intent.isQuestion) {
+      final answerService = AnswerService(db: db);
+      final answerData = await answerService.buildAnswer(intent);
+      setState(() {
+        _currentAnswer = answerData;
+        _isProcessing = false;
+      });
+      return;
+    }
 
     // Fetch open tasks for status matching
     final activeTasks = await (db.select(db.tasks)
@@ -373,13 +434,13 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'المساعد الذكي (تجربة الأوامر)',
+                            'المساعد الذكي (أوامر وأسئلة)',
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
-                            'إدخال نصي وتأكيد الإجراءات (Step 3)',
+                            'إدخال نصي وبطاقات التأكيد والإجابة (Step 4)',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
@@ -415,6 +476,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> {
                             setState(() {
                               _inputController.clear();
                               _currentPlan = null;
+                              _currentAnswer = null;
                               _statusFeedback = null;
                             });
                           },
@@ -488,6 +550,14 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> {
                     _statusFeedback!,
                     style: TextStyle(color: colorScheme.error),
                   ),
+                ),
+              ] else if (_currentAnswer != null) ...[
+                AnswerCard(
+                  data: _currentAnswer!,
+                  onNavigate: _currentAnswer!.navTarget != null
+                      ? () => _handleAnswerNavigation(_currentAnswer!.navTarget)
+                      : null,
+                  onClose: () => setState(() => _currentAnswer = null),
                 ),
               ] else if (_currentPlan != null) ...[
                 // Card View Area

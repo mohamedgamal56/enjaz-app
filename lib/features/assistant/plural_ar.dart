@@ -88,4 +88,92 @@ class PluralAr {
     final formatted = amount % 1 == 0 ? amount.toInt().toString() : amount.toStringAsFixed(2);
     return '$formatted جنيه';
   }
+
+  /// Formats month counts (e.g. "شهر", "شهرين", "3 شهور", "12 شهر")
+  static String formatMonths(int count) {
+    return format(
+      count,
+      singular: 'شهر',
+      dual: 'شهرين',
+      plural: 'شهور',
+      zero: 'صفر شهر',
+    );
+  }
+
+  /// Formats cups (e.g. "فنجان", "فنجانين", "3 فناجين", "12 فنجان")
+  static String formatCups(int count) {
+    return format(
+      count,
+      singular: 'فنجان',
+      dual: 'فنجانين',
+      plural: 'فناجين',
+      zero: 'ولا فنجان',
+    );
+  }
+
+  /// Formats times (e.g. "مرة", "مرتين", "3 مرات", "12 مرة")
+  static String formatTimes(int count) {
+    return format(
+      count,
+      singular: 'مرة',
+      dual: 'مرتين',
+      plural: 'مرات',
+      zero: 'ولا مرة',
+    );
+  }
+
+  /// Formats obligations (e.g. "التزام", "التزامين", "3 التزامات", "12 التزام")
+  static String formatObligations(int count) {
+    return format(
+      count,
+      singular: 'التزام',
+      dual: 'التزامين',
+      plural: 'التزامات',
+      zero: 'لا توجد التزامات',
+    );
+  }
+
+  /// Formats checkups / health items (e.g. "كشف", "كشفين", "3 كشوفات", "12 كشف")
+  static String formatCheckups(int count) {
+    return format(
+      count,
+      singular: 'كشف',
+      dual: 'كشفين',
+      plural: 'كشوفات',
+      zero: 'لا توجد كشوفات',
+    );
+  }
+
+  /// Formats notes (e.g. "ملاحظة", "ملاحظتين", "3 ملاحظات", "12 ملاحظة")
+  static String formatNotes(int count) {
+    return format(
+      count,
+      singular: 'ملاحظة',
+      dual: 'ملاحظتين',
+      plural: 'ملاحظات',
+      zero: 'صفر ملاحظة',
+    );
+  }
+
+  /// Formats ideas (e.g. "فكرة", "فكرتين", "3 أفكار", "12 فكرة")
+  static String formatIdeas(int count) {
+    return format(
+      count,
+      singular: 'فكرة',
+      dual: 'فكرتين',
+      plural: 'أفكار',
+      zero: 'صفر فكرة',
+    );
+  }
+
+  /// Formats generic items (e.g. "عنصر", "عنصرين", "3 عناصر", "12 عنصر")
+  static String formatItems(int count, {String singular = 'عنصر', String dual = 'عنصرين', String plural = 'عناصر'}) {
+    return format(
+      count,
+      singular: singular,
+      dual: dual,
+      plural: plural,
+      zero: 'لا توجد $plural',
+    );
+  }
 }

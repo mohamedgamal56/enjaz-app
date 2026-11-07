@@ -1,4 +1,4 @@
-# تطبيق "إنجاز" (Enjaz) — الإصدار المستقر v1.1.3 (Voice Assistant Step 3 Cards & Execution)
+# تطبيق "إنجاز" (Enjaz) — الإصدار المستقر v1.1.4 (Voice Assistant Step 4 Answers & SpeechComposer)
 
 تطبيق **"إنجاز"** هو نظامك الشخصي المتكامل لإدارة المهام، المشاوير، الأهداف الحياتية، العادات، السجل الزمني، الملاحظات، والمتابعة المالية والصحية — أوفلاين بالكامل 100% وبدون أي حاجة للإنترنت وبأعلى معايير الخصوصية والأمان، بالإضافة إلى **المساعد الصوتي الذكي أوفلاين (Voice Assistant)**.
 
@@ -6,17 +6,17 @@
 
 ---
 
-## 🚀 تحميل وتثبيت النسخة الرسمية المحدثة (v1.1.3):
+## 🚀 تحميل وتثبيت النسخة الرسمية المحدثة (v1.1.4):
 
 ### 💡 التثبيت المباشر بنقرة واحدة (Direct In-Place Update):
-النسخة **v1.1.3+13** موقّعة بنفس المفتاح الرسمي الثابت (`enjaz-release-key.jks`)؛ لذلك **ستتثبت مباشرة فوق أي إصدار سابق بنقرة واحدة بدون مسح التطبيق وبدون فقدان أي بيانات نهائياً**.
+النسخة **v1.1.4+14** موقّعة بنفس المفتاح الرسمي الثابت (`enjaz-release-key.jks`)؛ لذلك **ستتثبت مباشرة فوق أي إصدار سابق بنقرة واحدة بدون مسح التطبيق وبدون فقدان أي بيانات نهائياً**.
 
 * 🔗 **رابط الإصدار الرسمي على GitHub:**
-  👉 [GitHub Releases: voice-3 (v1.1.3)](https://github.com/mohamedgamal56/enjaz-app/releases/tag/voice-3)
+  👉 [GitHub Releases: voice-4 (v1.1.4)](https://github.com/mohamedgamal56/enjaz-app/releases/tag/voice-4)
 * 📦 **تحميل ملف الـ APK المباشر لهواتف الأندرويد الحديثة (arm64):**
-  👉 [تحميل enjaz-app-arm64.apk](https://github.com/mohamedgamal56/enjaz-app/releases/download/voice-3/enjaz-app-arm64.apk)
+  👉 [تحميل enjaz-app-arm64.apk](https://github.com/mohamedgamal56/enjaz-app/releases/download/voice-4/enjaz-app-arm64.apk)
 * 📦 **تحميل ملف الـ APK العام (Universal):**
-  👉 [تحميل enjaz-app.apk](https://github.com/mohamedgamal56/enjaz-app/releases/download/voice-3/enjaz-app.apk)
+  👉 [تحميل enjaz-app.apk](https://github.com/mohamedgamal56/enjaz-app/releases/download/voice-4/enjaz-app.apk)
 
 ---
 
