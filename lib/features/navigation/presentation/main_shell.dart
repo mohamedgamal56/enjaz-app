@@ -11,6 +11,7 @@ import '../../goals/presentation/add_goal_sheet.dart';
 import '../../ideas/presentation/add_idea_sheet.dart';
 import '../../notes/presentation/add_note_sheet.dart';
 import '../../settings/presentation/settings_screen.dart';
+import '../../assistant/presentation/assistant_sheet.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
@@ -58,6 +59,11 @@ class _MainShellState extends ConsumerState<MainShell> {
           style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.auto_awesome_rounded),
+            tooltip: isArabic ? 'المساعد الذكي' : 'Assistant',
+            onPressed: () => AssistantSheet.show(context),
+          ),
           if (_currentIndex != 3)
             IconButton(
               icon: const Icon(Icons.settings_outlined),

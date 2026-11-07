@@ -16,12 +16,20 @@ class QuickAddSheet extends ConsumerStatefulWidget {
   final String? initialDate; // YYYY-MM-DD
   final String initialKind; // task | errand | goal | idea
   final int? initialGoalId;
+  final String? initialTitle;
+  final String? initialTime; // HH:mm
+  final int? initialReminderOffset;
+  final String? initialLocation;
 
   const QuickAddSheet({
     super.key,
     this.initialDate,
     this.initialKind = 'task',
     this.initialGoalId,
+    this.initialTitle,
+    this.initialTime,
+    this.initialReminderOffset,
+    this.initialLocation,
   });
 
   static Future<void> show(
@@ -29,6 +37,10 @@ class QuickAddSheet extends ConsumerStatefulWidget {
     String? initialDate,
     String initialKind = 'task',
     int? initialGoalId,
+    String? initialTitle,
+    String? initialTime,
+    int? initialReminderOffset,
+    String? initialLocation,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -41,6 +53,10 @@ class QuickAddSheet extends ConsumerStatefulWidget {
         initialDate: initialDate,
         initialKind: initialKind,
         initialGoalId: initialGoalId,
+        initialTitle: initialTitle,
+        initialTime: initialTime,
+        initialReminderOffset: initialReminderOffset,
+        initialLocation: initialLocation,
       ),
     );
   }
@@ -93,6 +109,18 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   void initState() {
     super.initState();
     _selectedKind = widget.initialKind;
+    if (widget.initialTitle != null) {
+      _titleController.text = widget.initialTitle!;
+    }
+    if (widget.initialTime != null) {
+      _selectedTime = widget.initialTime;
+    }
+    if (widget.initialReminderOffset != null) {
+      _selectedReminderOffset = widget.initialReminderOffset;
+    }
+    if (widget.initialLocation != null) {
+      _locationController.text = widget.initialLocation!;
+    }
     // Default date is today unless provided
     final now = DateTime.now();
     _selectedDayOfMonth = now.day;

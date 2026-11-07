@@ -388,6 +388,29 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
   - **Version & Build**:
     - Bumped application version to `1.1.2+12` in `pubspec.yaml`.
 
+- **Decision 24 (Step 3 — Cards & Execution, Typed Input Only) [2026-11-07]**:
+  - **Context**: Implement Step 3 of `VOICE.md` (Cards and execution, typed input only: ActionPlanner, Confirmation cards, execution through existing services, Undo snackbar, and AssistantSheet with typed field).
+  - **Architecture & Implementation**:
+    - Built `ActionPlan` and `ActionPlanner` (`lib/features/assistant/action_planner.dart`):
+      - Transforms parsed `AssistantIntent` into a concrete `ActionPlan` with human-readable Arabic descriptions (e.g. `مهمة — أكلم العميل — الأحد 8 نوفمبر 2026 — 5:00 م — منبه قبلها 10 دقايق`).
+      - Validates and formats all dates and times in full Arabic words, ensuring ambiguity resolution (chips for missing dates: "بدون تاريخ", "اليوم", "بكرة", "اختر تاريخ"; chips for missing reasons: "مضغوط في الشغل", "مفيش فلوس", etc.; candidate selection for ambiguous tasks).
+      - Strictly intercepts blocked delete commands (`unsupported_delete`) with `isBlocked` and fallback for unrecognized speech (`isUnrecognized`).
+    - Built `ActionExecutor` and `UndoAction` (`lib/features/assistant/action_executor.dart`):
+      - Directly reuses existing Drift database tables and services: `insertNewTask` + `ReminderScheduler` for tasks/errands/reminders, `TaskStatusService` + `TaskEvents` for status transitions, `insertTransaction` for expenses/income, `setHabitCheck` / `incrementHabitCount` for habits, `insertNote`, `into(db.ideas).insert`, `insertWishlistItem`, `insertHealthItemWithEvent`.
+      - Provides an `UndoAction` with every execution so that the standard Undo snackbar can reverse the operation cleanly without data loss.
+    - Built `ConfirmationCard` (`lib/features/assistant/presentation/widgets/confirmation_card.dart`):
+      - Interactive card with icon, Arabic title, human-readable description in words, detail chips, missing info choice chips, and 3 buttons: تأكيد / Confirm, تعديل / Edit, إلغاء / Cancel.
+    - Built `AssistantSheet` (`lib/features/assistant/presentation/assistant_sheet.dart`):
+      - Bottom sheet with typed `TextField`, quick suggestion chips for the user's 10 sentences + document examples, live card view, execution trigger, and Undo snackbar.
+      - Added entry button in `MainShell` app bar for 1-tap access on the device.
+    - Extended `QuickAddSheet` with `initialTitle`, `initialTime`, `initialReminderOffset`, `initialLocation` to support pre-filling from "تعديل" (Edit) and fallback "افتح الإضافة ده بالنص".
+  - **Testing**:
+    - Created `test/unit/assistant/action_planner_test.dart` and `test/unit/assistant/action_executor_test.dart`.
+    - Created `test/widget/assistant/confirmation_card_test.dart`.
+  - **Version & Build**:
+    - Bumped application version to `1.1.3+13` in `pubspec.yaml`.
+
+
 
 
 
