@@ -12,6 +12,24 @@ class RuleBasedIntentParser implements IntentParser {
   final DateTime Function()? _nowProvider;
   final int weekStartWeekday;
 
+  static const List<String> _arabicMonths = [
+    'يناير',
+    'فبراير',
+    'مارس',
+    'ابريل',
+    'أبريل',
+    'مايو',
+    'يونيو',
+    'يوليو',
+    'اغسطس',
+    'أغسطس',
+    'سبتمبر',
+    'اكتوبر',
+    'أكتوبر',
+    'نوفمبر',
+    'ديسمبر',
+  ];
+
   const RuleBasedIntentParser({
     DateTime Function()? nowProvider,
     this.weekStartWeekday = DateTime.saturday,
@@ -74,11 +92,13 @@ class RuleBasedIntentParser implements IntentParser {
 
     // -------------------------------------------------------------
     // 3. QUESTIONS (Section 6)
-    // Check questions before task commands
+    // Must be an actual question (e.g. contains question marker or interrogative)
     // -------------------------------------------------------------
-    final questionIntent = _parseQuestion(trimmed, normalized, dtResolver);
-    if (questionIntent != null) {
-      return questionIntent;
+    if (_isQuestionText(trimmed, normalized)) {
+      final questionIntent = _parseQuestion(trimmed, normalized, dtResolver);
+      if (questionIntent != null) {
+        return questionIntent;
+      }
     }
 
     // -------------------------------------------------------------
@@ -93,7 +113,24 @@ class RuleBasedIntentParser implements IntentParser {
     }
 
     // -------------------------------------------------------------
-    // 5. ERRANDS (Section 5.2: create_errand)
+    // 5. WISHLIST ITEMS (Section 5.2 / 6: create_wishlist_item)
+    // "ضيف للمشتريات سماعة بألف وخمسمية", "عايز اشتري كاميرا"
+    // Check wishlist before expense so "ضيف للمشتريات ... بـ 2000 جنيه" is a wishlist item
+    // -------------------------------------------------------------
+    if (_isWishlistCommand(normalized)) {
+      return _parseWishlistItem(trimmed, normalized);
+    }
+
+    // -------------------------------------------------------------
+    // 6. EXPENSE LOG (Section 5.2: log_expense)
+    // Check expenses before errands so "صرفت 80 جنيه اوبر مشوار الجامعة" is an expense
+    // -------------------------------------------------------------
+    if (_isExpenseCommand(normalized)) {
+      return _parseExpense(trimmed, normalized, dtResolver);
+    }
+
+    // -------------------------------------------------------------
+    // 7. ERRANDS (Section 5.2: create_errand)
     // Word "مشوار" is required.
     // -------------------------------------------------------------
     if (_isErrandCommand(normalized)) {
@@ -101,7 +138,7 @@ class RuleBasedIntentParser implements IntentParser {
     }
 
     // -------------------------------------------------------------
-    // 6. HEALTH ITEMS (Section 5.2 / 6: create_health_item)
+    // 8. HEALTH ITEMS (Section 5.2 / 6: create_health_item)
     // Medical appointments, tests, checkups.
     // -------------------------------------------------------------
     if (_isHealthCommand(normalized)) {
@@ -109,7 +146,7 @@ class RuleBasedIntentParser implements IntentParser {
     }
 
     // -------------------------------------------------------------
-    // 7. REMINDERS (Section 5.2: create_reminder)
+    // 9. REMINDERS (Section 5.2: create_reminder)
     // "فكرني بكرة الساعة 9 اكلم احمد", "نبهني بعد يومين ادفع الفاتورة"
     // -------------------------------------------------------------
     if (_isReminderCommand(normalized)) {
@@ -117,27 +154,11 @@ class RuleBasedIntentParser implements IntentParser {
     }
 
     // -------------------------------------------------------------
-    // 8. WISHLIST ITEMS (Section 5.2 / 6: create_wishlist_item)
-    // "ضيف للمشتريات سماعة بألف وخمسمية", "عايز اشتري كاميرا"
-    // -------------------------------------------------------------
-    if (_isWishlistCommand(normalized)) {
-      return _parseWishlistItem(trimmed, normalized);
-    }
-
-    // -------------------------------------------------------------
-    // 9. INCOME LOG (Section 5.2: log_income)
+    // 10. INCOME LOG (Section 5.2: log_income)
     // "دخل 5000 من عميل", "قبضت 8000 مرتب"
     // -------------------------------------------------------------
     if (_isIncomeCommand(normalized)) {
       return _parseIncome(trimmed, normalized, dtResolver);
-    }
-
-    // -------------------------------------------------------------
-    // 10. EXPENSE LOG (Section 5.2: log_expense)
-    // "سجل شاي بعشرة جنيه", "صرفت 50 على اكل بره", "دفعت 300 فاتورة النت امبارح"
-    // -------------------------------------------------------------
-    if (_isExpenseCommand(normalized)) {
-      return _parseExpense(trimmed, normalized, dtResolver);
     }
 
     // -------------------------------------------------------------
@@ -193,6 +214,8 @@ class RuleBasedIntentParser implements IntentParser {
     return norm.startsWith('امسح') ||
         norm.startsWith('احذف') ||
         norm.startsWith('شيل مهمة') ||
+        norm.startsWith('شيل مهمة ') ||
+        norm.startsWith('شيل ') ||
         norm.startsWith('حذف') ||
         norm.startsWith('مسح') ||
         norm.contains('امسح كل') ||
@@ -201,6 +224,26 @@ class RuleBasedIntentParser implements IntentParser {
 
   bool _isVoiceNoteCommand(String norm) {
     return norm.contains('صوتيه') || norm.contains('صوتية');
+  }
+
+  bool _isQuestionText(String raw, String norm) {
+    if (raw.contains('؟') || raw.contains('?')) return true;
+    if (norm.startsWith('ملخص ') || norm.contains(' ملخص ')) return true;
+    if (norm.startsWith('جدول ') || norm.contains(' جدول ')) return true;
+    if (norm.startsWith('تقرير ') || norm.contains(' تقرير ')) return true;
+    if (norm.contains('ايه') ||
+        norm.contains('إيه') ||
+        norm.contains('كام') ||
+        norm.contains('بكام') ||
+        norm.contains('التزامي') ||
+        norm.contains('ورايا ايه') ||
+        norm.contains('ورايا إيه') ||
+        norm.contains('اكتر حاجه') ||
+        norm.contains('اكتر حاجة') ||
+        norm.contains('أكتر حاجة')) {
+      return true;
+    }
+    return false;
   }
 
   bool _isErrandCommand(String norm) {
@@ -221,23 +264,28 @@ class RuleBasedIntentParser implements IntentParser {
     final healthKeywords = [
       'كشف',
       'تحليل',
-      'دكتور',
+      'فحص',
+      'اشعة',
+      'اشعه',
       'اسنان',
+      'أسنان',
       'رمد',
       'باطنة',
       'باطنه',
-      'طبيب',
-      'علاج',
-      'اشعة',
-      'اشعه',
+      'عيادة',
+      'علاج الصداع',
+      'روشتة',
+      'روشته',
     ];
     final hasHealthWord = healthKeywords.any((k) => norm.contains(k));
     if (!hasHealthWord) return false;
 
-    // Check if it's an intent to schedule or record health action
+    // Must be health action/intent
     return norm.contains('محتاج') ||
         norm.contains('عايز') ||
+        norm.contains('عاوز') ||
         norm.contains('فكرني') ||
+        norm.contains('نبهني') ||
         norm.contains('اروح') ||
         norm.contains('اعمل') ||
         norm.contains('معاد') ||
@@ -280,16 +328,19 @@ class RuleBasedIntentParser implements IntentParser {
       return true;
     }
 
-    // "سجل شاي بـ 25 جنيه", "سجل قهوة بعشرة جنيه"
+    // Explicit currency token check
+    final hasCurrency = RegExp(r'(?:^|[\s،,])(?:جنيه|جنية|ج\.م|egp|قرش|قروش)(?:[\s،,]|\$)').hasMatch(norm);
+
+    // "سجل شاي بـ 25 جنيه", "سجل قهوة بـ 15 جنيه", "سجل شاي بعشرة جنيه"
     if ((norm.startsWith('سجل') || norm.startsWith('ضيف')) &&
-        (norm.contains('جنيه') || norm.contains('ج') || norm.contains('بـ')) &&
-        (AssistantDictionary.matchCategory(norm) != null || RegExp(r'\d+').hasMatch(norm))) {
+        hasCurrency &&
+        (AssistantDictionary.matchCategory(norm) != null || RegExp(r'\b\d+\b').hasMatch(norm))) {
       return true;
     }
 
-    // Direct mention of amount + known expense category
-    final money = NumberWordsAr.extractMoney(norm);
-    if (money != null && AssistantDictionary.matchCategory(norm) != null) {
+    // Direct mention of money amount + known expense category
+    final moneyRec = NumberWordsAr.extractMoney(norm);
+    if (moneyRec != null && AssistantDictionary.matchCategory(norm) != null) {
       return true;
     }
 
@@ -338,6 +389,7 @@ class RuleBasedIntentParser implements IntentParser {
   bool _isTaskCommand(String norm) {
     // Explicit triggers
     if (norm.startsWith('سجل') ||
+        norm.startsWith('سجّل') ||
         norm.startsWith('ضيف مهمة') ||
         norm.startsWith('ضيف مهمه') ||
         norm.startsWith('مهمة') ||
@@ -348,7 +400,6 @@ class RuleBasedIntentParser implements IntentParser {
     }
 
     // Spec 5.1: "A command word is optional when the sentence has a date and an intent verb."
-    // e.g. "انا بكرة عايز اعمل مونتاج الاعلان", "يوم الخميس هقابل الدكتور"
     final hasDateWord = norm.contains('بكرة') ||
         norm.contains('النهارده') ||
         norm.contains('السبت') ||
@@ -359,10 +410,14 @@ class RuleBasedIntentParser implements IntentParser {
         norm.contains('الخميس') ||
         norm.contains('الجمعه') ||
         norm.contains('بعد يومين') ||
-        norm.contains('بعد بكره');
+        norm.contains('بعد بكره') ||
+        norm.contains('بعد بكرة') ||
+        RegExp(r'\d{1,2}/\d{1,2}').hasMatch(norm) ||
+        _arabicMonths.any((m) => norm.contains(m));
 
     final hasIntentVerb = norm.contains('اعمل') ||
         norm.contains('أعمل') ||
+        norm.contains('هعمل') ||
         norm.contains('اقابل') ||
         norm.contains('أقابل') ||
         norm.contains('هقابل') ||
@@ -371,15 +426,29 @@ class RuleBasedIntentParser implements IntentParser {
         norm.contains('هكلم') ||
         norm.contains('اروح') ||
         norm.contains('أروح') ||
+        norm.contains('هروح') ||
+        norm.contains('اجدد') ||
+        norm.contains('أجدد') ||
+        norm.contains('هجدد') ||
         norm.contains('اراجع') ||
         norm.contains('أراجع') ||
+        norm.contains('هراجع') ||
         norm.contains('اسلم') ||
         norm.contains('أسلم') ||
+        norm.contains('هسلم') ||
         norm.contains('اكتب') ||
         norm.contains('أكتب') ||
-        norm.contains('اشتغل');
+        norm.contains('هكتب') ||
+        norm.contains('اذاكر') ||
+        norm.contains('أذاكر') ||
+        norm.contains('هذاكر') ||
+        norm.contains('اشتغل') ||
+        norm.contains('عايز') ||
+        norm.contains('عاوز') ||
+        norm.contains('لازم') ||
+        norm.contains('ضروري');
 
-    return hasDateWord && (hasIntentVerb || norm.contains('عايز') || norm.contains('عاوز'));
+    return hasDateWord && hasIntentVerb;
   }
 
   // =========================================================================
@@ -389,24 +458,26 @@ class RuleBasedIntentParser implements IntentParser {
   AssistantIntent? _parseQuestion(String raw, String norm, DateTimeResolver dtResolver) {
     // 1. Pending questions (Section 6: pending)
     // "ايه المتأخر عندي؟", "إيه المهام المتأخرة عندي؟", "ايه المؤجل؟", "ايه اللي مستنيه؟"
-    if (norm.contains('المتاخر') ||
-        norm.contains('المتأخر') ||
-        norm.contains('المتاخره') ||
-        norm.contains('المتأخرة') ||
+    if (norm.contains('متاخر') ||
+        norm.contains('متأخر') ||
+        norm.contains('متاخره') ||
+        norm.contains('متأخرة') ||
         norm.contains('المؤجل') ||
         norm.contains('الموجل') ||
         norm.contains('المؤجله') ||
         norm.contains('الموجله') ||
         norm.contains('مستنيه') ||
-        norm.contains('مستني ايه')) {
-      // Exclude obligations and health questions
+        norm.contains('مستني ايه') ||
+        norm.contains('ايه المعلق') ||
+        norm.contains('المعلق') ||
+        norm.contains('معلق')) {
       if (!norm.contains('الالتزامات') &&
           !norm.contains('اقساط') &&
           !norm.contains('أقساط') &&
           !norm.contains('كشوفات') &&
           !norm.contains('تحاليل')) {
         String filter = 'overdue';
-        if (norm.contains('مؤجل') || norm.contains('موجل')) {
+        if (norm.contains('مؤجل') || norm.contains('موجل') || norm.contains('المؤجلة')) {
           filter = 'postponed';
         } else if (norm.contains('مستني') || norm.contains('معلق')) {
           filter = 'waiting';
@@ -446,7 +517,8 @@ class RuleBasedIntentParser implements IntentParser {
         norm.contains('إيه عليا') ||
         norm.contains('الالتزامات') ||
         norm.contains('الاقساط') ||
-        norm.contains('الأقساط')) {
+        norm.contains('الأقساط') ||
+        norm.contains('الديون')) {
       final periodRes = dtResolver.resolvePeriod(norm);
       final isOverdue = norm.contains('المتاخر') || norm.contains('المتأخر');
       return AssistantIntent(
@@ -475,14 +547,14 @@ class RuleBasedIntentParser implements IntentParser {
 
     // 5. Spending questions (Section 6: spending)
     // "صرفت كام الشهر ده؟", "صرفت كام على اكل بره الشهر ده؟", "اكتر حاجة بصرف عليها؟", "مصروف النهارده كام؟"
-    if ((norm.contains('صرفت كام') ||
-            norm.contains('كام صرفت') ||
-            norm.contains('مصروف النهارده كام') ||
-            norm.contains('اكتر حاجه بصرف عليها') ||
-            norm.contains('اكتر حاجة بصرف عليها') ||
-            norm.contains('أكتر حاجة بصرف عليها') ||
-            norm.contains('مصاريفي')) &&
-        (norm.contains('؟') || norm.contains('كام') || norm.contains('اكتر') || norm.contains('ايه'))) {
+    if (norm.contains('صرفت كام') ||
+        norm.contains('كام صرفت') ||
+        norm.contains('مصروف النهارده كام') ||
+        norm.contains('اكتر حاجه بصرف عليها') ||
+        norm.contains('اكتر حاجة بصرف عليها') ||
+        norm.contains('أكتر حاجة بصرف عليها') ||
+        norm.contains('مصاريفي') ||
+        (norm.contains('صرفت') && (norm.contains('كام') || norm.contains('قد ايه')))) {
       final category = AssistantDictionary.matchCategory(norm);
       final periodRes = dtResolver.resolvePeriod(norm);
       final dateRes = dtResolver.resolveDate(norm);
@@ -504,12 +576,13 @@ class RuleBasedIntentParser implements IntentParser {
 
     // 6. Habit status questions (Section 6: habit_status)
     // "شربت كام قهوة النهارده؟", "صليت ايه النهارده؟", "التزامي بالقران الاسبوع ده؟"
-    if ((norm.contains('شربت كام') ||
-            norm.contains('صليت ايه') ||
-            norm.contains('صليت إيه') ||
-            norm.contains('التزامي') ||
-            norm.contains('قريت كام')) &&
-        (norm.contains('؟') || norm.contains('كام') || norm.contains('ايه'))) {
+    if (norm.contains('شربت كام') ||
+        norm.contains('كام شربت') ||
+        norm.contains('صليت ايه') ||
+        norm.contains('صليت إيه') ||
+        norm.contains('التزامي') ||
+        norm.contains('قريت كام') ||
+        (norm.contains('عادات') && norm.contains('ايه'))) {
       final habitKey = AssistantDictionary.matchHabitKey(norm);
       final dateRes = dtResolver.resolveDate(norm);
       final periodRes = dtResolver.resolvePeriod(norm);
@@ -536,7 +609,9 @@ class RuleBasedIntentParser implements IntentParser {
         norm.contains('ايه اللي حصل') ||
         norm.contains('إيه اللي حصل') ||
         norm.startsWith('ملخص ') ||
-        norm.contains(' ملخص ')) {
+        norm.contains(' ملخص ') ||
+        norm.startsWith('تقرير ') ||
+        norm.contains(' تقرير ')) {
       final dateRes = dtResolver.resolveDate(norm);
       final periodRes = dtResolver.resolvePeriod(norm);
 
@@ -563,10 +638,10 @@ class RuleBasedIntentParser implements IntentParser {
         norm.contains('عندي ايه') ||
         norm.contains('عندي إيه') ||
         norm.contains('جدول') ||
-        norm.contains('مواعيدي')) {
+        norm.contains('مواعيدي') ||
+        norm.contains('ورايا ايه النهارده')) {
       final dateRes = dtResolver.resolveDate(norm);
       final periodRes = dtResolver.resolvePeriod(norm);
-      // Default to today if no date or period was explicitly specified
       final finalDate = (dateRes == null && periodRes == null) ? dtResolver.resolveDate('النهارده') : dateRes;
 
       return AssistantIntent(
@@ -632,13 +707,13 @@ class RuleBasedIntentParser implements IntentParser {
 
     // Reason extraction (Section 5.3): after "لان", "لاني", "عشان", "علشان", "بسبب"
     String? reason;
-    final reasonMatch = RegExp(r'(?:لاني|لأني|لان|لأن|عشان|علشان|بسبب)\s+(.+)$').firstMatch(norm);
+    final reasonMatch = RegExp(r'(?:لاني|لأني|لان|لأن|عشان|علشان|بسبب)\s+(.+)$').firstMatch(raw);
     if (reasonMatch != null) {
       reason = reasonMatch.group(1)!.trim();
-      // Match against known reason synonyms if possible for clean canonical names
-      final canonicalReason = AssistantDictionary.matchReason(reason);
-      if (canonicalReason != null) {
-        reason = canonicalReason;
+    } else if (status == 'waiting') {
+      final waitMatch = RegExp(r'(?:مستنية|مستني|منتظر)\s+(.+)$').firstMatch(raw);
+      if (waitMatch != null) {
+        reason = waitMatch.group(1)!.trim();
       }
     }
 
@@ -653,12 +728,13 @@ class RuleBasedIntentParser implements IntentParser {
 
     // Extract title: remove command words, "مهمة", date words, and the reason clause
     var title = raw;
-    // Strip reason clause from raw
-    final rawReasonMatch = RegExp(r'(?:لاني|لأني|لان|لأن|عشان|علشان|بسبب)\s+.+$').firstMatch(title);
-    if (rawReasonMatch != null) {
-      title = title.substring(0, rawReasonMatch.start).trim();
+    if (reason != null && reason.isNotEmpty) {
+      final rawReasonMatch = RegExp(r'(?:لاني|لأني|لان|لأن|عشان|علشان|بسبب|مستنية|مستني)\s+.+$').firstMatch(title);
+      if (rawReasonMatch != null) {
+        title = title.substring(0, rawReasonMatch.start).trim();
+      }
     }
-    // Strip status verbs and filler words
+
     title = _stripWords(title, [
       'خلصت',
       'انهيت',
@@ -791,7 +867,17 @@ class RuleBasedIntentParser implements IntentParser {
   }
 
   AssistantIntent _parseWishlistItem(String raw, String norm) {
-    final money = NumberWordsAr.extractMoney(norm);
+    final moneyRec = NumberWordsAr.extractMoney(norm);
+    double? money = moneyRec?.amount;
+
+    if (money == null) {
+      // Look for price phrases like "بألف وخمسمية", "بـ 2000"
+      final bMatch = RegExp(r'بـ?\s*([أ-ي\s\d]+?)(?:\s*(?:جنيه|جنية|ج|EGP|قرش|$))').firstMatch(norm);
+      if (bMatch != null) {
+        final phrase = bMatch.group(1)!.trim();
+        money = NumberWordsAr.parseNumber(phrase) ?? double.tryParse(phrase);
+      }
+    }
 
     var title = raw;
     title = _stripWords(title, [
@@ -828,10 +914,10 @@ class RuleBasedIntentParser implements IntentParser {
   }
 
   AssistantIntent _parseIncome(String raw, String norm, DateTimeResolver dtResolver) {
-    final money = NumberWordsAr.extractMoney(norm) ?? _extractFirstNumber(norm);
+    final moneyRec = NumberWordsAr.extractMoney(norm);
+    final double? money = moneyRec?.amount ?? _extractFirstNumber(norm);
     final dateRes = dtResolver.resolveDate(norm) ?? dtResolver.resolveDate('النهارده');
 
-    // Extract source: text after "من" or remaining words (e.g. "مرتب", "عميل")
     String? source;
     final sourceMatch = RegExp(r'(?:من)\s+([أ-ي\w\s]+)').firstMatch(raw);
     if (sourceMatch != null) {
@@ -859,12 +945,12 @@ class RuleBasedIntentParser implements IntentParser {
   }
 
   AssistantIntent _parseExpense(String raw, String norm, DateTimeResolver dtResolver) {
-    final money = NumberWordsAr.extractMoney(norm) ?? _extractFirstNumber(norm);
+    final moneyRec = NumberWordsAr.extractMoney(norm);
+    final double? money = moneyRec?.amount ?? _extractFirstNumber(norm);
     final category = AssistantDictionary.matchCategory(norm) ?? 'أخرى';
     final isEssential = AssistantDictionary.isEssential(category);
     final dateRes = dtResolver.resolveDate(norm) ?? dtResolver.resolveDate('النهارده');
 
-    // Extract title (expense description)
     var title = raw;
     title = _stripWords(title, ['صرفت', 'دفعت', 'اشتريت', 'سجل', 'سجّل', 'مصروف', 'على']);
     if (money != null) {
@@ -873,7 +959,6 @@ class RuleBasedIntentParser implements IntentParser {
     title = _stripDatesAndTimes(title, norm);
     title = _cleanExtraPunctuation(title);
 
-    // If title becomes empty, fall back to category or generic phrase
     if (title.isEmpty) {
       title = category;
     }
@@ -901,18 +986,15 @@ class RuleBasedIntentParser implements IntentParser {
     double quantity = 1.0;
     String action = 'add';
 
-    // Check duals: "كوبايتين", "يومين"
     if (norm.contains('كوبايتين') || norm.contains('فنجانين') || norm.contains('مرتين')) {
       quantity = 2.0;
     } else {
-      // Check for explicit number: e.g. "قريت 5 صفحات قران", "3 كوبايات قهوة"
       final numVal = _extractFirstNumber(norm);
       if (numVal != null && numVal > 0) {
         quantity = numVal;
       }
     }
 
-    // Check action type: prayers, fajr, azkar are typically checkbox ticks
     if (habitKey == 'fajr' || habitKey == 'prayers' || habitKey == 'azkar' || habitKey == 'exercise') {
       action = 'tick';
     }
@@ -969,7 +1051,6 @@ class RuleBasedIntentParser implements IntentParser {
     final timeRes = dtResolver.resolveTime(norm);
     final reminderOffset = dtResolver.resolveReminderOffsetMinutes(norm);
 
-    // Clean title keeping original spelling from transcript
     var title = raw;
     title = _stripWords(title, [
       'سجل',
