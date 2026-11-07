@@ -6,9 +6,9 @@ class TextNormalizer {
   /// Tashkeel / Diacritics regex: Fatha, Damma, Kasra, Sukun, Tanween, Shadda, etc.
   static final RegExp _diacriticsRegex = RegExp(r'[\u064B-\u065F\u0670\u0640]');
 
-  /// Common Arabic and Latin punctuation
+  /// Common Arabic and Latin punctuation (preserving : and / between digits for times and dates)
   static final RegExp _punctuationRegex = RegExp(
-    r'[\u060C\u061B\u061F\u00AB\u00BB\.,:;?!\x27\x22\(\)\[\]{}<>/\\-_~#@*^+=]',
+    r'(?<!\d):(?!\d)|(?<!\d)/(?!\d)|[\u060C\u061B\u061F\u00AB\u00BB\.,;?!\x27\x22\(\)\[\]{}<>\-_~#@*^+=]',
   );
 
   /// Arabic-Indic digits mapping to Western digits

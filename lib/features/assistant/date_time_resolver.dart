@@ -166,7 +166,7 @@ class DateTimeResolver {
     }
 
     // 2. Explicit numeric date: e.g. "12/9/2026", "يوم 12/9", "12/9"
-    final slashDateMatch = RegExp(r'(?:يوم\s*)?(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?').firstMatch(norm);
+    final slashDateMatch = RegExp(r'(?:يوم\s*)?(\d{1,2})\s*[\/\-\.]\s*(\d{1,2})(?:\s*[\/\-\.]\s*(\d{4}))?').firstMatch(norm);
     if (slashDateMatch != null) {
       final d = int.parse(slashDateMatch.group(1)!);
       final m = int.parse(slashDateMatch.group(2)!);

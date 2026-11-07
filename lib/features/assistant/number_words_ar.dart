@@ -13,28 +13,39 @@ class NumberWordsAr {
     'اثنين': 2,
     'تلاته': 3,
     'تلاتة': 3,
+    'تلات': 3,
     'ثلاثة': 3,
     'ثلاثه': 3,
+    'ثلاث': 3,
     'اربعه': 4,
     'اربعة': 4,
+    'اربع': 4,
     'أربعة': 4,
     'أربعه': 4,
+    'أربع': 4,
     'خمسه': 5,
     'خمسة': 5,
+    'خمس': 5,
     'سته': 6,
     'ستة': 6,
+    'ست': 6,
     'سبعه': 7,
     'سبعة': 7,
+    'سبع': 7,
     'تمانيه': 8,
     'تمانية': 8,
     'تمنيه': 8,
     'تمنية': 8,
+    'تمن': 8,
     'ثمانية': 8,
     'ثمانيه': 8,
+    'ثمان': 8,
     'تسعه': 9,
     'تسعة': 9,
+    'تسع': 9,
     'عشره': 10,
     'عشرة': 10,
+    'عشر': 10,
   };
 
   static const Map<String, double> _teens = {
@@ -298,25 +309,29 @@ class NumberWordsAr {
       }
     }
 
-    // 2. Word numbers: "بـ خمسين جنيه", "ألف وخمسمية جنيه", "بعشرة جنيه"
+    // 2. Word numbers: "بـ خمسين جنيه", "ألف وخمسمية جنيه", "بعشرة جنيه", "اشتريت حاجات بألف وخمسمية جنيه"
     final wordWithCurrencyReg = RegExp(
-      r'(?:بـ?|ب|دفع|صرف|اشتريت|سجل)?\s*([أ-ي\s]+?)\s*(جنيه|جنية|ج|egp|قرش|قروش)',
+      r'([أ-ي0-9\s]+?)\s*(جنيه|جنية|ج|egp|قرش|قروش)',
       caseSensitive: false,
     );
     for (final match in wordWithCurrencyReg.allMatches(norm)) {
-      var wordPart = match.group(1)!.trim();
+      final textBefore = match.group(1)!.trim();
       final currStr = match.group(2);
 
-      // Strip leading preposition 'ب' if attached: e.g. "بعشرة" -> "عشرة"
-      if (wordPart.startsWith('ب') && wordPart.length > 2 && !wordPart.startsWith('بعد')) {
-        wordPart = wordPart.substring(1).trim();
-      }
-
-      final parsed = parseNumber(wordPart);
-      if (parsed != null && parsed > 0) {
-        final isQirsh = currStr != null && (currStr == 'قرش' || currStr == 'قروش');
-        final finalAmount = isQirsh ? parsed / 100.0 : parsed;
-        return (amount: finalAmount, currency: 'EGP');
+      // Split into words and test suffixes backwards
+      final words = textBefore.split(RegExp(r'\s+'));
+      for (var i = 0; i < words.length; i++) {
+        final candidate = words.sublist(i).join(' ');
+        var cleanCandidate = candidate;
+        if (cleanCandidate.startsWith('ب') && cleanCandidate.length > 2 && !cleanCandidate.startsWith('بعد')) {
+          cleanCandidate = cleanCandidate.substring(1).trim();
+        }
+        final parsed = parseNumber(cleanCandidate) ?? parseNumber(candidate);
+        if (parsed != null && parsed > 0) {
+          final isQirsh = currStr != null && (currStr == 'قرش' || currStr == 'قروش');
+          final finalAmount = isQirsh ? parsed / 100.0 : parsed;
+          return (amount: finalAmount, currency: 'EGP');
+        }
       }
     }
 
@@ -331,7 +346,7 @@ class NumberWordsAr {
 
     // Check duals first
     _duals.forEach((word, num) {
-      final reg = RegExp('\\b$word\\b');
+      final reg = RegExp('(?<=^|[\\s\u060C,])' + RegExp.escape(word) + '(?=[\\s\u060C,]|\$)');
       if (reg.hasMatch(result)) {
         // e.g. "يومين" -> "2 يوم", "كوبايتين" -> "2 كوباية"
         result = result.replaceAll(reg, '${num.toInt()} $word');
@@ -340,28 +355,32 @@ class NumberWordsAr {
 
     // Check thousands compounds
     _thousands.forEach((phrase, val) {
-      result = result.replaceAll(phrase, val.toInt().toString());
+      final reg = RegExp('(?<=^|[\\s\u060C,])' + RegExp.escape(phrase) + '(?=[\\s\u060C,]|\$)');
+      result = result.replaceAll(reg, val.toInt().toString());
     });
 
     // Check hundreds
     _hundreds.forEach((phrase, val) {
-      result = result.replaceAll(phrase, val.toInt().toString());
+      final reg = RegExp('(?<=^|[\\s\u060C,])' + RegExp.escape(phrase) + '(?=[\\s\u060C,]|\$)');
+      result = result.replaceAll(reg, val.toInt().toString());
     });
 
     // Check tens
     _tens.forEach((phrase, val) {
-      result = result.replaceAll(phrase, val.toInt().toString());
+      final reg = RegExp('(?<=^|[\\s\u060C,])' + RegExp.escape(phrase) + '(?=[\\s\u060C,]|\$)');
+      result = result.replaceAll(reg, val.toInt().toString());
     });
 
     // Check teens
     _teens.forEach((phrase, val) {
-      result = result.replaceAll(phrase, val.toInt().toString());
+      final reg = RegExp('(?<=^|[\\s\u060C,])' + RegExp.escape(phrase) + '(?=[\\s\u060C,]|\$)');
+      result = result.replaceAll(reg, val.toInt().toString());
     });
 
     // Check single units
     _units.forEach((phrase, val) {
-      // Avoid replacing inside other words by checking boundary
-      result = result.replaceAll(RegExp('\\b$phrase\\b'), val.toInt().toString());
+      final reg = RegExp('(?<=^|[\\s\u060C,])' + RegExp.escape(phrase) + '(?=[\\s\u060C,]|\$)');
+      result = result.replaceAll(reg, val.toInt().toString());
     });
 
     return result;
