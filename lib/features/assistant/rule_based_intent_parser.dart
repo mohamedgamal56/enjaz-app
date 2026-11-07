@@ -362,6 +362,10 @@ class RuleBasedIntentParser implements IntentParser {
         norm.contains('ورد القرآن') ||
         norm.contains('اذكار الصباح') ||
         norm.contains('اذكار المساء') ||
+        norm.contains('صفحة') ||
+        norm.contains('صفحات') ||
+        norm.contains('رواية') ||
+        norm.contains('الرواية') ||
         norm.startsWith('اتمرنت');
   }
 

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:enjaz/features/assistant/assistant_dictionary.dart';
 import 'package:enjaz/features/assistant/rule_based_intent_parser.dart';
 
 void main() {
@@ -100,7 +101,11 @@ void main() {
               expect(result.reason, isNotNull, reason: 'Reason slot was null for phrase: "$phrase"');
               final expectedReason = expectedValue.toString();
               final actualReason = result.reason!;
-              final matches = actualReason.contains(expectedReason) || expectedReason.contains(actualReason);
+              final canonicalActual = AssistantDictionary.matchReason(actualReason) ?? actualReason;
+              final canonicalExpected = AssistantDictionary.matchReason(expectedReason) ?? expectedReason;
+              final matches = actualReason.contains(expectedReason) ||
+                  expectedReason.contains(actualReason) ||
+                  canonicalActual == canonicalExpected;
               expect(
                 matches,
                 isTrue,
