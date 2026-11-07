@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import '../../core/db/app_database.dart';
 import '../finance/domain/finance_service.dart';
@@ -102,9 +103,10 @@ class AnswerService {
     final dateWords = isToday ? 'النهارده' : ActionPlanner.formatDateInArabicWords(targetDateStr);
 
     // 1. Fetch tasks for target date
-    final allTasks = await (db.select(db.tasks)
-          ..where((t) => t.dueDate.equals(targetDateStr) & t.deletedAt.isNull()))
+    final dayTasks = await (db.select(db.tasks)
+          ..where((t) => t.dueDate.equals(targetDateStr)))
         .get();
+    final allTasks = dayTasks.where((t) => t.deletedAt == null).toList();
 
     // Sort by dueTime
     allTasks.sort((a, b) {
@@ -238,9 +240,10 @@ class AnswerService {
     }
 
     // Spending in period
-    final txs = await (db.select(db.transactions)
-          ..where((t) => t.kind.equals('expense') & t.deletedAt.isNull()))
+    final allExpenseTxs = await (db.select(db.transactions)
+          ..where((t) => t.kind.equals('expense')))
         .get();
+    final txs = allExpenseTxs.where((t) => t.deletedAt == null).toList();
     final periodTxs = txs.where((t) => t.occurredAt >= startMs && t.occurredAt < endMs).toList();
     final totals = financeService.calculateTotals(periodTxs);
 
@@ -319,9 +322,10 @@ class AnswerService {
     final endMs = DateTime.parse(endDate).add(const Duration(days: 1)).millisecondsSinceEpoch;
 
     // Fetch transactions
-    final allTxs = await (db.select(db.transactions)
-          ..where((t) => t.kind.equals('expense') & t.deletedAt.isNull()))
+    final allExpenseTxs = await (db.select(db.transactions)
+          ..where((t) => t.kind.equals('expense')))
         .get();
+    final allTxs = allExpenseTxs.where((t) => t.deletedAt == null).toList();
     final periodTxs = allTxs.where((t) => t.occurredAt >= startMs && t.occurredAt < endMs).toList();
 
     // Specific category query?
