@@ -290,14 +290,14 @@ class NumberWordsAr {
     }
 
     // Match patterns like "بـ 100", "ب100", "100 جنيه", "100 ج", "100 EGP"
-    // 1. Numeric with currency word
+    // 1. Numeric with currency indicator (prefix like "بـ" / "ب" / "سعرها" / "مبلغ", OR currency word suffix)
     final numCurrencyReg = RegExp(
-      r'(?:بـ?|سعرها|مبلغ)?\s*(\d+(?:\.\d+)?)\s*(جنيه|جنية|ج|egp|قرش|قروش)?',
+      r'(?:(?:بـ?|سعرها|مبلغ)\s*(\d+(?:\.\d+)?)(?:\s*(جنيه|جنية|ج\.م|ج|egp|قرش|قروش))?|(\d+(?:\.\d+)?)\s*(جنيه|جنية|ج\.م|ج|egp|قرش|قروش))',
       caseSensitive: false,
     );
     for (final match in numCurrencyReg.allMatches(norm)) {
-      final numStr = match.group(1);
-      final currStr = match.group(2);
+      final numStr = match.group(1) ?? match.group(3);
+      final currStr = match.group(2) ?? match.group(4);
       if (numStr != null) {
         final val = double.tryParse(numStr);
         if (val != null && val > 0) {

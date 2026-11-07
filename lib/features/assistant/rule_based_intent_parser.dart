@@ -707,11 +707,11 @@ class RuleBasedIntentParser implements IntentParser {
 
     // Reason extraction (Section 5.3): after "لان", "لاني", "عشان", "علشان", "بسبب"
     String? reason;
-    final reasonMatch = RegExp(r'(?:لاني|لأني|لان|لأن|عشان|علشان|بسبب)\s+(.+)$').firstMatch(raw);
+    final reasonMatch = RegExp(r'(?:^|[\s،,])(?:لاني|لأني|لان|لأن|عشان|علشان|بسبب)\s+(.+)$').firstMatch(raw);
     if (reasonMatch != null) {
       reason = reasonMatch.group(1)!.trim();
     } else if (status == 'waiting') {
-      final waitMatch = RegExp(r'(?:مستنية|مستني|منتظر)\s+(.+)$').firstMatch(raw);
+      final waitMatch = RegExp(r'(?:^|[\s،,])(?:مستنية|مستني|منتظر)\s+(.+)$').firstMatch(raw);
       if (waitMatch != null) {
         reason = waitMatch.group(1)!.trim();
       }
@@ -729,7 +729,7 @@ class RuleBasedIntentParser implements IntentParser {
     // Extract title: remove command words, "مهمة", date words, and the reason clause
     var title = raw;
     if (reason != null && reason.isNotEmpty) {
-      final rawReasonMatch = RegExp(r'(?:لاني|لأني|لان|لأن|عشان|علشان|بسبب|مستنية|مستني)\s+.+$').firstMatch(title);
+      final rawReasonMatch = RegExp(r'(?:^|[\s،,])(?:لاني|لأني|لان|لأن|عشان|علشان|بسبب|مستنية|مستني)\s+.+$').firstMatch(title);
       if (rawReasonMatch != null) {
         title = title.substring(0, rawReasonMatch.start).trim();
       }
