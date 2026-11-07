@@ -122,6 +122,11 @@ void main() {
 
       // Verify transcript is rendered
       expect(find.text('صرفت 100 جنيه بنزين للموتوسيكل'), findsOneWidget);
+
+      // Stop listening to terminate repeating animation and unmount cleanly
+      await voiceService.stopListening();
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
     });
 
     testWidgets('VoiceTestScreen renders all 30 test sentences and allows test interaction', (tester) async {
@@ -140,6 +145,9 @@ void main() {
       await tester.tap(find.text('🌐 وضع عادي'));
       await tester.pumpAndSettle();
       expect(find.text('✈️ وضع الطيران'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
     });
   });
 }
