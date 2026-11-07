@@ -7,7 +7,9 @@ class TextNormalizer {
   static final RegExp _diacriticsRegex = RegExp(r'[\u064B-\u065F\u0670\u0640]');
 
   /// Common Arabic and Latin punctuation
-  static final RegExp _punctuationRegex = RegExp(r'[،؛؟!؟\.,:;`"\'\(\)\[\]\{\}\<\>\/\\«»\-_~#@\*\^\+=]');
+  static final RegExp _punctuationRegex = RegExp(
+    r'[\u060C\u061B\u061F\u00AB\u00BB\.,:;?!\x27\x22\(\)\[\]{}<>/\\-_~#@*^+=]',
+  );
 
   /// Arabic-Indic digits mapping to Western digits
   static const Map<String, String> _arabicDigitsMap = {
