@@ -1,22 +1,22 @@
-# تطبيق "إنجاز" (Enjaz) — الإصدار النهائي المستقر v1.1.0
+# تطبيق "إنجاز" (Enjaz) — الإصدار النهائي المستقر v1.1.1 (Voice Assistant Foundations)
 
-تطبيق **"إنجاز"** هو نظامك الشخصي المتكامل لإدارة المهام، المشاوير، الأهداف الحياتية، العادات، السجل الزمني، الملاحظات، والمتابعة المالية والصحية — أوفلاين بالكامل 100% وبدون أي حاجة للإنترنت وبأعلى معايير الخصوصية والأمان.
+تطبيق **"إنجاز"** هو نظامك الشخصي المتكامل لإدارة المهام، المشاوير، الأهداف الحياتية، العادات، السجل الزمني، الملاحظات، والمتابعة المالية والصحية — أوفلاين بالكامل 100% وبدون أي حاجة للإنترنت وبأعلى معايير الخصوصية والأمان، بالإضافة إلى **المساعد الصوتي الذكي أوفلاين (Voice Assistant)**.
 
-المشروع الآن مكتمل بنسبة 100% بجميع مراحله وفق وثيقة **Roadmap v2.0** (`CHANGES.md`)، ومطابق لكافة شروط واختبارات القبول (Section 14).
+المشروع الآن مكتمل بنسبة 100% بجميع مراحله وفق وثيقة **Roadmap v2.0** (`CHANGES.md`)، ومواصفات المساعد الصوتي (`VOICE.md`).
 
 ---
 
-## 🚀 تحميل وتثبيت النسخة النهائية المستقرة (Production v1.1.0):
+## 🚀 تحميل وتثبيت النسخة الرسمية المحدثة (v1.1.1):
 
 ### 💡 التثبيت المباشر بنقرة واحدة (Direct In-Place Update):
-النسخة النهائية **v1.1.0+10** موقّعة بنفس المفتاح الرسمي الثابت (`enjaz-release-key.jks`)؛ لذلك **ستتثبت مباشرة فوق أي إصدار سابق بنقرة واحدة بدون مسح التطبيق وبدون فقدان أي بيانات نهائياً**.
+النسخة **v1.1.1+11** موقّعة بنفس المفتاح الرسمي الثابت (`enjaz-release-key.jks`)؛ لذلك **ستتثبت مباشرة فوق أي إصدار سابق بنقرة واحدة بدون مسح التطبيق وبدون فقدان أي بيانات نهائياً**.
 
 * 🔗 **رابط الإصدار الرسمي على GitHub:**
-  👉 [GitHub Releases: v1.1.0](https://github.com/mohamedgamal56/enjaz-app/releases/tag/v1.1.0)
+  👉 [GitHub Releases: voice-1 (v1.1.1)](https://github.com/mohamedgamal56/enjaz-app/releases/tag/voice-1)
 * 📦 **تحميل ملف الـ APK المباشر لهواتف الأندرويد الحديثة (arm64):**
-  👉 [تحميل enjaz-app-arm64.apk](https://github.com/mohamedgamal56/enjaz-app/releases/download/v1.1.0/enjaz-app-arm64.apk)
+  👉 [تحميل enjaz-app-arm64.apk](https://github.com/mohamedgamal56/enjaz-app/releases/download/voice-1/enjaz-app-arm64.apk)
 * 📦 **تحميل ملف الـ APK العام (Universal):**
-  👉 [تحميل enjaz-app.apk](https://github.com/mohamedgamal56/enjaz-app/releases/download/v1.1.0/enjaz-app.apk)
+  👉 [تحميل enjaz-app.apk](https://github.com/mohamedgamal56/enjaz-app/releases/download/voice-1/enjaz-app.apk)
 
 ---
 

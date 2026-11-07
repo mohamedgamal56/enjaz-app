@@ -351,6 +351,24 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
   - **Documentation & Archive**:
     - Complete synchronization across `README.md`, `CHANGELOG.md`, `DECISIONS.md`, and official GitHub release notes.
 
+## Decision 22: Voice Assistant Architecture & Step 1 Foundations (VOICE.md Specification v1.0)
+- **Context**: Initiation of the Voice Assistant ("المساعد الصوتي") feature per `VOICE.md`. The assistant is an offline, rule-based natural language parser powered by on-device Android speech recognition and local rule matching (zero cloud/AI calls, zero network permissions). Step 1 implements the linguistic, numerical, temporal, and pluralization foundations without UI.
+- **Decision & Implementation**:
+  - **Open Items Decisions (Section 13)**:
+    - Default reminder kind for voice-created tasks: Alarm (منبه) following the user's default setting in Settings.
+    - App Shortcut title: "سجّل بالصوت".
+    - Adopted 10 Egyptian dialect corpus sentences into the test suite.
+  - **Foundations Implementation (`lib/features/assistant/`)**:
+    - `TextNormalizer`: Normalizes Arabic text for matching without modifying what the user sees. Strips diacritics/tashkeel, converts Arabic-Indic numerals to ASCII, unifies Alef forms, Taa Marbuta, and Yaa/Alef Maqsura, strips punctuation, and maps Egyptian dialect variants.
+    - `NumberWordsAr`: Pure Dart parser for Egyptian Arabic number words (units, teens, tens, hundreds, thousands, compound phrases such as "ألف وخمسمية", fractions "اتنين ونص", duals "يومين", "جنيهين", and currency extraction).
+    - `DateTimeResolver`: Resolves dates, times, periods, and reminder offsets with Egyptian Arabic semantics. Evaluated against the fixed reference timestamp `Saturday 7 Nov 2026 10:00 AM (Africa/Cairo)`.
+    - `PluralAr`: Formats Arabic counting rules (singular, dual, plural 3-10, singular accusative 11+).
+  - **Verification**:
+    - Unit test suites in `test/unit/assistant/` achieving 100% pass rate.
+  - **Version & Build**:
+    - Bumped version to `1.1.1+11` in `pubspec.yaml` ensuring smooth in-place update over production v1.1.0+10.
+
+
 
 
 
