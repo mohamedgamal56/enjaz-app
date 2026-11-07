@@ -63,7 +63,10 @@ void main() {
   setUp(() {
     db = AppDatabase(NativeDatabase.memory());
     fakeSource = FakeSpeechRecognizerSource();
-    voiceService = VoiceInputService(source: fakeSource);
+    voiceService = VoiceInputService(
+      source: fakeSource,
+      permissionChecker: () async => true,
+    );
   });
 
   tearDown(() async {

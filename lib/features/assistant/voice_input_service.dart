@@ -95,6 +95,7 @@ class RealSpeechToTextSource implements SpeechRecognizerSource {
 class VoiceInputService {
   final SpeechRecognizerSource _source;
   final Duration maxSessionDuration;
+  final Future<bool> Function()? permissionChecker;
 
   VoiceInputState _state = VoiceInputState.idle;
   bool _isUserIntendedListening = false;
@@ -110,6 +111,7 @@ class VoiceInputService {
   VoiceInputService({
     SpeechRecognizerSource? source,
     this.maxSessionDuration = const Duration(seconds: 60),
+    this.permissionChecker,
   }) : _source = source ?? RealSpeechToTextSource();
 
   VoiceInputState get state => _state;
@@ -125,11 +127,20 @@ class VoiceInputService {
     if (_isUserIntendedListening) return true;
 
     // Check microphone permission
-    final permStatus = await Permission.microphone.request();
-    if (!permStatus.isGranted) {
-      _setState(VoiceInputState.error);
-      _errorController.add('صلاحية الميكروفون مطلوبة للتسجيل الصوتي.');
-      return false;
+    if (permissionChecker != null) {
+      final granted = await permissionChecker!();
+      if (!granted) {
+        _setState(VoiceInputState.error);
+        _errorController.add('صلاحية الميكروفون مطلوبة للتسجيل الصوتي.');
+        return false;
+      }
+    } else {
+      final permStatus = await Permission.microphone.request();
+      if (!permStatus.isGranted) {
+        _setState(VoiceInputState.error);
+        _errorController.add('صلاحية الميكروفون مطلوبة للتسجيل الصوتي.');
+        return false;
+      }
     }
 
     // Trigger brief haptic vibration per Section 2.3
