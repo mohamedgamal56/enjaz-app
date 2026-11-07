@@ -65,7 +65,7 @@ void main() {
       final taskId = await db.insertNewTask(
         TasksCompanion.insert(
           title: 'مراجعة الميزانية',
-          status: const Value('done'),
+          status: const Value('in_progress'),
           createdAt: yest.millisecondsSinceEpoch,
           updatedAt: yest.millisecondsSinceEpoch,
         ),

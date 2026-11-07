@@ -519,6 +519,7 @@ class RuleBasedIntentParser implements IntentParser {
         norm.contains('عليا إيه') ||
         norm.contains('ايه عليا') ||
         norm.contains('إيه عليا') ||
+        norm.contains('اللي عليا') ||
         norm.contains('الالتزامات') ||
         norm.contains('الاقساط') ||
         norm.contains('الأقساط') ||
