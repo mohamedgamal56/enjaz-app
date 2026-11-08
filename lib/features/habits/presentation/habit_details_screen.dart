@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:drift/drift.dart' as drift;
 
 import '../../../core/db/app_database.dart';
-import '../../../core/l10n/app_localizations.dart';
 import '../../reminders/domain/reminder_scheduler.dart';
 import '../domain/habits_service.dart';
 import 'habit_icon_helper.dart';

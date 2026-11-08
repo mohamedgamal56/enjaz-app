@@ -7,7 +7,6 @@ import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../voice_notes/presentation/widgets/voice_notes_section.dart';
-import '../../reminders/domain/notification_service.dart';
 import '../../reminders/domain/reminder_scheduler.dart';
 import 'status_sheet.dart';
 

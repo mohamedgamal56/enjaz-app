@@ -49,3 +49,7 @@ key.properties
 test_font.ttf
 
 build_output/
+*.g.dart
+lib/l10n/app_localizations*.dart
+untranslated.json
+*-result.txt

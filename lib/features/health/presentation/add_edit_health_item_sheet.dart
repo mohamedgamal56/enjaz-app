@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' as drift;
 
 import '../../../core/db/app_database.dart';
-import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/money_formatter.dart';
 import 'health_icon_helper.dart';
 

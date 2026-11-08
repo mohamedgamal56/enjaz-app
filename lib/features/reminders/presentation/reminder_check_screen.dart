@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import '../../../core/l10n/app_localizations.dart';
 import '../domain/notification_service.dart';
 
 class ReminderCheckScreen extends ConsumerStatefulWidget {

@@ -1,14 +1,19 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
+
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../../core/db/app_database.dart';
+import 'reminder_scheduler.dart';
 
 @pragma('vm:entry-point')
-void notificationTapBackground(NotificationResponse notificationResponse) async {
+void notificationTapBackground(
+  NotificationResponse notificationResponse,
+) async {
   final actionId = notificationResponse.actionId;
   final payload = notificationResponse.payload;
 
@@ -27,6 +32,7 @@ void notificationTapBackground(NotificationResponse notificationResponse) async 
       final task = await db.getTaskById(taskId);
       if (task != null) {
         await db.updateTaskStatus(task: task, newStatus: 'done');
+        await ReminderScheduler(db: db).cancelAllForOwner('task', taskId);
       }
     } else if (actionId == 'action_snooze' && taskId != null) {
       // Snooze default: 10 minutes
@@ -36,19 +42,27 @@ void notificationTapBackground(NotificationResponse notificationResponse) async 
       if (task != null) {
         final snoozeTime = DateTime.now().add(Duration(minutes: snoozeMinutes));
         await NotificationService.instance.scheduleAlarm(
-          id: (taskId.abs() % 2000000000),
+          id: notificationResponse.id ?? (taskId.abs() % 2000000000),
           title: task.title,
           body: 'تأجيل المنبه ($snoozeMinutes د)',
           scheduledDateTime: snoozeTime,
           payload: 'task:$taskId',
         );
       }
+    } else if (actionId == 'action_snooze' && notificationResponse.id != null) {
+      final minutes = int.tryParse(await db.getSetting('reminder_snooze_duration') ?? '10') ?? 10;
+      await NotificationService.instance.scheduleAlarm(
+        id: notificationResponse.id!, title: 'تذكير مؤجل', body: 'حان موعد التذكير',
+        scheduledDateTime: DateTime.now().add(Duration(minutes: minutes)), payload: payload, isSensitive: true);
     } else if (actionId == 'action_stop') {
-      if (taskId != null) {
-        await NotificationService.instance.cancelNotification(taskId.abs() % 2000000000);
+      if (notificationResponse.id != null) {
+        await NotificationService.instance.cancelNotification(
+          notificationResponse.id!,
+        );
       }
     }
-  } catch (_) {} finally {
+  } catch (_) {
+  } finally {
     await db.close();
   }
 }
@@ -59,8 +73,12 @@ class NotificationService {
   static NotificationService get instance => _instance;
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   bool _initialized = false;
+  Future<void>? _initializing;
+  String? _pendingLaunchPayload;
+  Function(String?)? _onSelectNotification;
 
   // Fixed Notification IDs
   static const int idDailySummary = 99901;
@@ -76,28 +94,45 @@ class NotificationService {
   final Map<int, String> activeScheduledPayloads = {};
 
   /// Initialize notifications plugin and timezone database
-  Future<void> initialize({Function(String? payload)? onSelectNotification}) async {
-    if (_initialized) return;
+  Future<void> initialize({
+    Function(String? payload)? onSelectNotification,
+  }) async {
+    if (onSelectNotification != null) _onSelectNotification = onSelectNotification;
+    if (_initialized) {
+      if (_pendingLaunchPayload != null && _onSelectNotification != null) {
+        final payload = _pendingLaunchPayload;
+        _pendingLaunchPayload = null;
+        _onSelectNotification!(payload);
+      }
+      return;
+    }
+    await (_initializing ??= _initializePlugin());
+  }
+
+  Future<void> _initializePlugin() async {
+    try {
 
     try {
       tz.initializeTimeZones();
+      final zone = await const MethodChannel('com.enjaz.app/assistant').invokeMethod<String>('timezone');
+      if (zone != null) tz.setLocalLocation(tz.getLocation(zone));
     } catch (_) {}
 
-    const androidSettings = AndroidInitializationSettings('@drawable/ic_stat_enjaz');
-
-    const initSettings = InitializationSettings(
-      android: androidSettings,
+    const androidSettings = AndroidInitializationSettings(
+      '@drawable/ic_stat_enjaz',
     );
+
+    const initSettings = InitializationSettings(android: androidSettings);
 
     await _notificationsPlugin.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (response) async {
         final actionId = response.actionId;
         final payload = response.payload;
-        if (payload != null && actionId != null) {
+        if (payload != null && actionId != null && actionId.isNotEmpty && actionId != 'action_open') {
           notificationTapBackground(response);
-        } else if (onSelectNotification != null) {
-          onSelectNotification(response.payload);
+        } else {
+          _onSelectNotification?.call(response.payload);
         }
       },
       onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
@@ -106,14 +141,22 @@ class NotificationService {
     // Create Notification Channels for Android 8.0+
     if (Platform.isAndroid) {
       final androidImplementation = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
 
       if (androidImplementation != null) {
         // Delete legacy channels so new settings/sounds take effect
         try {
-          await androidImplementation.deleteNotificationChannel('enjaz_task_reminders');
-          await androidImplementation.deleteNotificationChannel('enjaz_daily_reminders');
-          await androidImplementation.deleteNotificationChannel('enjaz_weekly_report');
+          await androidImplementation.deleteNotificationChannel(
+            'enjaz_task_reminders',
+          );
+          await androidImplementation.deleteNotificationChannel(
+            'enjaz_daily_reminders',
+          );
+          await androidImplementation.deleteNotificationChannel(
+            'enjaz_weekly_report',
+          );
         } catch (_) {}
 
         // 1. Dedicated Alarm Channel (Importance.max, alarm audio attributes, ongoing, insistent)
@@ -144,15 +187,29 @@ class NotificationService {
     }
 
     _initialized = true;
+    final launch = await _notificationsPlugin.getNotificationAppLaunchDetails();
+    if (launch?.didNotificationLaunchApp == true) {
+      final response = launch!.notificationResponse;
+      if (response != null && response.actionId != null && response.actionId!.isNotEmpty && response.actionId != 'action_open') {
+        notificationTapBackground(response);
+      } else {
+        if (_onSelectNotification != null) { _onSelectNotification!(response?.payload); }
+        else { _pendingLaunchPayload = response?.payload; }
+      }
+    }
+    } finally { _initializing = null; }
   }
 
   /// Request POST_NOTIFICATIONS permission on Android 13+
   Future<bool> requestPermission() async {
     if (Platform.isAndroid) {
       final androidImplementation = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (androidImplementation != null) {
-        final granted = await androidImplementation.requestNotificationsPermission();
+        final granted = await androidImplementation
+            .requestNotificationsPermission();
         return granted ?? false;
       }
     }
@@ -163,9 +220,12 @@ class NotificationService {
   Future<bool> areExactAlarmsPermitted() async {
     if (Platform.isAndroid) {
       final androidImplementation = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (androidImplementation != null) {
-        final granted = await androidImplementation.requestExactAlarmsPermission();
+        final granted = await androidImplementation
+            .requestExactAlarmsPermission();
         return granted ?? false;
       }
     }
@@ -207,11 +267,18 @@ class NotificationService {
       additionalFlags: Int32List.fromList([4]),
       icon: '@drawable/ic_stat_enjaz',
       timeoutAfter: autoStopMinutes * 60 * 1000,
-      visibility: isSensitive ? NotificationVisibility.private : NotificationVisibility.public,
+      visibility:
+          (isSensitive ||
+              (await SharedPreferences.getInstance()).getBool(
+                    'app_lock_hide_notifications',
+                  ) !=
+                  false)
+          ? NotificationVisibility.private
+          : NotificationVisibility.public,
       actions: <AndroidNotificationAction>[
         AndroidNotificationAction(
-          'action_done',
-          doneLabel,
+          payload?.startsWith('task:') == true ? 'action_done' : 'action_open',
+          payload?.startsWith('task:') == true ? doneLabel : (isArabic ? 'فتح' : 'Open'),
           showsUserInterface: true,
         ),
         AndroidNotificationAction(
@@ -284,11 +351,18 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
       icon: '@drawable/ic_stat_enjaz',
-      visibility: isSensitive ? NotificationVisibility.private : NotificationVisibility.public,
+      visibility:
+          (isSensitive ||
+              (await SharedPreferences.getInstance()).getBool(
+                    'app_lock_hide_notifications',
+                  ) !=
+                  false)
+          ? NotificationVisibility.private
+          : NotificationVisibility.public,
       actions: <AndroidNotificationAction>[
         AndroidNotificationAction(
-          'action_done',
-          doneLabel,
+          payload?.startsWith('task:') == true ? 'action_done' : 'action_open',
+          payload?.startsWith('task:') == true ? doneLabel : openLabel,
           showsUserInterface: true,
         ),
         AndroidNotificationAction(
@@ -350,8 +424,42 @@ class NotificationService {
 
   /// Cancel notification by ID
   Future<void> cancelNotification(int id) async {
+    await initialize();
     activeScheduledPayloads.remove(id);
     await _notificationsPlugin.cancel(id);
+  }
+
+  Future<void> cancelAll() async {
+    await initialize();
+    await _notificationsPlugin.cancelAll();
+    activeScheduledPayloads.clear();
+  }
+
+  Future<void> scheduleMonthlyBackupReminder() async {
+    await initialize();
+    const id = 99904;
+    await cancelNotification(id);
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('backup_monthly_reminder') == false) return;
+    final now = DateTime.now();
+    await _notificationsPlugin.zonedSchedule(
+      id,
+      'نسخة احتياطية لإنجاز',
+      'احفظ نسخة احتياطية من بياناتك',
+      tz.TZDateTime.from(DateTime(now.year, now.month + 1, 1, 10), tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          channelRemindersV2,
+          'تنبيهات المهام والإشعارات',
+          icon: '@drawable/ic_stat_enjaz',
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.dayOfMonthAndTime,
+      payload: 'backup',
+    );
   }
 
   /// Schedule Daily Morning Summary (configurable time)
@@ -369,11 +477,11 @@ class NotificationService {
     final title = isArabic ? 'الموجز الصباحي ☀️' : 'Morning Summary ☀️';
     final body = isArabic
         ? (todayItemsCount > 0
-            ? 'لديك اليوم $todayItemsCount مهمة ومشوار'
-            : 'يومك يبدو هادئاً، خطط لأولوياتك')
+              ? 'لديك اليوم $todayItemsCount مهمة ومشوار'
+              : 'يومك يبدو هادئاً، خطط لأولوياتك')
         : (todayItemsCount > 0
-            ? 'You have $todayItemsCount items planned for today'
-            : 'Your day looks clear, plan your priorities');
+              ? 'You have $todayItemsCount items planned for today'
+              : 'Your day looks clear, plan your priorities');
 
     final now = DateTime.now();
     var scheduledDate = DateTime(now.year, now.month, now.day, hour, minute);
@@ -466,7 +574,9 @@ class NotificationService {
     if (!enabled) return;
 
     final isArabic = languageCode != 'en';
-    final title = isArabic ? 'تقرير إنجاز الأسبوعي 📊' : 'Weekly Excel Report 📊';
+    final title = isArabic
+        ? 'تقرير إنجاز الأسبوعي 📊'
+        : 'Weekly Excel Report 📊';
     final body = isArabic
         ? 'تقرير الأسبوع جاهز، اضغط للمراجعة والتصدير'
         : 'Your weekly report is ready. Tap to review and export';
@@ -513,13 +623,17 @@ class NotificationService {
   /// Reschedule all active reminders
   Future<void> rescheduleAll(AppDatabase db, {String? languageCode}) async {
     await initialize();
+    await scheduleMonthlyBackupReminder();
 
     final todayStr = _formatDate(DateTime.now());
     final todayTasks = await db.watchTasksForDate(todayStr).first;
 
-    final morningHour = int.tryParse(await db.getSetting('morning_summary_hour') ?? '8') ?? 8;
-    final morningMinute = int.tryParse(await db.getSetting('morning_summary_minute') ?? '0') ?? 0;
-    final morningEnabled = (await db.getSetting('morning_summary_enabled')) != 'false';
+    final morningHour =
+        int.tryParse(await db.getSetting('morning_summary_hour') ?? '8') ?? 8;
+    final morningMinute =
+        int.tryParse(await db.getSetting('morning_summary_minute') ?? '0') ?? 0;
+    final morningEnabled =
+        (await db.getSetting('morning_summary_enabled')) != 'false';
 
     await scheduleDailySummary(
       enabled: morningEnabled,
@@ -529,9 +643,12 @@ class NotificationService {
       languageCode: languageCode,
     );
 
-    final eveningHour = int.tryParse(await db.getSetting('evening_review_hour') ?? '21') ?? 21;
-    final eveningMinute = int.tryParse(await db.getSetting('evening_review_minute') ?? '0') ?? 0;
-    final eveningEnabled = (await db.getSetting('evening_review_enabled')) == 'true';
+    final eveningHour =
+        int.tryParse(await db.getSetting('evening_review_hour') ?? '21') ?? 21;
+    final eveningMinute =
+        int.tryParse(await db.getSetting('evening_review_minute') ?? '0') ?? 0;
+    final eveningEnabled =
+        (await db.getSetting('evening_review_enabled')) == 'true';
 
     await scheduleEveningReview(
       enabled: eveningEnabled,
@@ -540,9 +657,12 @@ class NotificationService {
       languageCode: languageCode,
     );
 
-    final weeklyHour = int.tryParse(await db.getSetting('weekly_excel_hour') ?? '18') ?? 18;
-    final weeklyMinute = int.tryParse(await db.getSetting('weekly_excel_minute') ?? '0') ?? 0;
-    final weeklyEnabled = (await db.getSetting('weekly_excel_enabled')) != 'false';
+    final weeklyHour =
+        int.tryParse(await db.getSetting('weekly_excel_hour') ?? '18') ?? 18;
+    final weeklyMinute =
+        int.tryParse(await db.getSetting('weekly_excel_minute') ?? '0') ?? 0;
+    final weeklyEnabled =
+        (await db.getSetting('weekly_excel_enabled')) != 'false';
 
     await scheduleWeeklyExcelReminder(
       enabled: weeklyEnabled,

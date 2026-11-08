@@ -400,3 +400,9 @@ class TreatmentChecks extends Table with CommonColumns {
 
 
 
+
+class UnrecognizedPhrases extends Table with CommonColumns {
+  TextColumn get phrase => text()();
+  IntColumn get at => integer()();
+  BoolColumn get handled => boolean().withDefault(const Constant(false))();
+}

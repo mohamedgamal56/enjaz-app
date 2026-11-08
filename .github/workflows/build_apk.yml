@@ -2,7 +2,8 @@ name: Build Flutter APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, 'fix/**' ]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -33,6 +34,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          flutter-version: '3.47.9'
           cache: true
 
       - name: Get dependencies
@@ -45,6 +47,7 @@ jobs:
         run: flutter test
 
       - name: Configure Release Keystore
+        if: github.event_name != 'pull_request'
         env:
           KEYSTORE_BASE64: ${{ secrets.ENJAZ_RELEASE_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ENJAZ_KEYSTORE_PASSWORD }}
@@ -59,6 +62,7 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 -d > android/app/enjaz-release-key.jks
 
       - name: Build Release APK (arm64 only)
+        if: github.event_name != 'pull_request'
         env:
           ENJAZ_KEYSTORE_PASSWORD: ${{ secrets.ENJAZ_KEYSTORE_PASSWORD }}
           ENJAZ_KEY_ALIAS: ${{ secrets.ENJAZ_KEY_ALIAS }}
@@ -66,10 +70,12 @@ jobs:
         run: flutter build apk --release --split-per-abi --no-tree-shake-icons --android-skip-build-dependency-validation
 
       - name: Prepare APK
+        if: github.event_name != 'pull_request'
         run: |
           cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk enjaz-app-arm64.apk
 
       - name: Verify APK Signature Fingerprint
+        if: github.event_name != 'pull_request'
         run: |
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f 2>/dev/null | sort -V | tail -n 1)
           if [ -z "$APKSIGNER" ]; then
@@ -91,6 +97,7 @@ jobs:
           echo "✅ APK signature verified successfully: $ACTUAL_RAW"
 
       - name: Upload APK Artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: enjaz-app-apk

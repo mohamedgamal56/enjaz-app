@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/db/app_database.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../finance/presentation/finance_screen.dart';
@@ -13,7 +11,6 @@ import '../../health/presentation/health_screen.dart';
 import '../../plan/presentation/plan_screen.dart';
 import '../../tasks/presentation/task_details_screen.dart';
 import '../../voice_notes/presentation/widgets/voice_player_card.dart';
-import '../domain/timeline_aggregator.dart';
 import '../domain/timeline_models.dart';
 import '../domain/timeline_provider.dart';
 

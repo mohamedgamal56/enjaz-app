@@ -152,13 +152,14 @@ class ReminderScheduler {
   Future<void> rescheduleAllActive({String? languageCode}) async {
     final allReminders = await _db.getAllActiveReminders();
     for (final r in allReminders) {
+      await cancelReminder(r.id);
       if (r.ownerType == 'task') {
         final task = await _db.getTaskById(r.ownerId);
         if (task != null && task.status != 'done' && task.deletedAt == null) {
           await scheduleReminder(
             reminder: r,
             title: task.title,
-            dueDate: task.dueDate,
+            dueDate: task.postponedUntil ?? task.dueDate,
             dueTime: task.dueTime,
             languageCode: languageCode,
           );

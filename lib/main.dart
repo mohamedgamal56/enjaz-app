@@ -46,6 +46,7 @@ class EnjazApp extends ConsumerWidget {
       themeMode: themeMode,
       builder: (context, child) {
         final lockState = ref.watch(appLockProvider);
+        if (lockState.isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
         if (lockState.isEnabled && lockState.isLocked) {
           return const AppLockScreen();
         }

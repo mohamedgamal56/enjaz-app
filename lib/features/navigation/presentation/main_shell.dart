@@ -1,4 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../security/domain/app_lock_provider.dart';
+import '../../reminders/domain/notification_service.dart';
+import '../../tasks/presentation/task_details_screen.dart';
+import '../../backup/presentation/backup_screen.dart';
+import '../../finance/presentation/finance_screen.dart';
+import '../../health/presentation/health_screen.dart';
+import '../../timeline/presentation/timeline_calendar_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/app_localizations.dart';
@@ -21,6 +29,52 @@ class MainShell extends ConsumerStatefulWidget {
 }
 
 class _MainShellState extends ConsumerState<MainShell> {
+  static const _channel = MethodChannel('com.enjaz.app/assistant');
+  String? _pendingDestination;
+  @override
+  void initState() {
+    super.initState();
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'voiceShortcut') await _checkShortcut();
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await NotificationService().initialize(onSelectNotification: (payload) {
+        _pendingDestination = payload;
+        _openPending();
+      });
+      await _checkShortcut();
+    });
+  }
+  Future<void> _checkShortcut() async {
+    try {
+      if (await _channel.invokeMethod<bool>('consumeShortcut') == true) {
+        _pendingDestination = 'voice';
+        _openPending();
+      }
+    } catch (_) {}
+  }
+  void _openPending() {
+    if (!mounted || _pendingDestination == null) return;
+    final lock = ref.read(appLockProvider);
+    if (lock.isLoading || lock.isLocked) return;
+    final destination = _pendingDestination!;
+    _pendingDestination = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (destination == 'voice') { AssistantSheet.show(context); return; }
+      final id = int.tryParse(destination.split(':').last);
+      final Widget screen = destination.startsWith('task:') && id != null
+        ? TaskDetailsScreen(taskId: id)
+        : destination == 'backup' ? const BackupScreen()
+        : destination.startsWith('obligation:') ? const FinanceScreen()
+        : destination.startsWith('health_item:') || destination.startsWith('treatment:') ? const HealthScreen()
+        : const TimelineCalendarScreen();
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+    });
+    WidgetsBinding.instance.scheduleFrame();
+  }
+  @override
+  void dispose() { _channel.setMethodCallHandler(null); super.dispose(); }
   int _currentIndex = 0;
 
   final List<Widget> _screens = const [
@@ -32,6 +86,7 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(appLockProvider, (_, next) { if (!next.isLoading && !next.isLocked) _openPending(); });
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -60,7 +115,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.auto_awesome_rounded),
+            icon: const Icon(Icons.mic_rounded),
             tooltip: isArabic ? 'المساعد الذكي' : 'Assistant',
             onPressed: () => AssistantSheet.show(context),
           ),

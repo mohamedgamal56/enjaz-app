@@ -42,12 +42,13 @@ part 'app_database.g.dart';
   HealthEvents,
   Treatments,
   TreatmentChecks,
+  UnrecognizedPhrases,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -75,6 +76,17 @@ class AppDatabase extends _$AppDatabase {
           await _seedFinanceDefaults();
         },
         onUpgrade: (Migrator m, int from, int to) async {
+          if (from >= 7 && from < 8) {
+            await m.createTable(unrecognizedPhrases);
+            await customStatement('''
+              INSERT INTO reminders (owner_type, owner_id, kind, trigger_type, offset_minutes, enabled, created_at, updated_at)
+              SELECT 'task', t.id, 'alarm', 'offset', t.reminder_offset_minutes, 1, t.created_at, t.updated_at
+              FROM tasks t WHERE t.reminder_offset_minutes IS NOT NULL AND t.deleted_at IS NULL
+              AND NOT EXISTS (SELECT 1 FROM reminders r WHERE r.owner_type = 'task' AND r.owner_id = t.id)
+            ''');
+          } else if (from < 7) {
+            await m.createTable(unrecognizedPhrases);
+          }
           if (from < 2) {
             await m.createTable(voiceNotes);
             await customStatement(
@@ -1472,6 +1484,7 @@ class AppDatabase extends _$AppDatabase {
     final treatmentChecksList = await select(treatmentChecks).get();
 
     return {
+      'unrecognized_phrases': (await select(unrecognizedPhrases).get()).map((e) => e.toJson()).toList(),
       'schema_version': schemaVersion,
       'exported_at': DateTime.now().toIso8601String(),
       'tasks': tasksList.map((e) => e.toJson()).toList(),
@@ -1509,6 +1522,12 @@ class AppDatabase extends _$AppDatabase {
   /// Import and replace all database tables from a JSON map in a transaction
   Future<void> importAllData(Map<String, dynamic> data) async {
     await transaction(() async {
+      await delete(unrecognizedPhrases).go();
+      if (data['unrecognized_phrases'] is List) {
+        for (final item in data['unrecognized_phrases']) {
+          await into(unrecognizedPhrases).insert(UnrecognizedPhrase.fromJson(Map<String, dynamic>.from(item)).toCompanion(false));
+        }
+      }
       await delete(treatmentChecks).go();
       await delete(treatments).go();
       await delete(healthEvents).go();

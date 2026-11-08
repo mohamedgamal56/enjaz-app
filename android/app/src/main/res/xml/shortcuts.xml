@@ -1,0 +1,5 @@
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="voice" android:enabled="true" android:icon="@drawable/ic_launcher" android:shortcutShortLabel="@string/voice_shortcut">
+        <intent android:action="com.enjaz.app.VOICE" android:targetPackage="com.enjaz.app" android:targetClass="com.enjaz.app.MainActivity" />
+    </shortcut>
+</shortcuts>

@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:enjaz/features/assistant/action_plan.dart';
 import 'package:enjaz/features/assistant/action_planner.dart';
-import 'package:enjaz/features/assistant/assistant_intent.dart';
 import 'package:enjaz/features/assistant/rule_based_intent_parser.dart';
 
 void main() {

@@ -13,6 +13,7 @@ import 'reasons_manager_screen.dart';
 import 'trash_screen.dart';
 import '../../security/domain/app_lock_provider.dart';
 import '../../backup/presentation/backup_screen.dart';
+import '../../assistant/presentation/assistant_settings_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -34,6 +35,7 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         children: [
+          Card(child: ListTile(leading: const Icon(Icons.settings_voice), title: Text(isArabic ? 'المساعد الصوتي' : 'Voice assistant'), onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AssistantSettingsScreen())))),
           // Section: Language
           Card(
             child: Padding(

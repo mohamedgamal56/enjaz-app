@@ -180,7 +180,7 @@ class _GoalDetailsScreenState extends ConsumerState<GoalDetailsScreen> {
       final title = titleController.text.trim();
 
       if (isEdit) {
-        final updated = existing!.toCompanion(true).copyWith(
+        final updated = existing.toCompanion(true).copyWith(
           title: drift.Value(title),
           weight: drift.Value(weight),
           updatedAt: drift.Value(now),

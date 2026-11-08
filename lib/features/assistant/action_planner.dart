@@ -57,7 +57,7 @@ class ActionPlanner {
 
   DateTime _getNow(DateTime? referenceNow) {
     if (referenceNow != null) return referenceNow;
-    if (_nowProvider != null) return _nowProvider!();
+    if (_nowProvider != null) return _nowProvider();
     return DateTime.now();
   }
 
