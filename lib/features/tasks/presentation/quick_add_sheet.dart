@@ -11,6 +11,7 @@ import '../../recurrence/domain/recurrence_service.dart';
 import '../../reminders/domain/notification_service.dart';
 import '../../reminders/domain/reminder_scheduler.dart';
 import '../../reminders/presentation/notification_permission_sheet.dart';
+import '../../reminders/presentation/xiaomi_permission_helper.dart';
 
 class QuickAddSheet extends ConsumerStatefulWidget {
   final String? initialDate; // YYYY-MM-DD
@@ -910,6 +911,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                           final enabled = await NotificationService.instance.areNotificationsEnabled();
                           if (!enabled && context.mounted) {
                             await NotificationPermissionSheet.show(context);
+                          }
+                          if (context.mounted) {
+                            await XiaomiPermissionHelper.checkAndPrompt(context);
                           }
                         }
                         setState(() {

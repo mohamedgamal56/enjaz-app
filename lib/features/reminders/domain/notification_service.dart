@@ -185,6 +185,10 @@ class NotificationService {
           );
         } catch (_) {}
 
+        try {
+          await androidImplementation.deleteNotificationChannel('enjaz_alarm_v3');
+        } catch (_) {}
+
         // Dedicated Alarm Channel (id: enjaz_alarm_channel, name: منبه إنجاز)
         await androidImplementation.createNotificationChannel(
           const AndroidNotificationChannel(
@@ -196,6 +200,7 @@ class NotificationService {
             enableVibration: true,
             enableLights: true,
             audioAttributesUsage: AudioAttributesUsage.alarm,
+            sound: RawResourceAndroidNotificationSound('alarm_sound'),
           ),
         );
 
@@ -401,6 +406,7 @@ class NotificationService {
       priority: Priority.max,
       category: AndroidNotificationCategory.alarm,
       audioAttributesUsage: AudioAttributesUsage.alarm,
+      sound: const RawResourceAndroidNotificationSound('alarm_sound'),
       ongoing: true,
       autoCancel: false,
       additionalFlags: Int32List.fromList([4]),

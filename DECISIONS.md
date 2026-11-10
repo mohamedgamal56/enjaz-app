@@ -525,10 +525,14 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
 - **Version Bump & Permanent Signing**: Bumped version to `1.2.4+2022` with permanent keystore signing and SHA-256 fingerprint verification intact.
 
 
-## Release 1.2.4+2024 (Solidified Channel ID & Direct Exact Scheduling) / 2026-11-10
+## Release 1.2.4+2024 (Bundled Alarm Ringtone, Xiaomi Permission Onboarding & Keyguard Dismissal) / 2026-11-10
 
-- **Fixed Approved Channel**: Solidified alarm channel ID to `enjaz_alarm_channel` and name `منبه إنجاز` with `Importance.max`, `Priority.max`, `playSound: true`, `enableVibration: true`, and `audioAttributesUsage: AudioAttributesUsage.alarm`, avoiding channel muting by MIUI/HyperOS.
-- **Robust Background Scheduling**: Removed premature check drops in `_scheduleChecked` that caused alarms to drop if `pendingNotificationRequests()` was asynchronously delayed on real devices.
-- **Exact Schedule Mode**: Enforced `AndroidScheduleMode.exactAllowWhileIdle` (`setExactAndAllowWhileIdle`) for all alarm reminders.
-- **Artifact Naming**: Produced release APK named `enjaz-v1.2.4+2024-arm64.apk`.
+- **Bundled Melodic Alarm Ringtone**: Replaced the system notification sound fallback with a bundled 10-second melodic chime sound (ndroid/app/src/main/res/raw/alarm_sound.wav) configured via RawResourceAndroidNotificationSound('alarm_sound') and AudioAttributesUsage.alarm in enjaz_alarm_channel, eliminating the rapid woodpecker looping of short system notification pings under FLAG_INSISTENT.
+- **Xiaomi MIUI/HyperOS Permission Onboarding**: Introduced XiaomiPermissionHelper displaying a friendly, educational onboarding modal when a reminder is selected in QuickAddSheet, plus a persistent status card in ReminderCheckScreen. One-tap opens miui.intent.action.APP_PERM_EDITOR with package com.enjaz.app, making it effortless to enable 'Show on Lock screen' and 'Display pop-up windows'.
+- **Keyguard Dismissal & Screen Wake**: Added 
+equestDismissKeyguard(this, null) and WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD to configureLockScreenFlags() in MainActivity.kt alongside setShowWhenLocked(true), setTurnScreenOn(true), and FLAG_KEEP_SCREEN_ON.
+- **Fixed Approved Channel**: Solidified alarm channel ID to enjaz_alarm_channel and name منبه إنجاز with Importance.max, Priority.max, playSound: true, enableVibration: true, and udioAttributesUsage: AudioAttributesUsage.alarm, avoiding channel muting by MIUI/HyperOS.
+- **Robust Background Scheduling**: Removed premature check drops in _scheduleChecked that caused alarms to drop if pendingNotificationRequests() was asynchronously delayed on real devices.
+- **Exact Schedule Mode**: Enforced AndroidScheduleMode.exactAllowWhileIdle (setExactAndAllowWhileIdle) for all alarm reminders.
+- **Artifact Naming**: Produced release APK named enjaz-v1.2.4+2024-arm64.apk.
 - **Permanent Signing**: Kept release keystore and SHA-256 fingerprint verification intact.

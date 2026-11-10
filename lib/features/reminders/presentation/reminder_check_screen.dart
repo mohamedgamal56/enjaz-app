@@ -1,3 +1,4 @@
+import 'xiaomi_permission_helper.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -119,59 +120,7 @@ class _ReminderCheckScreenState extends State<ReminderCheckScreen>
         status(labels[0], _notification),
         status(labels[1], _exact),
         status(labels[2], _battery),
-        if (_isXiaomi)
-          Card(
-            color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.25),
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.security_rounded,
-                          color: Theme.of(context).colorScheme.primary, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        Localizations.localeOf(context).languageCode == 'ar'
-                            ? 'أذونات خاصة بهواتف شاومي'
-                            : 'Xiaomi Special Permissions',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    Localizations.localeOf(context).languageCode == 'ar'
-                        ? 'لإظهار شاشة المنبه فوق القفل، يرجى تفعيل "الظهور على شاشة القفل" و"عرض النوافذ المنبثقة".'
-                        : 'To show alarm over lock screen, enable "Show on Lock screen" and "Display pop-up windows".',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        try {
-                          await const MethodChannel('com.enjaz.app/assistant')
-                              .invokeMethod('openXiaomiOtherPermissions');
-                        } catch (_) {
-                          openAppSettings();
-                        }
-                      },
-                      icon: const Icon(Icons.open_in_new, size: 16),
-                      label: Text(
-                        Localizations.localeOf(context).languageCode == 'ar'
-                            ? 'فتح صفحة الأذونات الإضافية في شاومي'
-                            : 'Open Xiaomi Other Permissions',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        if (_isXiaomi) XiaomiPermissionHelper.buildCard(context),
         TextButton(
             onPressed: openAppSettings, child: Text(s.diagnosticSettings)),
         TextButton(

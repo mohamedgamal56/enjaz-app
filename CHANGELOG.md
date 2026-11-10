@@ -1,5 +1,9 @@
 ## 1.2.4+2024 — 2026-11-10
 
+- Bundle authentic multi-tone melodic alarm ringtone (android/app/src/main/res/raw/alarm_sound.wav) with RawResourceAndroidNotificationSound('alarm_sound') and AudioAttributesUsage.alarm, completely eliminating the rapid 200ms notification ping loop under FLAG_INSISTENT.
+- Add XiaomiPermissionHelper providing an educational bottom sheet onboarding modal when setting alarms and a persistent card in ReminderCheckScreen with direct shortcut to MIUI PermissionsEditorActivity (miui.intent.action.APP_PERM_EDITOR) to enable 'Show on Lock screen' and 'Display pop-up windows'.
+- Enhance MainActivity.kt with requestDismissKeyguard and FLAG_DISMISS_KEYGUARD alongside setShowWhenLocked(true), setTurnScreenOn(true) and FLAG_KEEP_SCREEN_ON for instant wake and display over lock screen.
+- Deliver dedicated Full-Screen Intent Alarm Screen (AlarmRingScreen) displaying real-time digital clock, pulsing alarm bell, task details, and prominent [إيقاف المنبه] and [تأجيل 5 دقائق] action buttons.
 - Solidify dedicated alarm channel to approved ID enjaz_alarm_channel and name منبه إنجاز to prevent Xiaomi/MIUI from defaulting new channels to silent/disabled.
 - Enforce AndroidScheduleMode.exactAllowWhileIdle without false drop conditions during background alarm scheduling.
 - Output versioned release artifact named enjaz-v1.2.4+2024-arm64.apk.
