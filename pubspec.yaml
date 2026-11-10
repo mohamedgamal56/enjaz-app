@@ -1,7 +1,7 @@
 name: enjaz
 description: "إنجاز - تطبيق إدارة المهام والأهداف الحياتية أوفلاين بالكامل"
 publish_to: "none"
-version: 1.2.7+2027
+version: 1.2.8+2028
 
 environment:
   sdk: ">=3.5.0 <4.0.0"

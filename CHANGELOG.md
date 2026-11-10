@@ -1,3 +1,24 @@
+## 1.2.8+2028 — 2026-11-10 (Batch 1 — Data Protection)
+
+- Trash Screen for All 12 Modules:
+  - Expanded trash screen (`TrashScreen`) with 7 dedicated tabs supporting all 12 modules: Tasks & Errands (with distinct task/errand badging), Goals, Ideas, Notes, Habits, Finance (Transactions with income/expense indicators, Wishlist Items, Obligations), and Health (Health Items & Treatments).
+  - Every item can be restored back to its active list with automatic reminder rescheduling (`ReminderScheduler.rescheduleAllForOwner`).
+  - Added individual permanent deletion with confirmation dialog, which purges the item, its associated voice recording files from storage, and cancels all its active alarms/reminders.
+  - Enhanced Empty Trash (`purgeTrashDetailed`) with confirmation dialog reporting exact counts of purged entities and deleted audio files.
+  - Added `watchTrashGoals`, `restoreGoal`, `permanentlyDeleteGoal`, `watchTrashIdeas`, `restoreIdea`, `permanentlyDeleteIdea` to `AppDatabase` and updated 30-day auto-purge.
+- Unsaved Recording Recovery (Spec extension 14.3):
+  - Created `UnsavedRecordingRecoveryService` scanning application storage on startup for orphaned audio recordings left after a crash or forced stop.
+  - Interactive recovery modal offering user the choice to play/keep as a voice note or permanently discard.
+- Real SQLite Migration Tests:
+  - Added realistic v1.1.5 sample SQLite database asset (`test/assets/enjaz_v1.1.5_sample.sqlite`) with pre-populated tasks, goals, ideas, settings, and voice notes.
+  - Added `real_migration_test.dart` asserting that SQLite migrates end-to-end to schema v8 without data loss, verifying reminders migration from tasks and functional new tables.
+- Zero-Internet Security CI Verification:
+  - Added automated test (`no_internet_permission_test.dart`) asserting that `android.permission.INTERNET` is absent and no networking client packages exist in `pubspec.yaml`.
+- Comprehensive Reminders & Backup Audits:
+  - Added unit test suite `reminders_audit_test.dart` verifying active reminder queries, cancellation on soft-delete, and restoration.
+  - Added unit test suite `backup_restore_voice_recording_test.dart` verifying full roundtrip export & restore with voice recordings and SHA-256 integrity validation.
+- Output versioned release artifact named `enjaz-v1.2.8+2028-arm64.apk` signed with permanent release keystore.
+
 ## 1.2.7+2027 — 2026-11-10
 
 - Alarm Screen UX Overhaul: Remove _hideDetails condition completely; the task, errand or idea title is now always displayed in large, bold, prominent text in the center of the alarm screen.

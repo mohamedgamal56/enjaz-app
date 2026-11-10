@@ -887,6 +887,46 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  /// Watch trash goals
+  Stream<List<Goal>> watchTrashGoals() {
+    return (select(goals)
+          ..where((g) => g.deletedAt.isNotNull())
+          ..orderBy([(g) => OrderingTerm.desc(g.deletedAt)]))
+        .watch();
+  }
+
+  /// Restore goal from trash
+  Future<void> restoreGoal(int goalId) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(goals)..where((g) => g.id.equals(goalId))).write(
+      GoalsCompanion(
+        deletedAt: const Value(null),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Permanently delete goal, voice notes and reminders
+  Future<void> permanentlyDeleteGoal(int goalId) async {
+    final vns = await (select(voiceNotes)
+          ..where((v) => v.parentType.equals('goal') & v.parentId.equals(goalId)))
+        .get();
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      for (final vn in vns) {
+        final f = File(p.join(appDir.path, vn.fileName));
+        if (await f.exists()) await f.delete();
+      }
+    } catch (_) {}
+    await (delete(voiceNotes)
+          ..where((v) => v.parentType.equals('goal') & v.parentId.equals(goalId)))
+        .go();
+    await (delete(reminders)..where((r) => r.ownerType.equals('goal') & r.ownerId.equals(goalId))).go();
+    await (delete(milestones)..where((m) => m.goalId.equals(goalId))).go();
+    await (delete(goalUpdates)..where((u) => u.goalId.equals(goalId))).go();
+    await (delete(goals)..where((g) => g.id.equals(goalId))).go();
+  }
+
   /// Insert milestone
   Future<int> insertNewMilestone(MilestonesCompanion milestone) async {
     return into(milestones).insert(milestone);
@@ -1065,6 +1105,45 @@ class AppDatabase extends _$AppDatabase {
         updatedAt: Value(now),
       ),
     );
+  }
+
+  /// Watch trash ideas
+  Stream<List<Idea>> watchTrashIdeas() {
+    return (select(ideas)
+          ..where((i) => i.deletedAt.isNotNull())
+          ..orderBy([(i) => OrderingTerm.desc(i.deletedAt)]))
+        .watch();
+  }
+
+  /// Restore idea from trash
+  Future<void> restoreIdea(int ideaId) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(ideas)..where((i) => i.id.equals(ideaId))).write(
+      IdeasCompanion(
+        deletedAt: const Value(null),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Permanently delete idea, voice notes and reminders
+  Future<void> permanentlyDeleteIdea(int ideaId) async {
+    final vns = await (select(voiceNotes)
+          ..where((v) => v.parentType.equals('idea') & v.parentId.equals(ideaId)))
+        .get();
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      for (final vn in vns) {
+        final f = File(p.join(appDir.path, vn.fileName));
+        if (await f.exists()) await f.delete();
+      }
+    } catch (_) {}
+    await (delete(voiceNotes)
+          ..where((v) => v.parentType.equals('idea') & v.parentId.equals(ideaId)))
+        .go();
+    await (delete(reminders)..where((r) => r.ownerType.equals('idea') & r.ownerId.equals(ideaId))).go();
+    await (delete(ideaTags)..where((t) => t.ideaId.equals(ideaId))).go();
+    await (delete(ideas)..where((i) => i.id.equals(ideaId))).go();
   }
 
   /// Convert idea to Task or Goal
@@ -1958,6 +2037,20 @@ class AppDatabase extends _$AppDatabase {
         .get();
     for (final t in oldTreatments) {
       await permanentlyDeleteTreatment(t.id);
+      purged++;
+    }
+    final oldGoals = await (select(goals)
+          ..where((g) => g.deletedAt.isNotNull() & g.deletedAt.isSmallerOrEqualValue(thirtyDaysAgoMs)))
+        .get();
+    for (final goal in oldGoals) {
+      await permanentlyDeleteGoal(goal.id);
+      purged++;
+    }
+    final oldIdeas = await (select(ideas)
+          ..where((i) => i.deletedAt.isNotNull() & i.deletedAt.isSmallerOrEqualValue(thirtyDaysAgoMs)))
+        .get();
+    for (final idea in oldIdeas) {
+      await permanentlyDeleteIdea(idea.id);
       purged++;
     }
     return purged;

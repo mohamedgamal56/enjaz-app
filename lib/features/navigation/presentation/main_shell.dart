@@ -20,6 +20,8 @@ import '../../ideas/presentation/add_idea_sheet.dart';
 import '../../notes/presentation/add_note_sheet.dart';
 import '../../settings/presentation/settings_screen.dart';
 import '../../assistant/presentation/assistant_sheet.dart';
+import '../../voice_notes/domain/unsaved_recording_recovery_service.dart';
+import '../../../core/db/app_database.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
@@ -43,6 +45,11 @@ class _MainShellState extends ConsumerState<MainShell> {
         _openPending();
       });
       await _checkShortcut();
+      // Batch 1: Unsaved recording recovery check (Spec 14.3)
+      if (mounted) {
+        final db = ref.read(databaseProvider);
+        await UnsavedRecordingRecoveryService.checkAndPrompt(context, db);
+      }
     });
   }
   Future<void> _checkShortcut() async {

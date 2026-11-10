@@ -552,3 +552,22 @@ equestDismissKeyguard(this, null) and WindowManager.LayoutParams.FLAG_DISMISS_KE
 - **Strict Permission Verification**: Added native AppOps checks for MIUI 10020 (OP_SHOW_WHEN_LOCKED) and 10021 (OP_BACKGROUND_START_ACTIVITY). If any required permission is missing when scheduling reminders or testing alarms, XiaomiPermissionHelper.ensureAllPermissions halts execution, displays step-by-step guidance, and automatically re-evaluates upon app resume.
 - **Version Bump & Artifact Naming**: Bumped version to 1.2.7+2027 producing enjaz-v1.2.7+2027-arm64.apk signed with the permanent release keystore.
 
+## Decision 34: Batch 1 Data Protection (Unified Trash, Unsaved Recording Recovery & Real SQLite Migrations) / 2026-11-10
+
+- **Unified Trash Coverage for All 12 Modules**:
+  - Fully implemented trash lifecycle for all 12 modules defined in `PLAN.md` (tasks, errands, goals, ideas, notes, habits, expenses, income, wishlist items, obligations, health items, treatments).
+  - Designed 7-tab scrollable `TrashScreen` with clean status badging, soft-deleted timestamps, individual restore (with active reminder re-scheduling via `ReminderScheduler.rescheduleAllForOwner`), and permanent deletion with confirmation.
+  - Permanent purge (`permanentlyDelete...` and `purgeTrashDetailed`) cascades to remove physical voice audio files from storage and cancels pending alarm notifications.
+  - Added `watchTrashGoals`, `restoreGoal`, `permanentlyDeleteGoal`, `watchTrashIdeas`, `restoreIdea`, and `permanentlyDeleteIdea` to `AppDatabase`.
+- **Unsaved Recording Recovery (Spec extension 14.3)**:
+  - Created `UnsavedRecordingRecoveryService` scanning application storage on startup for orphaned audio recordings left behind after a sudden OS kill or crash.
+  - Presents a recovery modal dialog allowing the user to either save the audio file as a titled voice note or permanently discard it.
+- **Real SQLite Migration Testing**:
+  - Created genuine SQLite binary asset `test/assets/enjaz_v1.1.5_sample.sqlite` representing schema v2 with sample data.
+  - Implemented `real_migration_test.dart` asserting that SQLite file migrates successfully to schema version 8 without data loss, verifying reminder migration from tasks and functional new tables.
+- **Zero-Internet Guarantee**:
+  - Implemented `no_internet_permission_test.dart` verifying in CI that `android.permission.INTERNET` is never declared and no networking clients exist.
+- **Version Bump & Artifact Naming**:
+  - Bumped version to `1.2.8+2028` producing `enjaz-v1.2.8+2028-arm64.apk` signed with the permanent release keystore.
+
+
