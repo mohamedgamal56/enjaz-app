@@ -19,7 +19,6 @@ class AnswerCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final primaryColor = colorScheme.primary;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Card(
       elevation: 2,
@@ -61,7 +60,7 @@ class AnswerCard extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.close_rounded, size: 20),
                     onPressed: onClose,
-                    tooltip: isArabic ? 'إغلاق' : 'Close',
+                    tooltip: 'إغلاق',
                   ),
               ],
             ),
@@ -153,7 +152,7 @@ class AnswerCard extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: onNavigate,
                       icon: const Icon(Icons.arrow_outward_rounded, size: 18),
-                      label: Text(data.navLabel ?? (isArabic ? 'عرض التفاصيل' : 'View Details')),
+                      label: Text(data.navLabel ?? 'عرض التفاصيل'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
                         foregroundColor: colorScheme.onPrimary,
@@ -172,7 +171,7 @@ class AnswerCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: Text(isArabic ? 'إغلاق' : 'Close'),
+                      child: const Text('إغلاق'),
                     ),
                   ),
               ],

@@ -374,6 +374,9 @@ class RuleBasedIntentParser implements IntentParser {
         norm.startsWith('ملاحظة') ||
         norm.startsWith('سجل ملاحظه') ||
         norm.startsWith('سجل ملاحظة') ||
+        norm.startsWith('سجل حكمه') ||
+        norm.startsWith('سجل حكمة') ||
+        norm.startsWith('سجل اقتباس') ||
         norm.startsWith('حكمه') ||
         norm.startsWith('حكمة') ||
         norm.startsWith('اقتباس');
@@ -1018,9 +1021,9 @@ class RuleBasedIntentParser implements IntentParser {
   }
 
   AssistantIntent _parseNote(String raw, String norm) {
-    final isQuote = norm.startsWith('حكمه') || norm.startsWith('حكمة') || norm.startsWith('اقتباس');
+    final isQuote = norm.contains('حكمه') || norm.contains('حكمة') || norm.contains('اقتباس');
     var title = raw;
-    title = _stripWords(title, ['سجل ملاحظة', 'سجل ملاحظه', 'ملاحظة', 'ملاحظه', 'حكمة', 'حكمه', 'اقتباس']);
+    title = _stripWords(title, ['سجل ملاحظة', 'سجل ملاحظه', 'سجل حكمة', 'سجل حكمه', 'سجل اقتباس', 'ملاحظة', 'ملاحظه', 'حكمة', 'حكمه', 'اقتباس']);
     title = _cleanExtraPunctuation(title);
 
     return AssistantIntent(
