@@ -66,7 +66,9 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
     _taskTitle = widget.alarm.title;
     _currentTime = DateTime.now();
 
-    final isArabic = widget.alarm.languageCode != 'en';
+    final isArabic = (widget.alarm.languageCode != null)
+        ? widget.alarm.languageCode != 'en'
+        : true;
     final phrases = isArabic ? _motivationalPhrasesAr : _motivationalPhrasesEn;
     final index = (widget.alarm.id.abs() + DateTime.now().minute) % phrases.length;
     _motivationalPhrase = phrases[index];
@@ -96,6 +98,18 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
         Timer(remaining.isNegative ? Duration.zero : remaining, _stopAlarm);
 
     _loadTaskDetails();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final locale = Localizations.localeOf(context).languageCode;
+    final isArabic = (widget.alarm.languageCode != null)
+        ? widget.alarm.languageCode != 'en'
+        : locale != 'en';
+    final phrases = isArabic ? _motivationalPhrasesAr : _motivationalPhrasesEn;
+    final index = (widget.alarm.id.abs() + DateTime.now().minute) % phrases.length;
+    _motivationalPhrase = phrases[index];
   }
 
   Future<void> _acquireScreen() async {
@@ -162,10 +176,13 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
       await NotificationService.instance.cancelNotification(widget.alarmId);
 
       // If linked to a task that is 'todo', transition it to 'in_progress'
-      if (widget.taskId != null && _loadedTask != null && _loadedTask!.status == 'todo') {
+      if (widget.taskId != null) {
         try {
           final db = AppDatabase();
-          await db.updateTaskStatus(task: _loadedTask!, newStatus: 'in_progress');
+          final task = _loadedTask ?? await db.getTaskById(widget.taskId!);
+          if (task != null && task.status == 'todo') {
+            await db.updateTaskStatus(task: task, newStatus: 'in_progress');
+          }
           await db.close();
         } catch (_) {}
       }
@@ -363,11 +380,16 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
                                 Icon(Icons.auto_awesome_rounded,
                                     size: 18, color: theme.colorScheme.primary),
                                 const SizedBox(width: 8),
-                                Text(
-                                  _motivationalPhrase,
-                                  style: theme.textTheme.labelLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.colorScheme.onPrimaryContainer,
+                                Flexible(
+                                  child: Text(
+                                    _motivationalPhrase,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                    style: theme.textTheme.labelLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.onPrimaryContainer,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -411,12 +433,15 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
                                           color: theme.colorScheme.primary,
                                         ),
                                         const SizedBox(width: 6),
-                                        Text(
-                                          '${_taskDueDate ?? ''} ${_taskDueTime ?? ''}'
-                                              .trim(),
-                                          style: theme.textTheme.bodyMedium?.copyWith(
-                                            fontWeight: FontWeight.w600,
-                                            color: theme.colorScheme.onSurfaceVariant,
+                                        Flexible(
+                                          child: Text(
+                                            '${_taskDueDate ?? ''} ${_taskDueTime ?? ''}'
+                                                .trim(),
+                                            style: theme.textTheme.bodyMedium?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              color: theme.colorScheme.onSurfaceVariant,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                       ],

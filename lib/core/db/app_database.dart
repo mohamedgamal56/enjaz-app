@@ -45,7 +45,9 @@ part 'app_database.g.dart';
   UnrecognizedPhrases,
 ])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection());
+  AppDatabase([QueryExecutor? e]) : super(e ?? _openConnection()) {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  }
 
   @override
   int get schemaVersion => 8;
