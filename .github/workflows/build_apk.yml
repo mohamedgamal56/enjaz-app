@@ -87,6 +87,8 @@ jobs:
           fi
           
           echo "Using apksigner tool: $APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs "$APK_NAME"
+          sha256sum "$APK_NAME"
           EXPECTED_SHA256=$(cat android/expected_cert_sha256.txt | tr -d '[:space:]:' | tr '[:upper:]' '[:lower:]')
           ACTUAL_RAW=$("$APKSIGNER" verify --print-certs "$APK_NAME" | grep -i "certificate SHA-256 digest:" | head -n 1 | awk '{print $NF}')
           ACTUAL_SHA256=$(echo "$ACTUAL_RAW" | tr -d '[:space:]:' | tr '[:upper:]' '[:lower:]')

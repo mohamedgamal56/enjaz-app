@@ -17,31 +17,27 @@ class MainActivity: FlutterFragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        configureLockScreenFlags()
+        configureLockScreenFlags(intent?.getStringExtra("payload")?.startsWith("alarm:") == true)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        configureLockScreenFlags()
+        configureLockScreenFlags(intent?.getStringExtra("payload")?.startsWith("alarm:") == true)
         if (intent.action == "com.enjaz.app.VOICE") assistantChannel?.invokeMethod("voiceShortcut", null)
     }
 
-    private fun configureLockScreenFlags() {
+    private fun configureLockScreenFlags(enabled: Boolean) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            setShowWhenLocked(true)
-            setTurnScreenOn(true)
-            val km = getSystemService(KEYGUARD_SERVICE) as? android.app.KeyguardManager
-            km?.requestDismissKeyguard(this, null)
-        } else {
-            @Suppress("DEPRECATION")
-            window.addFlags(
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
-                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-            )
+            setShowWhenLocked(enabled)
+            setTurnScreenOn(enabled)
         }
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        @Suppress("DEPRECATION")
+        val flags = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+        if (enabled) window.addFlags(flags) else window.clearFlags(flags)
+        // Do not dismiss the device keyguard or expose the rest of the app.
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -63,9 +59,13 @@ class MainActivity: FlutterFragmentActivity() {
                         result.success("content://settings/system/alarm_alert")
                     }
                 }
-                "turnScreenOn" -> {
-                    configureLockScreenFlags()
+                "setAlarmScreen" -> {
+                    configureLockScreenFlags(call.argument<Boolean>("enabled") == true)
                     result.success(true)
+                }
+                "isDeviceLocked" -> {
+                    val km = getSystemService(KEYGUARD_SERVICE) as android.app.KeyguardManager
+                    result.success(km.isKeyguardLocked)
                 }
                 "openXiaomiOtherPermissions" -> {
                     try {

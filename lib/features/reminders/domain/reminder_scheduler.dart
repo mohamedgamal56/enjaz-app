@@ -1,5 +1,7 @@
 import '../../../core/db/app_database.dart';
 import 'notification_service.dart';
+import 'alarm_payload.dart';
+import 'active_alarm.dart';
 
 class ReminderScheduler {
   final NotificationService _notificationService;
@@ -8,11 +10,13 @@ class ReminderScheduler {
   ReminderScheduler({
     NotificationService? notificationService,
     required AppDatabase db,
-  })  : _notificationService = notificationService ?? NotificationService.instance,
+  })  : _notificationService =
+            notificationService ?? NotificationService.instance,
         _db = db;
 
   /// Calculate deterministic notification ID for a reminder
-  static int getNotificationId(int reminderId) => (reminderId.abs() % 2000000000);
+  static int getNotificationId(int reminderId) =>
+      (reminderId.abs() % 2000000000);
 
   /// Schedule a specific reminder
   Future<void> scheduleReminder({
@@ -20,11 +24,25 @@ class ReminderScheduler {
     required String title,
     String? dueDate,
     String? dueTime,
+    bool preservePending = false,
     int defaultDateOnlyHour = 9,
     int defaultDateOnlyMinute = 0,
     String? languageCode,
   }) async {
     final notifId = getNotificationId(reminder.id);
+    // Startup rescheduling must not stop an alarm currently being handled.
+    if (preservePending && activeAlarm.value?.id == notifId) return;
+    if (preservePending && reminder.enabled && reminder.deletedAt == null) {
+      await _notificationService.initialize();
+      final pending = await _notificationService.pendingRequests();
+      for (final request in pending.where((r) => r.id == notifId)) {
+        final alarm =
+            AlarmPayload.decode(request.payload, notificationId: request.id);
+        if (alarm != null &&
+            alarm.snoozed &&
+            (alarm.expiresAt?.isAfter(DateTime.now()) ?? false)) return;
+      }
+    }
     await _notificationService.cancelNotification(notifId);
 
     if (!reminder.enabled || reminder.deletedAt != null) {
@@ -59,9 +77,10 @@ class ReminderScheduler {
       return;
     }
 
-    final message = (reminder.message != null && reminder.message!.trim().isNotEmpty)
-        ? reminder.message!
-        : title;
+    final message =
+        (reminder.message != null && reminder.message!.trim().isNotEmpty)
+            ? reminder.message!
+            : title;
 
     final isSensitive = reminder.ownerType == 'health_item' ||
         reminder.ownerType == 'treatment' ||
@@ -153,90 +172,111 @@ class ReminderScheduler {
     final allReminders = await _db.getAllActiveReminders();
     for (final r in allReminders) {
       try {
-      await cancelReminder(r.id);
-      if (r.ownerType == 'task') {
-        final task = await _db.getTaskById(r.ownerId);
-        if (task != null && task.status != 'done' && task.deletedAt == null) {
-          await scheduleReminder(
-            reminder: r,
-            title: task.title,
-            dueDate: task.postponedUntil ?? task.dueDate,
-            dueTime: task.dueTime,
-            languageCode: languageCode,
-          );
-        }
-      } else if (r.ownerType == 'goal') {
-        final goal = await _db.getGoalById(r.ownerId);
-        if (goal != null && goal.status != 'done' && goal.status != 'abandoned' && goal.deletedAt == null) {
-          await scheduleReminder(
-            reminder: r,
-            title: goal.title,
-            dueDate: goal.targetDate,
-            dueTime: '09:00',
-            languageCode: languageCode,
-          );
-        }
-      } else if (r.ownerType == 'idea') {
-        final idea = await _db.getIdeaById(r.ownerId);
-        if (idea != null && idea.status != 'converted' && idea.deletedAt == null) {
-          await scheduleReminder(
-            reminder: r,
-            title: idea.title,
-            languageCode: languageCode,
-          );
-        }
-      } else if (r.ownerType == 'habit') {
-        final habit = await _db.getHabitById(r.ownerId);
-        if (habit != null && !habit.archived && habit.deletedAt == null) {
-          await scheduleReminder(
-            reminder: r,
-            title: habit.nameAr,
-            languageCode: languageCode,
-          );
-        }
-      } else if (r.ownerType == 'obligation') {
-        final ob = await _db.getObligationById(r.ownerId);
-        if (ob != null && ob.deletedAt == null) {
-          await scheduleReminder(
-            reminder: r,
-            title: ob.name,
-            dueDate: ob.dueDate ?? ob.startDate,
-            dueTime: '09:00',
-            languageCode: languageCode,
-          );
-        }
-      } else if (r.ownerType == 'health_item') {
-        final item = await _db.getHealthItemById(r.ownerId);
-        if (item != null && item.deletedAt == null && item.status != 'done' && item.status != 'skipped') {
-          String? dueDate = item.dueBy ?? item.neededSince;
-          String? dueTime = '09:00';
-          if (item.scheduledAt != null) {
-            final dt = DateTime.fromMillisecondsSinceEpoch(item.scheduledAt!);
-            dueDate = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-            dueTime = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+        await cancelReminder(r.id);
+        if (r.ownerType == 'task') {
+          final task = await _db.getTaskById(r.ownerId);
+          if (task != null && task.status != 'done' && task.deletedAt == null) {
+            await scheduleReminder(
+              reminder: r,
+              preservePending: true,
+              title: task.title,
+              dueDate: task.postponedUntil ?? task.dueDate,
+              dueTime: task.dueTime,
+              languageCode: languageCode,
+            );
           }
-          await scheduleReminder(
-            reminder: r,
-            title: item.title,
-            dueDate: dueDate,
-            dueTime: dueTime,
-            languageCode: languageCode,
-          );
+        } else if (r.ownerType == 'goal') {
+          final goal = await _db.getGoalById(r.ownerId);
+          if (goal != null &&
+              goal.status != 'done' &&
+              goal.status != 'abandoned' &&
+              goal.deletedAt == null) {
+            await scheduleReminder(
+              reminder: r,
+              preservePending: true,
+              title: goal.title,
+              dueDate: goal.targetDate,
+              dueTime: '09:00',
+              languageCode: languageCode,
+            );
+          }
+        } else if (r.ownerType == 'idea') {
+          final idea = await _db.getIdeaById(r.ownerId);
+          if (idea != null &&
+              idea.status != 'converted' &&
+              idea.deletedAt == null) {
+            await scheduleReminder(
+              reminder: r,
+              preservePending: true,
+              title: idea.title,
+              languageCode: languageCode,
+            );
+          }
+        } else if (r.ownerType == 'habit') {
+          final habit = await _db.getHabitById(r.ownerId);
+          if (habit != null && !habit.archived && habit.deletedAt == null) {
+            await scheduleReminder(
+              reminder: r,
+              preservePending: true,
+              title: habit.nameAr,
+              languageCode: languageCode,
+            );
+          }
+        } else if (r.ownerType == 'obligation') {
+          final ob = await _db.getObligationById(r.ownerId);
+          if (ob != null && ob.deletedAt == null) {
+            await scheduleReminder(
+              reminder: r,
+              preservePending: true,
+              title: ob.name,
+              dueDate: ob.dueDate ?? ob.startDate,
+              dueTime: '09:00',
+              languageCode: languageCode,
+            );
+          }
+        } else if (r.ownerType == 'health_item') {
+          final item = await _db.getHealthItemById(r.ownerId);
+          if (item != null &&
+              item.deletedAt == null &&
+              item.status != 'done' &&
+              item.status != 'skipped') {
+            String? dueDate = item.dueBy ?? item.neededSince;
+            String? dueTime = '09:00';
+            if (item.scheduledAt != null) {
+              final dt = DateTime.fromMillisecondsSinceEpoch(item.scheduledAt!);
+              dueDate =
+                  '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+              dueTime =
+                  '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+            }
+            await scheduleReminder(
+              reminder: r,
+              preservePending: true,
+              title: item.title,
+              dueDate: dueDate,
+              dueTime: dueTime,
+              languageCode: languageCode,
+            );
+          }
+        } else if (r.ownerType == 'treatment') {
+          final tr = await _db.getTreatmentById(r.ownerId);
+          if (tr != null &&
+              tr.deletedAt == null &&
+              tr.adherence != 'completed' &&
+              tr.adherence != 'stopped') {
+            await scheduleReminder(
+              reminder: r,
+              preservePending: true,
+              title: tr.name,
+              dueDate: tr.startDate,
+              dueTime: '09:00',
+              languageCode: languageCode,
+            );
+          }
         }
-      } else if (r.ownerType == 'treatment') {
-        final tr = await _db.getTreatmentById(r.ownerId);
-        if (tr != null && tr.deletedAt == null && tr.adherence != 'completed' && tr.adherence != 'stopped') {
-          await scheduleReminder(
-            reminder: r,
-            title: tr.name,
-            dueDate: tr.startDate,
-            dueTime: '09:00',
-            languageCode: languageCode,
-          );
-        }
-      }
       } catch (error) {
-        await NotificationService.recordFailure(error, id: getNotificationId(r.id));
+        await NotificationService.recordFailure(error,
+            id: getNotificationId(r.id));
       }
     }
   }

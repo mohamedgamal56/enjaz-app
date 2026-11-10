@@ -1,10 +1,17 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Stores technical outcomes only, without notification titles or user data.
 class NotificationDiagnostics {
   static const key = 'notification_diagnostics_v1';
   static Future<void> _writes = Future.value();
+
+  /// Widget tests use a separate fake-async zone for each case.
+  @visibleForTesting
+  static void resetPendingWritesForTest() {
+    _writes = Future.value();
+  }
 
   static Future<void> record(String code, {int? id}) {
     _writes = _writes.then((_) => _record(code, id: id)).catchError((_) {});

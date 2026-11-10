@@ -1,3 +1,11 @@
+## 1.2.5+2025 — 2026-11-10
+
+- Preserve the actual Android notification ID through alarm launch, stop and snooze, including legacy notifications and non-task owners.
+- Display alarm controls independently of app lock without exposing private app content; release wake/lock-screen flags after dismissal and remove global keyguard dismissal.
+- Confirm snooze only after Android retains the pending request; keep failure visible with retry and distinguish inexact scheduling.
+- Preserve snoozed and currently ringing reminders during startup rescheduling while allowing explicit edits.
+- Add payload, cold-start lock, stop/snooze and rescheduling regression tests. Android device checks remain required for physical sound, OEM lock-screen behavior and upgrade installation.
+
 ## 1.2.4+2024 — 2026-11-10
 
 - Bundle authentic multi-tone melodic alarm ringtone (android/app/src/main/res/raw/alarm_sound.wav) with RawResourceAndroidNotificationSound('alarm_sound') and AudioAttributesUsage.alarm, completely eliminating the rapid 200ms notification ping loop under FLAG_INSISTENT.

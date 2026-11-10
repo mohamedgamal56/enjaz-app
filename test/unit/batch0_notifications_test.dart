@@ -14,7 +14,7 @@ void main() {
   String? failure;
   final calls = <MethodCall>[];
   final pending = <int>{};
-  Future<void> schedule() => service.scheduleAlarm(
+  Future<AlarmScheduleResult> schedule() => service.scheduleAlarm(
       id: 12,
       title: 'Private',
       body: 'Private',
@@ -82,7 +82,7 @@ void main() {
   });
   test('disabled notifications never report a scheduled alarm', () async {
     enabled = false;
-    await schedule();
+    expect(await schedule(), AlarmScheduleResult.failed);
     expect(calls.where((c) => c.method == 'zonedSchedule'), isEmpty);
     expect(service.activeScheduledPayloads, isEmpty);
     expect(await codes(), contains('notifications_disabled'));

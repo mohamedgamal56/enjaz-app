@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'security_service.dart';
+import '../../reminders/domain/active_alarm.dart';
+import '../../reminders/domain/notification_service.dart';
 
 class AppLockState {
   final bool isLoading;
@@ -124,8 +126,11 @@ class AppLockNotifier extends StateNotifier<AppLockState> with WidgetsBindingObs
 
   /// Attempt to unlock the app
   Future<bool> unlock({String? localizedReason}) async {
+    // Resolve a cold-start alarm before displaying an authentication prompt.
+    try { await NotificationService.instance.initialize(); } catch (_) {}
+    if (!mounted) return false;
     if (!state.isEnabled || !state.isLocked) return true;
-    if (state.isAuthenticating) return false;
+    if (state.isAuthenticating || activeAlarm.value != null) return false;
 
     state = state.copyWith(isAuthenticating: true);
     final success = await SecurityService.instance.authenticate(
