@@ -6,6 +6,9 @@ class NotificationPermissionSheet extends StatelessWidget {
   const NotificationPermissionSheet({super.key});
 
   static Future<bool> show(BuildContext context) async {
+    final enabled = await NotificationService.instance.areNotificationsEnabled();
+    if (enabled) return true;
+    if (!context.mounted) return false;
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,

@@ -907,7 +907,10 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                       initialValue: _selectedReminderOffset,
                       onSelected: (val) async {
                         if (val != null) {
-                          await NotificationPermissionSheet.show(context);
+                          final enabled = await NotificationService.instance.areNotificationsEnabled();
+                          if (!enabled && context.mounted) {
+                            await NotificationPermissionSheet.show(context);
+                          }
                         }
                         setState(() {
                           _selectedReminderOffset = val;

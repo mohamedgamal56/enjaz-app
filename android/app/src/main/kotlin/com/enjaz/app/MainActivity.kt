@@ -30,6 +30,14 @@ class MainActivity: FlutterFragmentActivity() {
                     result.success(voice)
                 }
                 "timezone" -> result.success(java.util.TimeZone.getDefault().id)
+                "alarmUri" -> {
+                    try {
+                        val uri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
+                        result.success(uri?.toString() ?: "content://settings/system/alarm_alert")
+                    } catch (e: Exception) {
+                        result.success("content://settings/system/alarm_alert")
+                    }
+                }
                 "exactAlarmSettings" -> {
                     try {
                         val settingsIntent = if (android.os.Build.VERSION.SDK_INT >= 31)

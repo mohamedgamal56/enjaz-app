@@ -505,3 +505,12 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
 - Prevent arabic_missing failure by allowing speech engine to default to ar-EG / ar system recognition directly without forcing offline-only language pack pre-downloads.
 - Bumped version to 1.2.2+2020 for direct in-place update over installed builds.
 - Preserved permanent keystore signing configuration and SHA-256 fingerprint verification intact.
+
+
+## Release 1.2.3+2021 (Exact Alarm Reliability, Insistent Loop & Permission Sheet Fix) / 2026-11-10
+
+- **Exact Alarm Execution**: Declared ndroid.permission.USE_EXACT_ALARM in AndroidManifest.xml and enforced AndroidScheduleMode.exactAllowWhileIdle (setExactAndAllowWhileIdle) for all alarm reminders, avoiding inexact downgrades unless exact alarms are explicitly unsupported.
+- **Channel Reconfiguration & Alarm Ringtone**: Upgraded alarm channel to enjaz_alarm_v3 and bound it to native system alarm URI (RingtoneManager.TYPE_ALARM) and AudioAttributesUsage.alarm, with FLAG_INSISTENT = 4 to loop repeatedly until dismissed.
+- **Action Buttons & Ongoing Persistence**: Set ongoing: true and utoCancel: false, presenting two direct action buttons: [إيقاف] (ction_stop, native cancelNotification: true) and [تأجيل 5 دقائق] (ction_snooze, native cancelNotification: true), preventing accidental dismissals.
+- **Permission Sheet Guard**: Added NotificationService.instance.areNotificationsEnabled() guard inside NotificationPermissionSheet.show(context) and quick_add_sheet.dart, completely preventing redundant permission popups when already allowed.
+- **Version Bump & Permanent Signing**: Bumped version to 1.2.3+2021 (ersionCode: 2021) for direct in-place update without uninstalling; preserved permanent signing configuration and SHA-256 fingerprint verification intact.

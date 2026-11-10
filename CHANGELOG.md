@@ -1,3 +1,12 @@
+## 1.2.3+2021 — 2026-11-10
+
+- Enforce AndroidScheduleMode.exactAllowWhileIdle (setExactAndAllowWhileIdle) for alarm reminders to guarantee exact second firing during lock screen and Doze mode.
+- Declare ndroid.permission.USE_EXACT_ALARM in AndroidManifest.xml for seamless automatic exact alarm scheduling permissions on Android 13+.
+- Reconfigure dedicated alarm notification channel (enjaz_alarm_v3) with system default alarm sound (RingtoneManager.TYPE_ALARM), AudioAttributesUsage.alarm, and repeating audio loop (FLAG_INSISTENT = 4).
+- Streamline alarm actions to two clear buttons: [إيقاف] (Stop) to dismiss the alarm immediately with native cancellation, and [تأجيل 5 دقائق] (Snooze 5 min) with persistent ongoing notification (ongoing: true, utoCancel: false).
+- Programmatically check notification permission before displaying NotificationPermissionSheet, eliminating the bottom sheet popup on task creation when notifications are already granted.
+- Bump version to 1.2.3+2021 for direct seamless update installation.
+
 ## 1.2.2+2020 — 2026-11-10
 
 - Set notification and alarm channels to maximum importance (Importance.max / Priority.max) with sound, vibration, lights, heads-up display and public lockscreen visibility.

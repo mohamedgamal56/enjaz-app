@@ -35,30 +35,42 @@ void notificationTapBackground(
         await db.updateTaskStatus(task: task, newStatus: 'done');
         await ReminderScheduler(db: db).cancelAllForOwner('task', taskId);
       }
-    } else if (actionId == 'action_snooze' && taskId != null) {
-      // Snooze default: 10 minutes
-      final snoozeSetting = await db.getSetting('reminder_snooze_duration');
-      final snoozeMinutes = int.tryParse(snoozeSetting ?? '10') ?? 10;
-      final task = await db.getTaskById(taskId);
-      if (task != null) {
-        final snoozeTime = DateTime.now().add(Duration(minutes: snoozeMinutes));
+    } else if (actionId == 'action_snooze') {
+      const snoozeMinutes = 5;
+      final snoozeTime = DateTime.now().add(const Duration(minutes: snoozeMinutes));
+      if (taskId != null) {
+        final task = await db.getTaskById(taskId);
+        if (task != null) {
+          final alarmId = notificationResponse.id ?? (taskId.abs() % 2000000000);
+          await NotificationService.instance.cancelNotification(alarmId);
+          await NotificationService.instance.scheduleAlarm(
+            id: alarmId,
+            title: task.title,
+            body: 'تأجيل المنبه (5 دقائق)',
+            scheduledDateTime: snoozeTime,
+            payload: 'task:$taskId',
+          );
+        }
+      } else if (notificationResponse.id != null) {
+        await NotificationService.instance.cancelNotification(notificationResponse.id!);
         await NotificationService.instance.scheduleAlarm(
-          id: notificationResponse.id ?? (taskId.abs() % 2000000000),
-          title: task.title,
-          body: 'تأجيل المنبه ($snoozeMinutes د)',
+          id: notificationResponse.id!,
+          title: 'تذكير مؤجل',
+          body: 'حان موعد التذكير المؤجل (5 دقائق)',
           scheduledDateTime: snoozeTime,
-          payload: 'task:$taskId',
+          payload: payload,
+          isSensitive: true,
         );
       }
-    } else if (actionId == 'action_snooze' && notificationResponse.id != null) {
-      final minutes = int.tryParse(await db.getSetting('reminder_snooze_duration') ?? '10') ?? 10;
-      await NotificationService.instance.scheduleAlarm(
-        id: notificationResponse.id!, title: 'تذكير مؤجل', body: 'حان موعد التذكير',
-        scheduledDateTime: DateTime.now().add(Duration(minutes: minutes)), payload: payload, isSensitive: true);
     } else if (actionId == 'action_stop') {
       if (notificationResponse.id != null) {
         await NotificationService.instance.cancelNotification(
           notificationResponse.id!,
+        );
+      }
+      if (taskId != null) {
+        await NotificationService.instance.cancelNotification(
+          taskId.abs() % 2000000000,
         );
       }
     }
@@ -88,7 +100,8 @@ class NotificationService {
   static const int idAlarmTest = 99999;
 
   // New Channel IDs (Roadmap v2.0 Section 5)
-  static const String channelAlarmV2 = 'enjaz_alarm_v2';
+  static const String channelAlarmV3 = 'enjaz_alarm_v3';
+  static const String channelAlarmV2 = channelAlarmV3;
   static const String channelRemindersV2 = 'enjaz_reminders_v2';
 
   // For in-memory testing or tracking
@@ -130,7 +143,13 @@ class NotificationService {
       onDidReceiveNotificationResponse: (response) async {
         final actionId = response.actionId;
         final payload = response.payload;
-        if (payload != null && actionId != null && actionId.isNotEmpty && actionId != 'action_open') {
+        if (actionId == 'action_stop') {
+          if (response.id != null) {
+            await cancelNotification(response.id!);
+          }
+        } else if (actionId == 'action_snooze') {
+          notificationTapBackground(response);
+        } else if (payload != null && actionId != null && actionId.isNotEmpty && actionId != 'action_open') {
           notificationTapBackground(response);
         } else {
           _onSelectNotification?.call(response.payload);
@@ -158,12 +177,17 @@ class NotificationService {
           await androidImplementation.deleteNotificationChannel(
             'enjaz_weekly_report',
           );
+          await androidImplementation.deleteNotificationChannel(
+            'enjaz_alarm_v2',
+          );
         } catch (_) {}
+
+        final alarmUri = await getAlarmSoundUri();
 
         // 1. Dedicated Alarm Channel (Importance.max, alarm audio attributes, ongoing, insistent)
         await androidImplementation.createNotificationChannel(
-          const AndroidNotificationChannel(
-            channelAlarmV2,
+          AndroidNotificationChannel(
+            channelAlarmV3,
             'تنبيهات المنبه',
             description: 'منبه رنان بصوت واهتزاز متواصل حتى التفاعل',
             importance: Importance.max,
@@ -171,6 +195,7 @@ class NotificationService {
             enableVibration: true,
             enableLights: true,
             audioAttributesUsage: AudioAttributesUsage.alarm,
+            sound: UriAndroidNotificationSound(alarmUri),
           ),
         );
 
@@ -232,7 +257,8 @@ class NotificationService {
         await NotificationDiagnostics.record('channel_disabled', id: id);
         return;
       }
-      final permitted = !exact || await android?.canScheduleExactNotifications() == true;
+      final canExact = await android?.canScheduleExactNotifications();
+      final permitted = !exact || canExact != false;
       var useExact = exact && permitted;
       Future<void> schedule(bool precise) => _notificationsPlugin.zonedSchedule(
         id, title, body, date, details,
@@ -285,6 +311,32 @@ class NotificationService {
     } catch (error) { await recordFailure(error, id: 99998); return false; }
   }
 
+  /// Check if notifications are enabled
+  Future<bool> areNotificationsEnabled() async {
+    if (Platform.isAndroid) {
+      final androidImplementation = android;
+      if (androidImplementation != null) {
+        final enabled = await androidImplementation.areNotificationsEnabled();
+        return enabled ?? true;
+      }
+    }
+    return true;
+  }
+
+  static String? _cachedAlarmSoundUri;
+
+  /// Retrieve default system alarm sound URI
+  static Future<String> getAlarmSoundUri() async {
+    if (_cachedAlarmSoundUri != null) return _cachedAlarmSoundUri!;
+    String uri = 'content://settings/system/alarm_alert';
+    try {
+      final res = await const MethodChannel('com.enjaz.app/assistant').invokeMethod<String>('alarmUri');
+      if (res != null && res.isNotEmpty) uri = res;
+    } catch (_) {}
+    _cachedAlarmSoundUri = uri;
+    return uri;
+  }
+
   /// Request POST_NOTIFICATIONS permission on Android 13+
   Future<bool> requestPermission() async {
     if (Platform.isAndroid) {
@@ -332,21 +384,22 @@ class NotificationService {
     await cancelNotification(id);
 
     final isArabic = languageCode != 'en';
-    final doneLabel = isArabic ? 'تمت' : 'Done';
-    final snoozeLabel = isArabic ? 'تأجيل' : 'Snooze';
     final stopLabel = isArabic ? 'إيقاف' : 'Stop';
+    final snoozeLabel = isArabic ? 'تأجيل 5 دقائق' : 'Snooze 5 min';
 
     final tzDateTime = tz.TZDateTime.from(scheduledDateTime, tz.local);
+    final alarmUri = await getAlarmSoundUri();
 
     // FLAG_INSISTENT = 4 makes audio/vibration repeat until dismissed
     final androidDetails = AndroidNotificationDetails(
-      channelAlarmV2,
+      channelAlarmV3,
       'تنبيهات المنبه',
       channelDescription: 'منبه رنان بصوت واهتزاز متواصل حتى التفاعل',
       importance: Importance.max,
       priority: Priority.max,
       category: AndroidNotificationCategory.alarm,
       audioAttributesUsage: AudioAttributesUsage.alarm,
+      sound: UriAndroidNotificationSound(alarmUri),
       ongoing: true,
       autoCancel: false,
       additionalFlags: Int32List.fromList([4]),
@@ -366,19 +419,16 @@ class NotificationService {
           : NotificationVisibility.public,
       actions: <AndroidNotificationAction>[
         AndroidNotificationAction(
-          payload?.startsWith('task:') == true ? 'action_done' : 'action_open',
-          payload?.startsWith('task:') == true ? doneLabel : (isArabic ? 'فتح' : 'Open'),
-          showsUserInterface: true,
+          'action_stop',
+          stopLabel,
+          showsUserInterface: false,
+          cancelNotification: true,
         ),
         AndroidNotificationAction(
           'action_snooze',
           snoozeLabel,
           showsUserInterface: false,
-        ),
-        AndroidNotificationAction(
-          'action_stop',
-          stopLabel,
-          showsUserInterface: false,
+          cancelNotification: true,
         ),
       ],
     );
