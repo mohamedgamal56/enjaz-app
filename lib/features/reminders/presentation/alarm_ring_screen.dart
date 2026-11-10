@@ -166,6 +166,17 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
     }
   }
 
+  Future<void> _markTaskInProgress(int taskId) async {
+    try {
+      final db = AppDatabase();
+      final task = _loadedTask ?? await db.getTaskById(taskId);
+      if (task != null && task.status == 'todo') {
+        await db.updateTaskStatus(task: task, newStatus: 'in_progress');
+      }
+      await db.close();
+    } catch (_) {}
+  }
+
   Future<void> _startExecutingOrStop() async {
     if (_actionInProgress) return;
     setState(() {
@@ -174,20 +185,12 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
     });
     try {
       await NotificationService.instance.cancelNotification(widget.alarmId);
-
-      // If linked to a task that is 'todo', transition it to 'in_progress'
-      if (widget.taskId != null) {
-        try {
-          final db = AppDatabase();
-          final task = _loadedTask ?? await db.getTaskById(widget.taskId!);
-          if (task != null && task.status == 'todo') {
-            await db.updateTaskStatus(task: task, newStatus: 'in_progress');
-          }
-          await db.close();
-        } catch (_) {}
-      }
-
       if (mounted) widget.onClosed();
+
+      // If linked to a task that is 'todo', transition it to 'in_progress' in background
+      if (widget.taskId != null) {
+        unawaited(_markTaskInProgress(widget.taskId!));
+      }
     } catch (_) {
       if (mounted) {
         setState(() {
