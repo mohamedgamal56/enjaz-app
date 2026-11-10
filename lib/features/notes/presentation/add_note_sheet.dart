@@ -10,17 +10,26 @@ import '../../voice_notes/presentation/voice_recorder_sheet.dart';
 class AddNoteSheet extends ConsumerStatefulWidget {
   final Note? noteToEdit;
   final String? initialDate;
+  final String? initialTitle;
+  final String? initialBody;
+  final String? initialKind;
 
   const AddNoteSheet({
     super.key,
     this.noteToEdit,
     this.initialDate,
+    this.initialTitle,
+    this.initialBody,
+    this.initialKind,
   });
 
   static Future<void> show(
     BuildContext context, {
     Note? noteToEdit,
     String? initialDate,
+    String? initialTitle,
+    String? initialBody,
+    String? initialKind,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -29,6 +38,9 @@ class AddNoteSheet extends ConsumerStatefulWidget {
       builder: (_) => AddNoteSheet(
         noteToEdit: noteToEdit,
         initialDate: initialDate,
+        initialTitle: initialTitle,
+        initialBody: initialBody,
+        initialKind: initialKind,
       ),
     );
   }
@@ -77,6 +89,10 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
       if (n.tags != null && n.tags!.trim().isNotEmpty) {
         _tags.addAll(n.tags!.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty));
       }
+    } else {
+      if (widget.initialTitle != null) _titleController.text = widget.initialTitle!;
+      if (widget.initialBody != null) _bodyController.text = widget.initialBody!;
+      if (widget.initialKind != null) _kind = widget.initialKind!;
     }
   }
 

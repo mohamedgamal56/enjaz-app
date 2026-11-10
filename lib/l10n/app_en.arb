@@ -344,5 +344,19 @@
   "diagnosticMissing": "Notification not found in pending requests.",
   "diagnosticSound": "Sound",
   "diagnosticBlocked": "Channel blocked",
-  "diagnosticEnabled": "Channel enabled"
+  "diagnosticEnabled": "Channel enabled",
+  "assistantConfirm": "Confirm",
+  "assistantEdit": "Edit",
+  "assistantCancel": "Cancel",
+  "assistantListeningPrompt": "Assistant is listening...",
+  "assistantTapToSpeak": "Tap to speak with Enjaz",
+  "assistantInputHint": "Or type what you need here...",
+  "assistantHelpTitle": "Assistant Commands Guide",
+  "assistantUndoSuccess": "Undone successfully",
+  "assistantUndoLabel": "Undo",
+  "assistantSaveError": "Error occurred while saving",
+  "assistantVoiceSettings": "Assistant Settings",
+  "assistantClose": "Close",
+  "assistantHelpCommandsTab": "Commands",
+  "assistantHelpQuestionsTab": "Questions"
 }

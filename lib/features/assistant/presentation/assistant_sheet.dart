@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/utils/money_formatter.dart';
 import '../tts_service.dart';
+import 'assistant_help_screen.dart';
 import 'assistant_settings_screen.dart';
 
 import 'package:flutter/material.dart';
@@ -506,18 +507,37 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet>
 
       case 'expense':
       case 'income':
+        final amountNum = slots['amount'] as num?;
+        final amountMinor = amountNum != null ? (amountNum * 100).round() : null;
+        final dateStr = slots['date'] as String?;
+        final nature = slots['nature'] as String?;
+        final note = slots['title'] as String?;
         AddTransactionSheet.show(
           context,
           initialKind: plan.actionType == 'expense' ? 'expense' : 'income',
+          initialAmountMinor: amountMinor,
+          initialDate: dateStr,
+          initialNote: note,
+          initialNature: nature,
         );
         break;
 
       case 'note':
-        AddNoteSheet.show(context);
+        final title = slots['title'] as String?;
+        final noteKind = slots['noteKind'] as String?;
+        AddNoteSheet.show(
+          context,
+          initialTitle: title,
+          initialKind: noteKind,
+        );
         break;
 
       case 'idea':
-        AddIdeaSheet.show(context);
+        final title = slots['title'] as String?;
+        AddIdeaSheet.show(
+          context,
+          initialTitle: title,
+        );
         break;
 
       default:
@@ -738,6 +758,21 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet>
                   ),
                   Row(
                     children: [
+                      IconButton(
+                        icon: const Icon(Icons.help_outline_rounded),
+                        tooltip: 'دليل الأوامر',
+                        onPressed: () async {
+                          await _cancelConfirmation();
+                          await _tts.stop();
+                          if (context.mounted) {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const AssistantHelpScreen(),
+                              ),
+                            );
+                          }
+                        },
+                      ),
                       IconButton(
                         icon: const Icon(Icons.settings_voice),
                         tooltip: 'إعدادات المساعد',

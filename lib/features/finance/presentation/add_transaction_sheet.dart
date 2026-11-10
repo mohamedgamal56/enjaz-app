@@ -11,12 +11,20 @@ class AddTransactionSheet extends ConsumerStatefulWidget {
   final Transaction? existingTransaction;
   final String? initialKind;
   final String? initialDate;
+  final int? initialAmountMinor;
+  final int? initialCategoryId;
+  final String? initialNote;
+  final String? initialNature;
 
   const AddTransactionSheet({
     super.key,
     this.existingTransaction,
     this.initialKind,
     this.initialDate,
+    this.initialAmountMinor,
+    this.initialCategoryId,
+    this.initialNote,
+    this.initialNature,
   });
 
   static Future<void> show(
@@ -24,6 +32,10 @@ class AddTransactionSheet extends ConsumerStatefulWidget {
     Transaction? existingTransaction,
     String? initialKind,
     String? initialDate,
+    int? initialAmountMinor,
+    int? initialCategoryId,
+    String? initialNote,
+    String? initialNature,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -33,6 +45,10 @@ class AddTransactionSheet extends ConsumerStatefulWidget {
         existingTransaction: existingTransaction,
         initialKind: initialKind,
         initialDate: initialDate,
+        initialAmountMinor: initialAmountMinor,
+        initialCategoryId: initialCategoryId,
+        initialNote: initialNote,
+        initialNature: initialNature,
       ),
     );
   }
@@ -56,11 +72,17 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     final existing = widget.existingTransaction;
     _kind = existing?.kind ?? widget.initialKind ?? 'expense';
     _amountController = TextEditingController(
-      text: existing != null ? MoneyFormatter.formatAmount(existing.amountMinor, showDecimals: false) : '',
+      text: existing != null
+          ? MoneyFormatter.formatAmount(existing.amountMinor, showDecimals: false)
+          : (widget.initialAmountMinor != null
+              ? MoneyFormatter.formatAmount(widget.initialAmountMinor!, showDecimals: false)
+              : ''),
     );
-    _noteController = TextEditingController(text: existing?.note ?? '');
-    _selectedCategoryId = existing?.categoryId;
-    _nature = existing?.nature ?? 'side';
+    _noteController = TextEditingController(
+      text: existing?.note ?? widget.initialNote ?? '',
+    );
+    _selectedCategoryId = existing?.categoryId ?? widget.initialCategoryId;
+    _nature = existing?.nature ?? widget.initialNature ?? 'side';
     _paymentMethod = existing?.paymentMethod ?? 'cash';
 
     if (existing != null) {

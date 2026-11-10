@@ -89,6 +89,7 @@ class ConfirmationCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final actionColor = _getActionColor(colorScheme);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (plan.isBlocked) {
       return Card(
@@ -107,7 +108,7 @@ class ConfirmationCard extends StatelessWidget {
                   Icon(Icons.shield_outlined, color: colorScheme.error, size: 28),
                   const SizedBox(width: 10),
                   Text(
-                    'إجراء محظور بالصوت',
+                    isArabic ? 'إجراء محظور بالصوت' : 'Voice Action Blocked',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: colorScheme.error,
@@ -336,9 +337,9 @@ class ConfirmationCard extends StatelessWidget {
                     ),
                     onPressed: onConfirm,
                     icon: const Icon(Icons.check_rounded),
-                    label: const Text(
-                      'تأكيد',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    label: Text(
+                      isArabic ? 'تأكيد' : 'Confirm',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ),
                 ),
@@ -355,14 +356,14 @@ class ConfirmationCard extends StatelessWidget {
                     ),
                     onPressed: onEdit,
                     icon: const Icon(Icons.edit_outlined, size: 18),
-                    label: const Text('تعديل'),
+                    label: Text(isArabic ? 'تعديل' : 'Edit'),
                   ),
                 ),
                 const SizedBox(width: 8),
 
                 // إلغاء
                 IconButton(
-                  tooltip: 'إلغاء',
+                  tooltip: isArabic ? 'إلغاء' : 'Cancel',
                   style: IconButton.styleFrom(
                     foregroundColor: colorScheme.error,
                   ),

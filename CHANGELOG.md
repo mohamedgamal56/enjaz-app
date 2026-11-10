@@ -1,3 +1,28 @@
+## 1.2.9+2029 — 2026-11-10 (Batch 2 — Finish the Voice Assistant)
+
+- Single Source of Truth for Stats Alignment:
+  - Aligned `AnswerService._buildRecapAnswer` with `StatsService` (CHANGES.md Section 7) to count distinct tasks completed in range (`completedTaskIds.length`) instead of raw event count, ensuring 100% numerical consistency with `StatsScreen` when tasks are reopened and re-completed.
+- Seamless Command Edit Pre-filling:
+  - Expanded `AddTransactionSheet` with optional `initialAmountMinor`, `initialCategoryId`, `initialNote`, `initialNature`.
+  - Expanded `AddNoteSheet` with optional `initialTitle`, `initialBody`, `initialKind`.
+  - Expanded `AddIdeaSheet` with optional `initialTitle`, `initialDescription`.
+  - Updated `AssistantSheet._handleEdit` to forward all extracted intent slots directly into the respective edit sheets, preserving spoken amounts, titles, dates, and categories.
+- Dedicated Voice Assistant Help Screen (VOICE.md Sections 2.8, 5 & 6):
+  - Created `AssistantHelpScreen` (`lib/features/assistant/presentation/assistant_help_screen.dart`) with two categorized tabs:
+    - Registration Commands (Tasks, Errands, Reminders, Status Updates, Expenses, Income, Habits, Notes & Ideas, Wishlist & Health) with authentic Egyptian Arabic spoken examples.
+    - Questions & Inquiries (Agenda, Recap, Spending, Habit Status, Pending, Obligations, Health Appointments, Wishlist Totals).
+    - Top privacy & safety boundary notice confirming local-only processing and zero deletions.
+  - Added Help button (`Icons.help_outline_rounded`) to the `AssistantSheet` header.
+- ARB Localization & Locale Support:
+  - Added assistant localization keys to `lib/l10n/app_ar.arb` and `lib/l10n/app_en.arb`.
+  - Updated `ConfirmationCard` and `AnswerCard` to seamlessly adapt to both Arabic and English locales.
+- Unit Tests:
+  - Added test in `answer_service_test.dart` verifying distinct task completion count matching `StatsService`.
+  - Added `command_edit_prefill_test.dart` testing slots extraction and pre-fill readiness across all modules.
+- Zero Regression Guarantees:
+  - Kept alarm notification channel (`enjaz_alarm_v5_music`), Xiaomi lockscreen flags, and local Egyptian Arabic voice recognition engine untouched.
+- Output release artifact `enjaz-v1.2.9+2029-arm64.apk` signed with permanent release keystore.
+
 ## 1.2.8+2028 — 2026-11-10 (Batch 1 — Data Protection)
 
 - Trash Screen for All 12 Modules:

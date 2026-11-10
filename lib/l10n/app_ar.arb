@@ -344,5 +344,19 @@
   "diagnosticMissing": "لم نجد التنبيه ضمن الطلبات المسجلة.",
   "diagnosticSound": "الصوت",
   "diagnosticBlocked": "القناة مقفولة",
-  "diagnosticEnabled": "القناة مفعّلة"
+  "diagnosticEnabled": "القناة مفعّلة",
+  "assistantConfirm": "تأكيد",
+  "assistantEdit": "تعديل",
+  "assistantCancel": "إلغاء",
+  "assistantListeningPrompt": "المساعد يستمع الآن...",
+  "assistantTapToSpeak": "اضغط للتحدث مع إنجاز",
+  "assistantInputHint": "أو اكتب ما تريد هنا...",
+  "assistantHelpTitle": "دليل أوامر المساعد",
+  "assistantUndoSuccess": "تم التراجع بنجاح",
+  "assistantUndoLabel": "تراجع",
+  "assistantSaveError": "حدث خطأ أثناء الحفظ",
+  "assistantVoiceSettings": "إعدادات المساعد",
+  "assistantClose": "إغلاق",
+  "assistantHelpCommandsTab": "أوامر التسجيل",
+  "assistantHelpQuestionsTab": "الأسئلة والاستفسارات"
 }

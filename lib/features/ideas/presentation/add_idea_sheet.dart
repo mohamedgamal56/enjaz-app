@@ -9,15 +9,21 @@ import '../../voice_notes/presentation/voice_recorder_sheet.dart';
 
 class AddIdeaSheet extends ConsumerStatefulWidget {
   final bool startWithRecorder;
+  final String? initialTitle;
+  final String? initialDescription;
 
   const AddIdeaSheet({
     super.key,
     this.startWithRecorder = false,
+    this.initialTitle,
+    this.initialDescription,
   });
 
   static Future<int?> show(
     BuildContext context, {
     bool startWithRecorder = false,
+    String? initialTitle,
+    String? initialDescription,
   }) {
     return showModalBottomSheet<int?>(
       context: context,
@@ -26,7 +32,11 @@ class AddIdeaSheet extends ConsumerStatefulWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => AddIdeaSheet(startWithRecorder: startWithRecorder),
+      builder: (_) => AddIdeaSheet(
+        startWithRecorder: startWithRecorder,
+        initialTitle: initialTitle,
+        initialDescription: initialDescription,
+      ),
     );
   }
 
@@ -46,6 +56,12 @@ class _AddIdeaSheetState extends ConsumerState<AddIdeaSheet> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialTitle != null) {
+      _titleController.text = widget.initialTitle!;
+    }
+    if (widget.initialDescription != null) {
+      _descController.text = widget.initialDescription!;
+    }
     if (widget.startWithRecorder) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _recordVoiceNote();

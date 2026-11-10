@@ -226,6 +226,8 @@ class AnswerService {
     final startMs = DateTime.parse(startDate).millisecondsSinceEpoch;
     final endMs = DateTime.parse(endDate).add(const Duration(days: 1)).millisecondsSinceEpoch;
     final doneEvents = allEvents.where((e) => e.toStatus == 'done' && e.at >= startMs && e.at < endMs).toList();
+    // One source of truth: count distinct tasks completed in range (PLAN.md Batch 2 & CHANGES.md Section 7)
+    final completedTaskIds = doneEvents.map((e) => e.taskId).toSet();
 
     // Postponed tasks and reasons
     final postponeEvents = allEvents.where((e) => e.toStatus == 'postponed' && e.at >= startMs && e.at < endMs).toList();
@@ -266,7 +268,7 @@ class AnswerService {
 
     final speech = speechComposer.composeRecap(
       periodWords: periodWords,
-      doneTasksCount: doneEvents.length,
+      doneTasksCount: completedTaskIds.length,
       postponedCount: postponeEvents.length,
       topPostponeReason: topReason,
       habitAdherencePct: habitPct,
@@ -276,7 +278,7 @@ class AnswerService {
     );
 
     final metricChips = <String>[
-      'أنجزت ${PluralAr.formatTasks(doneEvents.length)}',
+      'أنجزت ${PluralAr.formatTasks(completedTaskIds.length)}',
       if (postponeEvents.isNotEmpty) 'أجلت ${PluralAr.formatTasks(postponeEvents.length)}',
       if (totals.expenseMinor > 0) 'مصاريف: ${PluralAr.formatPounds(totals.expenseMinor / 100)}',
       if (habitPct != null && habitPct > 0) 'التزام عادات: ${(habitPct * 100).round()}%',
@@ -286,10 +288,10 @@ class AnswerService {
       intent: intent,
       title: 'ملخص الإنجاز ($periodWords)',
       speechText: speech,
-      nonSensitiveSpeechText: speechComposer.composeRecap(periodWords: periodWords, doneTasksCount: doneEvents.length, postponedCount: postponeEvents.length, topPostponeReason: topReason, habitAdherencePct: habitPct, totalSpending: 0, notesCount: notesInPeriod, ideasCount: ideasInPeriod),
+      nonSensitiveSpeechText: speechComposer.composeRecap(periodWords: periodWords, doneTasksCount: completedTaskIds.length, postponedCount: postponeEvents.length, topPostponeReason: topReason, habitAdherencePct: habitPct, totalSpending: 0, notesCount: notesInPeriod, ideasCount: ideasInPeriod),
       metricChips: metricChips,
       detailItems: [
-        if (doneEvents.isNotEmpty) 'المهام المكتملة: ${doneEvents.length}',
+        if (completedTaskIds.isNotEmpty) 'المهام المكتملة: ${completedTaskIds.length}',
         if (topReason != null) 'أكثر سبب للتأجيل: $topReason',
         if (notesInPeriod > 0) 'ملاحظات مسجلة: $notesInPeriod',
         if (ideasInPeriod > 0) 'أفكار جديدة: $ideasInPeriod',

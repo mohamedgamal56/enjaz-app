@@ -570,4 +570,22 @@ equestDismissKeyguard(this, null) and WindowManager.LayoutParams.FLAG_DISMISS_KE
 - **Version Bump & Artifact Naming**:
   - Bumped version to `1.2.8+2028` producing `enjaz-v1.2.8+2028-arm64.apk` signed with the permanent release keystore.
 
+## Decision 35: Batch 2 Voice Assistant Polish (Stats Alignment, Command Edit Pre-fill, Dedicated Help Screen & ARB Localization) / 2026-11-10
+
+- **Stats Alignment Single Source of Truth**:
+  - Aligned `AnswerService._buildRecapAnswer` with `StatsService` (CHANGES.md Section 7) so that completed tasks count distinct task IDs (`completedTaskIds.length`) rather than duplicate done events when a task is reopened and completed again. This guarantees 100% numerical consistency between voice recap answers and the `StatsScreen`.
+- **Pre-filling in Command Edit Sheets**:
+  - Enhanced `AddTransactionSheet.show`, `AddNoteSheet.show`, and `AddIdeaSheet.show` with optional initial parameter fields (`initialAmountMinor`, `initialCategoryId`, `initialNote`, `initialNature`, `initialTitle`, `initialBody`, `initialKind`, `initialDescription`).
+  - Wired `AssistantSheet._handleEdit` to forward all parsed slots from the `ActionPlan` to these sheets, preventing any spoken details from being lost if the user chooses to edit.
+- **Dedicated Voice Assistant Help Screen**:
+  - Implemented `AssistantHelpScreen` (`lib/features/assistant/presentation/assistant_help_screen.dart`) featuring two categorized tabs for Commands (`أوامر التسجيل`) and Questions (`الأسئلة والاستفسارات`) with authentic spoken Egyptian Arabic examples per `VOICE.md` Sections 5 & 6.
+  - Included a safety and privacy banner emphasizing that all recognition runs 100% on-device and that the assistant never deletes data.
+  - Linked from `AssistantSheet` header with a help icon button (`Icons.help_outline_rounded`).
+- **ARB Localization & Zero Regression**:
+  - Added assistant keys to `app_ar.arb` and `app_en.arb` for dynamic localization.
+  - Maintained zero regression on the alarm system (`enjaz_alarm_v5_music`), Xiaomi lock screen flags, and local Egyptian Arabic voice recognition.
+- **Version Bump & Artifact Naming**:
+  - Bumped version to `1.2.9+2029` generating `enjaz-v1.2.9+2029-arm64.apk` signed with the permanent release keystore.
+
+
 

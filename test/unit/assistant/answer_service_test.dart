@@ -244,5 +244,63 @@ void main() {
       expect(card.speechText, contains('1500 جنيه'));
       expect(card.navTarget, equals('finance'));
     });
+
+    test('builds recap answer counting distinct tasks completed in range (aligned with StatsService)', () async {
+      final yest = fixedNow.subtract(const Duration(days: 1));
+
+      // Task completed, reopened, then completed again
+      final taskId1 = await db.insertNewTask(
+        TasksCompanion.insert(
+          title: 'تصميم البانر',
+          status: const Value('done'),
+          createdAt: yest.millisecondsSinceEpoch,
+          updatedAt: yest.millisecondsSinceEpoch,
+        ),
+      );
+
+      // First completion
+      await db.insertTaskEvent(
+        TaskEventsCompanion.insert(
+          taskId: taskId1,
+          at: yest.millisecondsSinceEpoch,
+          fromStatus: 'in_progress',
+          toStatus: 'done',
+          progress: 100,
+          createdAt: yest.millisecondsSinceEpoch,
+          updatedAt: yest.millisecondsSinceEpoch,
+        ),
+      );
+      // Reopened
+      await db.insertTaskEvent(
+        TaskEventsCompanion.insert(
+          taskId: taskId1,
+          at: yest.millisecondsSinceEpoch + 1000,
+          fromStatus: 'done',
+          toStatus: 'in_progress',
+          progress: 50,
+          createdAt: yest.millisecondsSinceEpoch + 1000,
+          updatedAt: yest.millisecondsSinceEpoch + 1000,
+        ),
+      );
+      // Completed again
+      await db.insertTaskEvent(
+        TaskEventsCompanion.insert(
+          taskId: taskId1,
+          at: yest.millisecondsSinceEpoch + 2000,
+          fromStatus: 'in_progress',
+          toStatus: 'done',
+          progress: 100,
+          createdAt: yest.millisecondsSinceEpoch + 2000,
+          updatedAt: yest.millisecondsSinceEpoch + 2000,
+        ),
+      );
+
+      final intent = parser.parse('عملت ايه امبارح؟', referenceNow: fixedNow);
+      final card = await answerService.buildAnswer(intent);
+
+      // Distinct tasks completed: exactly 1 task (not 2 events)
+      expect(card.metricChips, contains('أنجزت مهمة'));
+      expect(card.detailItems, contains('المهام المكتملة: 1'));
+    });
   });
 }
