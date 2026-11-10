@@ -17,27 +17,28 @@ class MainActivity: FlutterFragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        configureLockScreenFlags(intent?.getStringExtra("payload")?.startsWith("alarm:") == true)
+        configureLockScreenFlags()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        configureLockScreenFlags(intent?.getStringExtra("payload")?.startsWith("alarm:") == true)
+        configureLockScreenFlags()
         if (intent.action == "com.enjaz.app.VOICE") assistantChannel?.invokeMethod("voiceShortcut", null)
     }
 
-    private fun configureLockScreenFlags(enabled: Boolean) {
+    private fun configureLockScreenFlags() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            setShowWhenLocked(enabled)
-            setTurnScreenOn(enabled)
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
         }
         @Suppress("DEPRECATION")
-        val flags = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+        window.addFlags(
+            WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
             WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
-            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-        if (enabled) window.addFlags(flags) else window.clearFlags(flags)
-        // Do not dismiss the device keyguard or expose the rest of the app.
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+            WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
+        )
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -60,7 +61,11 @@ class MainActivity: FlutterFragmentActivity() {
                     }
                 }
                 "setAlarmScreen" -> {
-                    configureLockScreenFlags(call.argument<Boolean>("enabled") == true)
+                    configureLockScreenFlags()
+                    result.success(true)
+                }
+                "turnScreenOn" -> {
+                    configureLockScreenFlags()
                     result.success(true)
                 }
                 "isDeviceLocked" -> {

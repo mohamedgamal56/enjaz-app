@@ -87,9 +87,10 @@ class NotificationService {
   static const int idAlarmTest = 99999;
 
   // Confirmed Alarm Channel ID and Name
-  static const String channelAlarm = 'enjaz_alarm_channel';
+  static const String channelAlarm = 'enjaz_alarm_v5_music';
   static const String channelAlarmV2 = channelAlarm;
   static const String channelAlarmV3 = channelAlarm;
+  static const String channelAlarmName = 'منبه إنجاز الحقيقي';
   static const String channelRemindersV2 = 'enjaz_reminders_v2';
 
   // For in-memory testing or tracking
@@ -178,11 +179,15 @@ class NotificationService {
                 .deleteNotificationChannel('enjaz_alarm_v3');
           } catch (_) {}
 
-          // Dedicated Alarm Channel (id: enjaz_alarm_channel, name: منبه إنجاز)
+          try {
+            await androidImplementation.deleteNotificationChannel('enjaz_alarm_channel');
+          } catch (_) {}
+
+          // Dedicated Alarm Channel (id: enjaz_alarm_v5_music, name: منبه إنجاز الحقيقي)
           await androidImplementation.createNotificationChannel(
             const AndroidNotificationChannel(
               channelAlarm,
-              'منبه إنجاز',
+              channelAlarmName,
               description: 'منبه رنان بصوت واهتزاز متواصل حتى التفاعل',
               importance: Importance.max,
               playSound: true,
@@ -457,7 +462,7 @@ class NotificationService {
     // FLAG_INSISTENT = 4 makes audio/vibration repeat until dismissed
     final androidDetails = AndroidNotificationDetails(
       channelAlarm,
-      'منبه إنجاز',
+      channelAlarmName,
       channelDescription: 'منبه رنان بصوت واهتزاز متواصل حتى التفاعل',
       importance: Importance.max,
       priority: Priority.max,

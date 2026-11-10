@@ -1,3 +1,11 @@
+## 1.2.6+2026 — 2026-11-10
+
+- Fresh Alarm Notification Channel: Replaced alarm channel ID with enjaz_alarm_v5_music ('منبه إنجاز الحقيقي') to break Android notification channel sound immutability and force binding to bundled melodic audio (alarm_sound.wav) with AudioAttributesUsage.alarm.
+- Proactively delete older channels (enjaz_alarm_channel, enjaz_alarm_v3, enjaz_alarm_v2, enjaz_task_reminders).
+- Restore static lock screen wake attributes in AndroidManifest.xml: android:showWhenLocked="true", android:turnScreenOn="true", and android:showOnLockScreen="true" for Xiaomi MIUI / HyperOS compatibility.
+- Remove complex intent payload checks in MainActivity.kt; enable lockscreen flags (FLAG_KEEP_SCREEN_ON, FLAG_ALLOW_LOCK_WHILE_SCREEN_ON, setShowWhenLocked, setTurnScreenOn) directly in onCreate and onNewIntent.
+- Bump version to 1.2.6+2026 producing enjaz-v1.2.6+2026-arm64.apk signed with permanent release keystore.
+
 ## 1.2.5+2025 — 2026-11-10
 
 - Preserve the actual Android notification ID through alarm launch, stop and snooze, including legacy notifications and non-task owners.

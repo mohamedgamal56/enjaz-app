@@ -536,3 +536,11 @@ equestDismissKeyguard(this, null) and WindowManager.LayoutParams.FLAG_DISMISS_KE
 - **Exact Schedule Mode**: Enforced AndroidScheduleMode.exactAllowWhileIdle (setExactAndAllowWhileIdle) for all alarm reminders.
 - **Artifact Naming**: Produced release APK named enjaz-v1.2.4+2024-arm64.apk.
 - **Permanent Signing**: Kept release keystore and SHA-256 fingerprint verification intact.
+
+## Release 1.2.6+2026 (Fresh Alarm Channel ID enjaz_alarm_v5_music & Xiaomi Lock Screen Wake Fix) / 2026-11-10
+
+- **Channel Immutability Reset**: Android notification channels do not allow mutating sound or audio attributes after creation. Deployed fresh channel ID `enjaz_alarm_v5_music` (named `منبه إنجاز الحقيقي`) bound directly to `RawResourceAndroidNotificationSound('alarm_sound')` and `AudioAttributesUsage.alarm`, while deleting previous stale channels (`enjaz_alarm_channel`, `enjaz_alarm_v3`, `enjaz_alarm_v2`).
+- **Manifest Lock Screen Attributes Restored**: Restored `android:showWhenLocked="true"`, `android:turnScreenOn="true"`, and `android:showOnLockScreen="true"` in `AndroidManifest.xml` to ensure Xiaomi MIUI and HyperOS allow wake and display over lock screen from background full-screen intent.
+- **Direct Activity Wake Flags**: Removed flaky payload checks in `MainActivity.kt` and activated `setShowWhenLocked(true)`, `setTurnScreenOn(true)`, `FLAG_KEEP_SCREEN_ON`, and `FLAG_ALLOW_LOCK_WHILE_SCREEN_ON` in `onCreate` and `onNewIntent`.
+- **Version & Build**: Bumped version to `1.2.6+2026` generating `enjaz-v1.2.6+2026-arm64.apk` signed with the permanent release keystore.
+
