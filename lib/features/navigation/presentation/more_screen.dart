@@ -1,3 +1,5 @@
+import '../../assistant/presentation/assistant_sheet.dart';
+import '../../assistant/presentation/assistant_settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,6 +25,8 @@ class MoreScreen extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       children: [
+        ListTile(leading: const Icon(Icons.mic), title: const Text('سجّل بالصوت'), onTap: () => AssistantSheet.show(context)),
+        ListTile(leading: const Icon(Icons.settings_voice), title: const Text('إعدادات المساعد والمساعدة'), onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AssistantSettingsScreen()))),
         // App header banner
         Card(
           elevation: 0,

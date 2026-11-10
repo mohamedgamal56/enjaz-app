@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:enjaz/features/assistant/text_normalizer.dart';
 import 'package:enjaz/features/assistant/number_words_ar.dart';
 import 'package:enjaz/features/assistant/date_time_resolver.dart';
-import 'package:enjaz/features/assistant/plural_ar.dart';
 
 void main() {
   group('Voice Assistant Step 1 Foundations Acceptance Tests (VOICE.md Section 10.2)', () {

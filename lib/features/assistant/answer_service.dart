@@ -1,4 +1,3 @@
-import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import '../../core/db/app_database.dart';
 import '../finance/domain/finance_service.dart';
@@ -14,6 +13,7 @@ class AnswerCardData {
   final AssistantIntent intent;
   final String title;
   final String speechText;
+  final String? nonSensitiveSpeechText;
   final List<String> metricChips;
   final List<String> detailItems;
   final String? navTarget;
@@ -24,6 +24,7 @@ class AnswerCardData {
     required this.intent,
     required this.title,
     required this.speechText,
+    this.nonSensitiveSpeechText,
     this.metricChips = const [],
     this.detailItems = const [],
     this.navTarget,
@@ -178,6 +179,7 @@ class AnswerService {
       intent: intent,
       title: 'جدول المواعيد ($dateWords)',
       speechText: speech,
+      nonSensitiveSpeechText: speechComposer.composeAgenda(targetDateWords: dateWords, taskTitles: taskTitles, overdueCount: overdueCount, obligationsCount: 0, healthCount: 0, pendingHabits: pendingHabits),
       metricChips: metricChips,
       detailItems: taskTitles,
       navTarget: 'tasks',
@@ -219,11 +221,11 @@ class AnswerService {
 
     // Done tasks in period
     final allEvents = await (db.select(db.taskEvents)
-          ..where((e) => e.toStatus.equals('done')))
+          ..where((e) => e.deletedAt.isNull()))
         .get();
     final startMs = DateTime.parse(startDate).millisecondsSinceEpoch;
     final endMs = DateTime.parse(endDate).add(const Duration(days: 1)).millisecondsSinceEpoch;
-    final doneEvents = allEvents.where((e) => e.at >= startMs && e.at < endMs).toList();
+    final doneEvents = allEvents.where((e) => e.toStatus == 'done' && e.at >= startMs && e.at < endMs).toList();
 
     // Postponed tasks and reasons
     final postponeEvents = allEvents.where((e) => e.toStatus == 'postponed' && e.at >= startMs && e.at < endMs).toList();
@@ -284,6 +286,7 @@ class AnswerService {
       intent: intent,
       title: 'ملخص الإنجاز ($periodWords)',
       speechText: speech,
+      nonSensitiveSpeechText: speechComposer.composeRecap(periodWords: periodWords, doneTasksCount: doneEvents.length, postponedCount: postponeEvents.length, topPostponeReason: topReason, habitAdherencePct: habitPct, totalSpending: 0, notesCount: notesInPeriod, ideasCount: ideasInPeriod),
       metricChips: metricChips,
       detailItems: [
         if (doneEvents.isNotEmpty) 'المهام المكتملة: ${doneEvents.length}',

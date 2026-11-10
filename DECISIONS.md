@@ -488,3 +488,51 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
 
 
 
+
+## Batch 0 / 2026-11-10
+
+- Notification and microphone reliability only; no UI refresh, schema migration, signing-secret or workflow change.
+- Keep existing channel IDs and user sound choices. Show blocked/silent settings instead of overriding them.
+- Pending requests confirm registration, never delivery. Android may delay inexact fallback. Phone acceptance remains unverified.
+- Keep the latest 30 diagnostic timestamp/code/ID entries, without titles, bodies or recordings. Logging failure must not crash scheduling.
+- Reuse the installed speech service; do not guarantee offline recognition or add network permission to disguise missing service/language support.
+- Add Batch 0 texts to ARB resources without broadly rewriting localization.
+
+
+## Release 1.2.2+2020 (Alarm & Speech Direct Listening) / 2026-11-10
+
+- Set alarm and reminder channels to Importance.max and Priority.max with sound, vibration, lights, fullScreenIntent, and default public lockscreen visibility.
+- Prevent arabic_missing failure by allowing speech engine to default to ar-EG / ar system recognition directly without forcing offline-only language pack pre-downloads.
+- Bumped version to 1.2.2+2020 for direct in-place update over installed builds.
+- Preserved permanent keystore signing configuration and SHA-256 fingerprint verification intact.
+
+
+## Release 1.2.3+2021 (Exact Alarm Reliability, Insistent Loop & Permission Sheet Fix) / 2026-11-10
+
+- **Exact Alarm Execution**: Declared ndroid.permission.USE_EXACT_ALARM in AndroidManifest.xml and enforced AndroidScheduleMode.exactAllowWhileIdle (setExactAndAllowWhileIdle) for all alarm reminders, avoiding inexact downgrades unless exact alarms are explicitly unsupported.
+- **Channel Reconfiguration & Alarm Ringtone**: Upgraded alarm channel to enjaz_alarm_v3 and bound it to native system alarm URI (RingtoneManager.TYPE_ALARM) and AudioAttributesUsage.alarm, with FLAG_INSISTENT = 4 to loop repeatedly until dismissed.
+- **Action Buttons & Ongoing Persistence**: Set ongoing: true and utoCancel: false, presenting two direct action buttons: [إيقاف] (ction_stop, native cancelNotification: true) and [تأجيل 5 دقائق] (ction_snooze, native cancelNotification: true), preventing accidental dismissals.
+- **Permission Sheet Guard**: Added NotificationService.instance.areNotificationsEnabled() guard inside NotificationPermissionSheet.show(context) and quick_add_sheet.dart, completely preventing redundant permission popups when already allowed.
+- **Version Bump & Permanent Signing**: Bumped version to 1.2.3+2021 (ersionCode: 2021) for direct in-place update without uninstalling; preserved permanent signing configuration and SHA-256 fingerprint verification intact.
+
+
+## Release 1.2.4+2022 (Full Screen Alarm UI, Lock Screen Wake & Xiaomi Pop-up Permissions) / 2026-11-10
+
+- **Full Screen Alarm Intent (AlarmRingScreen)**: Implemented dedicated full-screen alarm dialog displaying live time, pulsing bell animation, task title, big danger-styled [إيقاف المنبه] button and [تأجيل 5 دقائق] button.
+- **Lock Screen Wake & Illumination**: Enabled `android.permission.USE_FULL_SCREEN_INTENT`, `showWhenLocked`, `turnScreenOn`, and native `setShowWhenLocked(true)`, `setTurnScreenOn(true)`, and `window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)`.
+- **Xiaomi Other Permissions Shortcut**: Added native handler and UI card targeting `com.miui.permcenter.permissions.PermissionsEditorActivity` to allow users on Xiaomi/MIUI/HyperOS to quickly enable "Show on Lock screen" and "Display pop-up windows".
+- **Versioned Artifact Output**: Configured GitHub Actions build workflow to dynamically parse the version from `pubspec.yaml` and name the output APK file and artifact `enjaz-v${VERSION}-arm64.apk` (`enjaz-v1.2.4+2022-arm64.apk`).
+- **Version Bump & Permanent Signing**: Bumped version to `1.2.4+2022` with permanent keystore signing and SHA-256 fingerprint verification intact.
+
+
+## Release 1.2.4+2024 (Bundled Alarm Ringtone, Xiaomi Permission Onboarding & Keyguard Dismissal) / 2026-11-10
+
+- **Bundled Melodic Alarm Ringtone**: Replaced the system notification sound fallback with a bundled 10-second melodic chime sound (ndroid/app/src/main/res/raw/alarm_sound.wav) configured via RawResourceAndroidNotificationSound('alarm_sound') and AudioAttributesUsage.alarm in enjaz_alarm_channel, eliminating the rapid woodpecker looping of short system notification pings under FLAG_INSISTENT.
+- **Xiaomi MIUI/HyperOS Permission Onboarding**: Introduced XiaomiPermissionHelper displaying a friendly, educational onboarding modal when a reminder is selected in QuickAddSheet, plus a persistent status card in ReminderCheckScreen. One-tap opens miui.intent.action.APP_PERM_EDITOR with package com.enjaz.app, making it effortless to enable 'Show on Lock screen' and 'Display pop-up windows'.
+- **Keyguard Dismissal & Screen Wake**: Added 
+equestDismissKeyguard(this, null) and WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD to configureLockScreenFlags() in MainActivity.kt alongside setShowWhenLocked(true), setTurnScreenOn(true), and FLAG_KEEP_SCREEN_ON.
+- **Fixed Approved Channel**: Solidified alarm channel ID to enjaz_alarm_channel and name منبه إنجاز with Importance.max, Priority.max, playSound: true, enableVibration: true, and udioAttributesUsage: AudioAttributesUsage.alarm, avoiding channel muting by MIUI/HyperOS.
+- **Robust Background Scheduling**: Removed premature check drops in _scheduleChecked that caused alarms to drop if pendingNotificationRequests() was asynchronously delayed on real devices.
+- **Exact Schedule Mode**: Enforced AndroidScheduleMode.exactAllowWhileIdle (setExactAndAllowWhileIdle) for all alarm reminders.
+- **Artifact Naming**: Produced release APK named enjaz-v1.2.4+2024-arm64.apk.
+- **Permanent Signing**: Kept release keystore and SHA-256 fingerprint verification intact.

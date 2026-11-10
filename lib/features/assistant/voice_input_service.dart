@@ -1,20 +1,15 @@
 import 'dart:async';
+
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+
 import 'word_merge_helper.dart';
 
 /// State of the voice recognition engine (VOICE.md Section 2.3 & 3.2).
-enum VoiceInputState {
-  idle,
-  listening,
-  processing,
-  error,
-  unsupported,
-}
+enum VoiceInputState { idle, listening, processing, error, unsupported }
 
 /// Abstract speech recognition source interface for testability and mocking (VOICE.md Section 10.4).
 abstract class SpeechRecognizerSource {
@@ -70,7 +65,7 @@ class RealSpeechToTextSource implements SpeechRecognizerSource {
       cancelOnError: false,
       pauseFor: const Duration(seconds: 3),
     );
-    return true;
+    return _stt.isListening;
   }
 
   @override
@@ -104,8 +99,18 @@ class VoiceInputService {
   String _currentSessionTranscript = '';
   String? _selectedLocaleId;
   Timer? _safetyTimeoutTimer;
+  Timer? _restartTimer;
+  String? lastErrorCode;
+  bool _starting = false;
+  bool _disposed = false;
+  int _generation = 0;
+  int _recognizerSession = 0;
+  bool _sessionStarting = false;
+  bool _stopping = false;
 
   final _transcriptController = StreamController<String>.broadcast();
+  final _finalController = StreamController<String>.broadcast();
+  Stream<String> get finalTranscriptStream => _finalController.stream;
   final _stateController = StreamController<VoiceInputState>.broadcast();
   final _errorController = StreamController<String>.broadcast();
 
@@ -125,69 +130,92 @@ class VoiceInputService {
 
   /// Starts listening session with tap-to-start and chained sessions (Section 3.2).
   Future<bool> startListening({String? localePreference}) async {
+    if (_disposed || _starting) return false;
     if (_isUserIntendedListening) return true;
-
-    // Check microphone permission
-    if (permissionChecker != null) {
-      final granted = await permissionChecker!();
-      if (!granted) {
-        _setState(VoiceInputState.error);
-        _errorController.add('صلاحية الميكروفون مطلوبة للتسجيل الصوتي.');
-        return false;
-      }
-    } else {
-      final permStatus = await Permission.microphone.request();
-      if (!permStatus.isGranted) {
-        _setState(VoiceInputState.error);
-        _errorController.add('صلاحية الميكروفون مطلوبة للتسجيل الصوتي.');
-        return false;
-      }
-    }
-
-    // Trigger brief haptic vibration per Section 2.3
-    if (WidgetsBinding.instance is WidgetsFlutterBinding) {
-      try {
-        await HapticFeedback.lightImpact();
-      } catch (_) {}
-    }
-
-    // Initialize recognizer
-    final initSuccess = await _source.initialize(
-      onStatus: _handleStatusChanged,
-      onError: _handleError,
-    );
-
-    if (!initSuccess) {
-      _setState(VoiceInputState.unsupported);
-      _errorController.add('التعرف الصوتي غير متوفر على هذا الجهاز.');
-      return false;
-    }
-
-    // Determine Egyptian Arabic locale (Section 3.1)
-    final supportedLocales = await _source.getSupportedLocales();
-    _selectedLocaleId = _resolveArabicLocale(supportedLocales, localePreference);
-
-    _isUserIntendedListening = true;
-    _accumulatedTranscript = '';
-    _currentSessionTranscript = '';
-    _emitTranscript('');
-    _setState(VoiceInputState.listening);
-
-    // 60-second maximum timeout per Section 3.2
-    _safetyTimeoutTimer?.cancel();
-    if (WidgetsBinding.instance is WidgetsFlutterBinding) {
-      _safetyTimeoutTimer = Timer(maxSessionDuration, () {
-        if (_isUserIntendedListening) {
-          stopListening();
+    lastErrorCode = null;
+    _starting = true;
+    final generation = ++_generation;
+    try {
+      // Check microphone permission
+      if (permissionChecker != null) {
+        final granted = await permissionChecker!();
+        if (!granted) {
+          _fail('microphone_denied');
+          return false;
         }
-      });
-    }
+      } else {
+        final permStatus = await Permission.microphone.request();
+        if (!permStatus.isGranted) {
+          _fail(permStatus.isPermanentlyDenied ? 'microphone_permanent' : 'microphone_denied');
+          return false;
+        }
+      }
 
-    return _startSingleRecognizerSession();
+      if (_disposed || generation != _generation) return false;
+
+      // Trigger brief haptic vibration per Section 2.3
+      {
+        try {
+          unawaited(HapticFeedback.lightImpact().catchError((_) {}));
+        } catch (_) {}
+      }
+
+      // Initialize recognizer
+      final initSuccess = await _source.initialize(
+        onStatus: (status) {
+          if (!_disposed && generation == _generation) _handleStatusChanged(status);
+        },
+        onError: (error) {
+          if (!_disposed && generation == _generation) _handleError(error);
+        },
+      );
+
+      if (_disposed || generation != _generation) return false;
+      if (!initSuccess || lastErrorCode != null) {
+        _setState(VoiceInputState.unsupported);
+        lastErrorCode ??= 'speech_unavailable';
+        if (!_errorController.isClosed) _errorController.add(lastErrorCode!);
+        return false;
+      }
+
+      // Determine Egyptian Arabic locale (Section 3.1)
+      final supportedLocales = await _source.getSupportedLocales();
+      if (_disposed || generation != _generation) return false;
+      _selectedLocaleId = _resolveArabicLocale(
+            supportedLocales,
+            localePreference,
+          ) ??
+          localePreference ??
+          'ar_EG';
+
+      _isUserIntendedListening = true;
+      _accumulatedTranscript = '';
+      _currentSessionTranscript = '';
+      _emitTranscript('');
+      _setState(VoiceInputState.listening);
+
+      // 60-second maximum timeout per Section 3.2
+      _safetyTimeoutTimer?.cancel();
+      {
+        _safetyTimeoutTimer = Timer(maxSessionDuration, () {
+          if (_isUserIntendedListening) {
+            stopListening();
+          }
+        });
+      }
+
+      return await _startSingleRecognizerSession();
+    } catch (error) {
+      _fail(error is PlatformException ? error.code : 'speech_failed');
+      return false;
+    } finally {
+      _starting = false;
+    }
   }
 
   /// Stops listening session (Tap-to-stop per Section 3.2) and returns the full merged transcript.
   Future<String> stopListening() async {
+    _restartTimer?.cancel();
     _safetyTimeoutTimer?.cancel();
     _isUserIntendedListening = false;
 
@@ -196,10 +224,13 @@ class VoiceInputService {
     }
 
     _setState(VoiceInputState.processing);
+    _stopping = true;
 
     try {
       await _source.stop();
     } catch (_) {}
+    _stopping = false;
+    _generation++;
 
     // Finalize merge
     if (_currentSessionTranscript.isNotEmpty) {
@@ -219,6 +250,9 @@ class VoiceInputService {
 
   /// Cancels listening and resets state without emitting final transcript.
   Future<void> cancel() async {
+    _generation++;
+    _stopping = false;
+    _restartTimer?.cancel();
     _safetyTimeoutTimer?.cancel();
     _isUserIntendedListening = false;
     _accumulatedTranscript = '';
@@ -232,13 +266,19 @@ class VoiceInputService {
 
   /// Internal method to start one underlying recognition session.
   Future<bool> _startSingleRecognizerSession() async {
+    if (_disposed || !_isUserIntendedListening || _sessionStarting) return false;
+    _sessionStarting = true;
+    final generation = _generation;
+    final session = ++_recognizerSession;
     try {
-      return await _source.listen(
+      final started = await _source.listen(
         onResult: (words, isFinal) {
+          if (_disposed || generation != _generation || session != _recognizerSession || (!_isUserIntendedListening && !_stopping)) return;
           _currentSessionTranscript = words;
           _emitTranscript(_buildDisplayTranscript());
 
           if (isFinal) {
+            if (!_finalController.isClosed) _finalController.add(words);
             _accumulatedTranscript = WordMergeHelper.merge(
               _accumulatedTranscript,
               _currentSessionTranscript,
@@ -248,8 +288,14 @@ class VoiceInputService {
         },
         localeId: _selectedLocaleId,
       );
+      if (_disposed || generation != _generation) return false;
+      if (!started && lastErrorCode == null) _fail('speech_failed');
+      return started && _isUserIntendedListening;
     } catch (e) {
+      _fail(e is PlatformException ? e.code : 'speech_failed');
       return false;
+    } finally {
+      _sessionStarting = false;
     }
   }
 
@@ -269,7 +315,8 @@ class VoiceInputService {
       }
 
       // Chain next session after tiny delay to allow recognizer to cycle
-      Future.delayed(const Duration(milliseconds: 150), () {
+      _restartTimer?.cancel();
+      _restartTimer = Timer(const Duration(milliseconds: 250), () {
         if (_isUserIntendedListening && _state == VoiceInputState.listening) {
           _startSingleRecognizerSession();
         }
@@ -278,12 +325,14 @@ class VoiceInputService {
   }
 
   void _handleError(String errorMsg) {
-    if (!_isUserIntendedListening) return;
+    if (_disposed || (!_isUserIntendedListening && !_starting)) return;
 
     // On non-fatal pause errors, try to chain next session if still intended to listen
-    if (errorMsg.contains('error_no_match') || errorMsg.contains('error_speech_timeout')) {
+    if (errorMsg.contains('error_no_match') ||
+        errorMsg.contains('error_speech_timeout')) {
       if (_isUserIntendedListening) {
-        Future.delayed(const Duration(milliseconds: 200), () {
+        _restartTimer?.cancel();
+        _restartTimer = Timer(const Duration(milliseconds: 250), () {
           if (_isUserIntendedListening) {
             _startSingleRecognizerSession();
           }
@@ -292,7 +341,18 @@ class VoiceInputService {
       }
     }
 
-    _errorController.add(errorMsg);
+    _fail(errorMsg);
+  }
+
+  void _fail(String message) {
+    if (_disposed) return;
+    lastErrorCode = message;
+    _isUserIntendedListening = false;
+    _safetyTimeoutTimer?.cancel();
+    _restartTimer?.cancel();
+    _setState(VoiceInputState.error);
+    if (!_errorController.isClosed) _errorController.add(message);
+    unawaited(_source.cancel().catchError((_) {}));
   }
 
   String _buildDisplayTranscript() {
@@ -302,7 +362,10 @@ class VoiceInputService {
     if (_currentSessionTranscript.isEmpty) {
       return _accumulatedTranscript;
     }
-    return WordMergeHelper.merge(_accumulatedTranscript, _currentSessionTranscript);
+    return WordMergeHelper.merge(
+      _accumulatedTranscript,
+      _currentSessionTranscript,
+    );
   }
 
   void _setState(VoiceInputState newState) {
@@ -333,12 +396,18 @@ class VoiceInputService {
       final l = loc.toLowerCase();
       if (l.startsWith('ar')) return loc;
     }
-    return locales.isNotEmpty ? locales.first : null;
+    return null;
   }
 
   void dispose() {
+    _disposed = true;
+    _isUserIntendedListening = false;
+    _generation++;
+    _restartTimer?.cancel();
+    unawaited(_source.cancel().catchError((_) {}));
     _safetyTimeoutTimer?.cancel();
     _transcriptController.close();
+    _finalController.close();
     _stateController.close();
     _errorController.close();
   }

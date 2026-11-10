@@ -1,5 +1,7 @@
 import 'dart:math';
+
 import 'package:drift/drift.dart';
+
 import '../../../core/db/app_database.dart';
 
 class RecurrenceService {
@@ -56,7 +58,11 @@ class RecurrenceService {
 
       case 'monthly':
         final targetDay = dayOfMonth ?? 1;
-        final clamped = clampDayOfMonth(targetDate.year, targetDate.month, targetDay);
+        final clamped = clampDayOfMonth(
+          targetDate.year,
+          targetDate.month,
+          targetDay,
+        );
         return targetDate.day == clamped;
 
       default:
@@ -119,15 +125,19 @@ class RecurrenceService {
       for (final date in candidateDates) {
         final dateStr = _formatDate(date);
         if (!existingDates.contains(dateStr)) {
-          await db.insertNewTask(
+          final taskId = await db.insertNewTask(
             TasksCompanion.insert(
               title: rec.title,
               kind: Value(rec.kind),
               status: const Value('todo'),
               priority: Value(rec.priority),
               dueDate: Value(dateStr),
-              dueTime: rec.dueTime != null ? Value(rec.dueTime) : const Value.absent(),
-              notes: rec.notes != null ? Value(rec.notes) : const Value.absent(),
+              dueTime: rec.dueTime != null
+                  ? Value(rec.dueTime)
+                  : const Value.absent(),
+              notes: rec.notes != null
+                  ? Value(rec.notes)
+                  : const Value.absent(),
               reminderOffsetMinutes: rec.reminderOffsetMinutes != null
                   ? Value(rec.reminderOffsetMinutes)
                   : const Value.absent(),
@@ -136,6 +146,14 @@ class RecurrenceService {
               updatedAt: nowMs,
             ),
           );
+          if (rec.reminderOffsetMinutes != null) {
+            await db.insertReminder(
+              ownerType: 'task',
+              ownerId: taskId,
+              kind: await db.getSetting('default_reminder_kind') ?? 'alarm',
+              offsetMinutes: rec.reminderOffsetMinutes,
+            );
+          }
           existingDates.add(dateStr);
           generatedCount++;
         }
@@ -143,10 +161,12 @@ class RecurrenceService {
 
       // Update lastGeneratedUntil
       await db.updateRecurrence(
-        rec.toCompanion(true).copyWith(
-          lastGeneratedUntil: Value(_formatDate(endWindow)),
-          updatedAt: Value(nowMs),
-        ),
+        rec
+            .toCompanion(true)
+            .copyWith(
+              lastGeneratedUntil: Value(_formatDate(endWindow)),
+              updatedAt: Value(nowMs),
+            ),
       );
     }
 

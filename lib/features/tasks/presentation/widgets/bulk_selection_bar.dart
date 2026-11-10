@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/db/app_database.dart';
-import '../../../../core/l10n/app_localizations.dart';
 import '../../../reminders/domain/reminder_scheduler.dart';
 import '../../domain/task_selection_provider.dart';
 

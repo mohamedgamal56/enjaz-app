@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,7 @@ import '../../excel_export/presentation/excel_export_sheet.dart';
 import '../../voice_notes/domain/voice_note_service.dart';
 import '../domain/backup_models.dart';
 import '../domain/backup_service.dart';
+import '../../reminders/domain/notification_service.dart';
 
 class BackupScreen extends ConsumerStatefulWidget {
   const BackupScreen({super.key});
@@ -25,7 +27,8 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   bool _isEncrypted = true;
   bool _obscureExportPassword = true;
   bool _monthlyReminder = true;
-  final TextEditingController _exportPasswordController = TextEditingController();
+  final TextEditingController _exportPasswordController =
+      TextEditingController();
   bool _isLoading = false;
 
   @override
@@ -47,6 +50,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     setState(() => _monthlyReminder = val);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('backup_monthly_reminder', val);
+    await NotificationService().scheduleMonthlyBackupReminder();
   }
 
   @override
@@ -98,10 +102,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       _hideLoading();
       if (!mounted) return;
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        subject: 'Enjaz Backup',
-      );
+      await Share.shareXFiles([XFile(file.path)], subject: 'Enjaz Backup');
     } catch (e) {
       _hideLoading();
       if (!mounted) return;
@@ -143,7 +144,10 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         if (enteredPassword == null || enteredPassword.isEmpty) return;
 
         _showLoading(l10n.inspectingBackup);
-        preview = await BackupService.inspectBackupFile(file, password: enteredPassword);
+        preview = await BackupService.inspectBackupFile(
+          file,
+          password: enteredPassword,
+        );
       }
 
       _hideLoading();
@@ -154,7 +158,9 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           context: context,
           builder: (ctx) => AlertDialog(
             title: Text(l10n.invalidBackupFile),
-            content: Text(preview.errorMessage ?? l10n.invalidBackupFileDetails),
+            content: Text(
+              preview.errorMessage ?? l10n.invalidBackupFileDetails,
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
@@ -199,7 +205,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     }
   }
 
-    Future<String?> _promptPasswordDialog({
+  Future<String?> _promptPasswordDialog({
     required String title,
     required String message,
   }) {
@@ -234,7 +240,9 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.key_rounded),
                   suffixIcon: IconButton(
-                    icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
+                    icon: Icon(
+                      obscure ? Icons.visibility_off : Icons.visibility,
+                    ),
                     onPressed: () => setDlgState(() => obscure = !obscure),
                   ),
                 ),
@@ -284,10 +292,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l10n.restoreConfirmMessage,
-              style: theme.textTheme.bodyMedium,
-            ),
+            Text(l10n.restoreConfirmMessage, style: theme.textTheme.bodyMedium),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
@@ -302,11 +307,26 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                   _previewRow(l10n.tasksCountLabel, '${preview.tasksCount}'),
                   _previewRow(l10n.goalsCountLabel, '${preview.goalsCount}'),
                   _previewRow(l10n.ideasCountLabel, '${preview.ideasCount}'),
-                  _previewRow(isArabic ? 'الملاحظات' : 'Notes', '${preview.notesCount}'),
-                  _previewRow(isArabic ? 'العادات' : 'Habits', '${preview.habitsCount}'),
-                  _previewRow(isArabic ? 'المال والمعاملات' : 'Finance & Transactions', '${preview.financeCount}'),
-                  _previewRow(isArabic ? 'الصحة والعلاج' : 'Health & Treatments', '${preview.healthCount}'),
-                  _previewRow(l10n.voiceNotesCountLabel, '${preview.voiceNotesCount}'),
+                  _previewRow(
+                    isArabic ? 'الملاحظات' : 'Notes',
+                    '${preview.notesCount}',
+                  ),
+                  _previewRow(
+                    isArabic ? 'العادات' : 'Habits',
+                    '${preview.habitsCount}',
+                  ),
+                  _previewRow(
+                    isArabic ? 'المال والمعاملات' : 'Finance & Transactions',
+                    '${preview.financeCount}',
+                  ),
+                  _previewRow(
+                    isArabic ? 'الصحة والعلاج' : 'Health & Treatments',
+                    '${preview.healthCount}',
+                  ),
+                  _previewRow(
+                    l10n.voiceNotesCountLabel,
+                    '${preview.voiceNotesCount}',
+                  ),
                   _previewRow(
                     l10n.fileSizeLabel,
                     VoiceNoteService.formatFileSize(preview.fileSizeBytes),
@@ -366,9 +386,9 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     } catch (e) {
       _hideLoading();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${l10n.errorExportingCsv}: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('${l10n.errorExportingCsv}: $e')));
     }
   }
 
@@ -384,9 +404,9 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     } catch (e) {
       _hideLoading();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${l10n.errorExportingCsv}: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('${l10n.errorExportingCsv}: $e')));
     }
   }
 
@@ -397,9 +417,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.backupAndSecurity),
-      ),
+      appBar: AppBar(title: Text(l10n.backupAndSecurity)),
       body: Stack(
         children: [
           ListView(
@@ -415,8 +433,12 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
 
                   return Card(
                     elevation: 0,
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(14.0),
                       child: Column(
@@ -424,11 +446,18 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.storage_rounded, color: theme.colorScheme.primary),
+                              Icon(
+                                Icons.storage_rounded,
+                                color: theme.colorScheme.primary,
+                              ),
                               const SizedBox(width: 10),
                               Text(
-                                isArabic ? 'مساحة التسجيلات الصوتية (Storage Monitor)' : 'Voice Notes Storage Monitor',
-                                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                                isArabic
+                                    ? 'مساحة التسجيلات الصوتية (Storage Monitor)'
+                                    : 'Voice Notes Storage Monitor',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
@@ -437,12 +466,20 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                isArabic ? 'عدد التسجيلات: $count' : 'Voice notes: $count',
-                                style: TextStyle(color: theme.colorScheme.outline),
+                                isArabic
+                                    ? 'عدد التسجيلات: $count'
+                                    : 'Voice notes: $count',
+                                style: TextStyle(
+                                  color: theme.colorScheme.outline,
+                                ),
                               ),
                               Text(
-                                isArabic ? 'المساحة المستخدمة: $sizeFormatted' : 'Used: $sizeFormatted',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                isArabic
+                                    ? 'المساحة المستخدمة: $sizeFormatted'
+                                    : 'Used: $sizeFormatted',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
@@ -457,19 +494,31 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
               // Monthly Safety Reminder Toggle (Roadmap v2.0 Round 7 - Default ON)
               Card(
                 elevation: 0,
-                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.5,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 child: SwitchListTile(
-                  secondary: const Icon(Icons.alarm_on_rounded, color: Colors.teal),
+                  secondary: const Icon(
+                    Icons.alarm_on_rounded,
+                    color: Colors.teal,
+                  ),
                   title: Text(
-                    isArabic ? 'تذكير شهري بالنسخ الاحتياطي' : 'Monthly Backup Reminder',
+                    isArabic
+                        ? 'تذكير شهري بالنسخ الاحتياطي'
+                        : 'Monthly Backup Reminder',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
                     isArabic
                         ? 'تنبيه دوري أول كل شهر لإنشاء نسخة احتياطية مشفرة لحفظ الذكريات وسجل الحياة'
                         : 'Periodic reminder on the 1st of every month to take an encrypted safety backup',
-                    style: TextStyle(fontSize: 12, color: theme.colorScheme.outline),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.outline,
+                    ),
                   ),
                   value: _monthlyReminder,
                   onChanged: _setMonthlyReminderPref,
@@ -486,7 +535,10 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.archive_outlined, color: theme.colorScheme.primary),
+                          Icon(
+                            Icons.archive_outlined,
+                            color: theme.colorScheme.primary,
+                          ),
                           const SizedBox(width: 12),
                           Text(
                             l10n.fullBackupTitle,
@@ -528,10 +580,16 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                               isArabic
                                   ? 'مشفرة بكلمة سر (موصى بها)'
                                   : 'Password-encrypted (recommended)',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             const SizedBox(width: 6),
-                            const Icon(Icons.security_rounded, size: 18, color: Colors.green),
+                            const Icon(
+                              Icons.security_rounded,
+                              size: 18,
+                              color: Colors.green,
+                            ),
                           ],
                         ),
                         subtitle: Text(
@@ -551,9 +609,16 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                               builder: (ctx) => AlertDialog(
                                 title: Row(
                                   children: [
-                                    Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error),
+                                    Icon(
+                                      Icons.warning_amber_rounded,
+                                      color: theme.colorScheme.error,
+                                    ),
                                     const SizedBox(width: 8),
-                                    Text(isArabic ? 'تنبيه أمان' : 'Security Warning'),
+                                    Text(
+                                      isArabic
+                                          ? 'تنبيه أمان'
+                                          : 'Security Warning',
+                                    ),
                                   ],
                                 ),
                                 content: Text(
@@ -563,13 +628,21 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                                 ),
                                 actions: [
                                   TextButton(
-                                    onPressed: () => Navigator.of(ctx).pop(false),
+                                    onPressed: () =>
+                                        Navigator.of(ctx).pop(false),
                                     child: Text(isArabic ? 'إلغاء' : 'Cancel'),
                                   ),
                                   FilledButton(
-                                    onPressed: () => Navigator.of(ctx).pop(true),
-                                    style: FilledButton.styleFrom(backgroundColor: theme.colorScheme.error),
-                                    child: Text(isArabic ? 'تصدير بدون تشفير' : 'Export unencrypted'),
+                                    onPressed: () =>
+                                        Navigator.of(ctx).pop(true),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: theme.colorScheme.error,
+                                    ),
+                                    child: Text(
+                                      isArabic
+                                          ? 'تصدير بدون تشفير'
+                                          : 'Export unencrypted',
+                                    ),
                                   ),
                                 ],
                               ),
@@ -588,17 +661,28 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                           controller: _exportPasswordController,
                           obscureText: _obscureExportPassword,
                           decoration: InputDecoration(
-                            labelText: isArabic ? 'كلمة مرور النسخة الاحتياطية' : 'Backup Password',
-                            hintText: isArabic ? 'اكتب كلمة سر تتذكرها جيداً' : 'Enter a password you will remember',
+                            labelText: isArabic
+                                ? 'كلمة مرور النسخة الاحتياطية'
+                                : 'Backup Password',
+                            hintText: isArabic
+                                ? 'اكتب كلمة سر تتذكرها جيداً'
+                                : 'Enter a password you will remember',
                             prefixIcon: const Icon(Icons.password_rounded),
                             suffixIcon: IconButton(
-                              icon: Icon(_obscureExportPassword ? Icons.visibility_off : Icons.visibility),
-                              onPressed: () => setState(() => _obscureExportPassword = !_obscureExportPassword),
+                              icon: Icon(
+                                _obscureExportPassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                              onPressed: () => setState(
+                                () => _obscureExportPassword =
+                                    !_obscureExportPassword,
+                              ),
                             ),
                             border: const OutlineInputBorder(),
                             helperText: isArabic
-                              ? 'تحذير: في حال نسيان كلمة المرور لن تتمكن من استرجاع البيانات'
-                              : 'Warning: If forgotten, the backup cannot be recovered',
+                                ? 'تحذير: في حال نسيان كلمة المرور لن تتمكن من استرجاع البيانات'
+                                : 'Warning: If forgotten, the backup cannot be recovered',
                             helperMaxLines: 2,
                           ),
                         ),
@@ -627,7 +711,10 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.unarchive_outlined, color: theme.colorScheme.primary),
+                          Icon(
+                            Icons.unarchive_outlined,
+                            color: theme.colorScheme.primary,
+                          ),
                           const SizedBox(width: 12),
                           Text(
                             l10n.restoreBackupTitle,
@@ -666,7 +753,10 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.table_rows_outlined, color: theme.colorScheme.primary),
+                          Icon(
+                            Icons.table_rows_outlined,
+                            color: theme.colorScheme.primary,
+                          ),
                           const SizedBox(width: 12),
                           Text(
                             l10n.csvExportTitle,
@@ -718,10 +808,16 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
               // Section 4: Excel Export Direct Card
               Card(
                 child: ListTile(
-                  leading: Icon(Icons.table_chart_rounded, color: theme.colorScheme.primary),
+                  leading: Icon(
+                    Icons.table_chart_rounded,
+                    color: theme.colorScheme.primary,
+                  ),
                   title: Text(l10n.exportExcel),
                   subtitle: Text(l10n.exportExcelSubtitle),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                  ),
                   onTap: () {
                     ExcelExportSheet.show(context);
                   },
@@ -732,9 +828,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           if (_isLoading)
             Container(
               color: Colors.black45,
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
+              child: const Center(child: CircularProgressIndicator()),
             ),
         ],
       ),

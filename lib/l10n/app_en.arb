@@ -40,7 +40,6 @@
   "loading": "Loading...",
   "about": "About Enjaz",
   "aboutDescription": "Your personal offline productivity and life-tracking companion.",
-
   "task": "Task",
   "errand": "Errand",
   "goal": "Goal",
@@ -61,7 +60,6 @@
   "save": "Save",
   "saveAndAddAnother": "Save & add another",
   "taskAddedSuccess": "Task added successfully",
-
   "statusTodo": "To do",
   "statusInProgress": "In progress",
   "statusPartial": "Partially done",
@@ -69,7 +67,6 @@
   "statusPostponed": "Postponed",
   "statusWaiting": "Waiting",
   "statusStopped": "Stopped",
-
   "changeStatusTitle": "Change Status",
   "selectReason": "Select Reason",
   "reasonOther": "Other reason",
@@ -82,7 +79,6 @@
   "addNote": "Add note",
   "taskCompleted": "Task completed! 🎉",
   "statusUpdated": "Status updated successfully",
-
   "sectionOverdue": "Overdue",
   "sectionTasks": "Today's Tasks",
   "sectionErrands": "Today's Errands",
@@ -90,7 +86,6 @@
   "sectionWaitingAndPostponed": "Waiting & Postponed",
   "sectionDoneToday": "Done Today",
   "moveToToday": "Move to today",
-
   "taskDetailsTitle": "Task Details",
   "timeline": "Timeline",
   "created": "Created",
@@ -106,14 +101,12 @@
   "taskDeleted": "Task moved to trash",
   "minute": "min",
   "hour": "hr",
-
   "multiLinePasteTitle": "Convert notes to tasks",
   "multiLinePastePrompt": "Found multiple lines, create separate tasks?",
   "importNotes": "Import notes",
   "pasteNotesHint": "Paste your notes or list here (each line a task)...",
   "convert": "Convert to tasks",
   "tasksCreatedSuccess": "Tasks created successfully",
-
   "historyTitle": "Task History",
   "searchHint": "Search tasks, notes, or reasons...",
   "filterAll": "All",
@@ -123,7 +116,6 @@
   "sortOldest": "Oldest first",
   "noHistoryFound": "No matching history found",
   "clearFilters": "Reset filters",
-
   "reasonsManager": "Reasons Manager",
   "addReason": "Add New Reason",
   "editReason": "Edit Reason",
@@ -141,14 +133,12 @@
   "reasonAddedSuccess": "Reason added successfully",
   "reasonUpdatedSuccess": "Reason updated successfully",
   "reasonArchivedSuccess": "Reason archived",
-
   "trash": "Trash",
   "emptyTrash": "Trash is empty",
   "purgeTrash": "Purge trash permanently",
   "purgeTrashConfirm": "Permanently purge all items in trash? This cannot be undone.",
   "restore": "Restore",
   "taskRestored": "Task restored",
-
   "goalTitle": "Goal Title",
   "goalDescription": "Goal Description & Notes",
   "progressMode": "Progress Tracking Mode",
@@ -203,7 +193,6 @@
   "filterPaused": "Paused",
   "filterDone": "Done",
   "editGoal": "Edit Goal",
-
   "editIdea": "Edit Idea",
   "ideaTitle": "Idea Title",
   "ideaDescription": "Idea Details & Notes",
@@ -246,7 +235,6 @@
   "voiceStorage": "Voice Notes Storage",
   "voiceNotesCountLabel": "Total Recordings",
   "voiceStorageUsedLabel": "Storage Used",
-
   "stats": "Stats",
   "rangeWeek": "Week",
   "rangeMonth": "Month",
@@ -294,7 +282,6 @@
   "sheetReasons": "Reasons",
   "sheetGoals": "Goals",
   "sheetIdeas": "Ideas",
-
   "remindersAndNotifications": "Reminders & Notifications",
   "dailySummary": "Daily Summary",
   "dailySummarySubtitle": "Morning notification (08:00) with today's task count",
@@ -328,5 +315,34 @@
   "deleteRecurringTitle": "Delete Recurring Task",
   "deleteRecurringThisOnly": "Delete this one only",
   "deleteRecurringAllFuture": "Cancel series & delete all future",
-  "recurrenceGenerated": "Recurring"
+  "recurrenceGenerated": "Recurring",
+  "diagnosticTitle": "Reminder diagnostics",
+  "diagnosticRefresh": "Refresh checks",
+  "diagnosticPermissions": "Notifications / exact alarms / battery exemption",
+  "diagnosticPending": "Notifications registered with Android",
+  "diagnosticChannels": "Notification channels and sound",
+  "diagnosticLog": "Attempt and error log",
+  "diagnosticSettings": "Open app settings",
+  "diagnosticExactSettings": "Open alarms and reminders settings",
+  "diagnosticImmediate": "Test notification now",
+  "diagnosticAlarm": "Test alarm in 10 seconds",
+  "diagnosticSubmitted": "Android accepted the request. Verify delivery on your phone.",
+  "diagnosticFailed": "The notification was not registered. See the log below.",
+  "diagnosticTestBody": "Test notification for sound and visibility",
+  "diagnosticDelayed": "Exact alarm access is unavailable. The fallback may be delayed.",
+  "diagnosticGuide": "On Xiaomi, enable autostart and unrestricted battery. Test with the screen locked. Android acceptance does not confirm audible delivery.",
+  "speechDenied": "Allow microphone access and try again.",
+  "speechPermanent": "Microphone access is permanently denied. Enable it in app settings.",
+  "speechUnavailable": "Speech recognition is unavailable. Open system speech settings. You can type your command.",
+  "speechArabicMissing": "Arabic recognition is unavailable. Install it in speech service settings.",
+  "speechNetwork": "The speech service needs connectivity or an offline language pack. Connect or type your command.",
+  "speechFailed": "Speech recognition failed. Retry or type your command.",
+  "speechSettings": "Speech service settings",
+  "diagnosticDisabled": "Notifications are disabled in app settings.",
+  "diagnosticChannelDisabled": "The channel is blocked. Open app notification settings.",
+  "diagnosticScheduled": "Android registered the request; delivery needs device testing.",
+  "diagnosticMissing": "Notification not found in pending requests.",
+  "diagnosticSound": "Sound",
+  "diagnosticBlocked": "Channel blocked",
+  "diagnosticEnabled": "Channel enabled"
 }

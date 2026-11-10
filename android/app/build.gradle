@@ -45,7 +45,10 @@ android {
             if (keystoreFile.exists()) {
                 signingConfig = signingConfigs.release
             } else {
-                signingConfig = signingConfigs.debug
+                // Never silently distribute a release with an unrelated debug key.
+                if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("release") }) {
+                    throw new GradleException("Release keystore missing: configure the permanent Enjaz signing key")
+                }
             }
             minifyEnabled = false
             shrinkResources = false

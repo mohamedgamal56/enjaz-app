@@ -11,6 +11,7 @@ import '../../recurrence/domain/recurrence_service.dart';
 import '../../reminders/domain/notification_service.dart';
 import '../../reminders/domain/reminder_scheduler.dart';
 import '../../reminders/presentation/notification_permission_sheet.dart';
+import '../../reminders/presentation/xiaomi_permission_helper.dart';
 
 class QuickAddSheet extends ConsumerStatefulWidget {
   final String? initialDate; // YYYY-MM-DD
@@ -348,6 +349,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
         final recId = await db.insertRecurrence(recCompanion);
         await RecurrenceService.generateAllUpcomingInstances(db);
         await NotificationService().rescheduleAll(db);
+        await ReminderScheduler(db: db).rescheduleAllActive();
         insertedId = recId;
       } else {
         final companion = TasksCompanion.insert(
@@ -385,7 +387,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
           final defaultKind = await db.getSetting('default_reminder_kind') ?? 'alarm';
           final remId = await db.insertReminder(
             ownerType: 'task',
-            ownerId: insertedId!,
+            ownerId: insertedId,
             kind: defaultKind,
             offsetMinutes: _selectedReminderOffset,
           );
@@ -906,7 +908,13 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                       initialValue: _selectedReminderOffset,
                       onSelected: (val) async {
                         if (val != null) {
-                          await NotificationPermissionSheet.show(context);
+                          final enabled = await NotificationService.instance.areNotificationsEnabled();
+                          if (!enabled && context.mounted) {
+                            await NotificationPermissionSheet.show(context);
+                          }
+                          if (context.mounted) {
+                            await XiaomiPermissionHelper.checkAndPrompt(context);
+                          }
                         }
                         setState(() {
                           _selectedReminderOffset = val;

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/db/app_database.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/money_formatter.dart';
-import 'health_icon_helper.dart';
 import 'health_event_history_sheet.dart';
 
 class HealthHistoryTab extends ConsumerWidget {

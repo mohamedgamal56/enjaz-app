@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'security_service.dart';
 
 class AppLockState {
+  final bool isLoading;
   final bool isEnabled;
   final bool isLocked;
   final bool isAuthenticating;
@@ -13,6 +14,7 @@ class AppLockState {
   final bool hasDeviceSecurity;
 
   const AppLockState({
+    this.isLoading = true,
     this.isEnabled = false,
     this.isLocked = false,
     this.isAuthenticating = false,
@@ -22,6 +24,7 @@ class AppLockState {
   });
 
   AppLockState copyWith({
+    bool? isLoading,
     bool? isEnabled,
     bool? isLocked,
     bool? isAuthenticating,
@@ -30,6 +33,7 @@ class AppLockState {
     bool? hasDeviceSecurity,
   }) {
     return AppLockState(
+      isLoading: isLoading ?? this.isLoading,
       isEnabled: isEnabled ?? this.isEnabled,
       isLocked: isLocked ?? this.isLocked,
       isAuthenticating: isAuthenticating ?? this.isAuthenticating,
@@ -92,8 +96,9 @@ class AppLockNotifier extends StateNotifier<AppLockState> with WidgetsBindingObs
       final enabled = prefs.getBool(_prefKeyEnabled) ?? false;
       final timeout = prefs.getInt(_prefKeyTimeout) ?? 0;
       final hideNotifs = prefs.getBool(_prefKeyHideNotifs) ?? true;
-
+      if (!mounted) return;
       state = state.copyWith(
+        isLoading: false,
         isEnabled: enabled,
         isLocked: enabled,
         timeoutSeconds: timeout,
@@ -105,7 +110,9 @@ class AppLockNotifier extends StateNotifier<AppLockState> with WidgetsBindingObs
         await SecurityService.instance.setPrivacyWindow(true);
         unlock();
       }
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) state = state.copyWith(isLoading: false, isEnabled: true, isLocked: true);
+    }
   }
 
   /// Check whether device has screen security set up

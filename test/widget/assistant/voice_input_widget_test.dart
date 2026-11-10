@@ -104,8 +104,8 @@ void main() {
       expect(find.byIcon(Icons.mic_rounded), findsOneWidget);
       expect(find.text('اضغط على المايك وابدأ الكلام'), findsOneWidget);
 
-      // Verify test wizard shortcut button exists
-      expect(find.byIcon(Icons.science_outlined), findsOneWidget);
+      // The test wizard is accessible from the voice settings screen.
+      expect(find.byIcon(Icons.settings_voice), findsOneWidget);
 
       // Start listening
       await voiceService.startListening();

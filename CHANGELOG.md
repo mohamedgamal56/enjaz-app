@@ -1,3 +1,46 @@
+## 1.2.4+2024 — 2026-11-10
+
+- Bundle authentic multi-tone melodic alarm ringtone (android/app/src/main/res/raw/alarm_sound.wav) with RawResourceAndroidNotificationSound('alarm_sound') and AudioAttributesUsage.alarm, completely eliminating the rapid 200ms notification ping loop under FLAG_INSISTENT.
+- Add XiaomiPermissionHelper providing an educational bottom sheet onboarding modal when setting alarms and a persistent card in ReminderCheckScreen with direct shortcut to MIUI PermissionsEditorActivity (miui.intent.action.APP_PERM_EDITOR) to enable 'Show on Lock screen' and 'Display pop-up windows'.
+- Enhance MainActivity.kt with requestDismissKeyguard and FLAG_DISMISS_KEYGUARD alongside setShowWhenLocked(true), setTurnScreenOn(true) and FLAG_KEEP_SCREEN_ON for instant wake and display over lock screen.
+- Deliver dedicated Full-Screen Intent Alarm Screen (AlarmRingScreen) displaying real-time digital clock, pulsing alarm bell, task details, and prominent [إيقاف المنبه] and [تأجيل 5 دقائق] action buttons.
+- Solidify dedicated alarm channel to approved ID enjaz_alarm_channel and name منبه إنجاز to prevent Xiaomi/MIUI from defaulting new channels to silent/disabled.
+- Enforce AndroidScheduleMode.exactAllowWhileIdle without false drop conditions during background alarm scheduling.
+- Output versioned release artifact named enjaz-v1.2.4+2024-arm64.apk.
+- Bump version to 1.2.4+2024 with permanent signing configuration intact.
+
+## 1.2.4+2022 — 2026-11-10
+
+- Deliver dedicated Full-Screen Intent Alarm Screen (AlarmRingScreen) that launches and illuminates over the lock screen immediately when the alarm triggers, displaying task title, real-time digital clock, pulsing bell, and prominent [إيقاف المنبه] and [تأجيل 5 دقائق] action buttons.
+- Enable android.permission.USE_FULL_SCREEN_INTENT, setShowWhenLocked(true), setTurnScreenOn(true), and FLAG_KEEP_SCREEN_ON in MainActivity.kt and AndroidManifest.xml to wake the screen upon alarm trigger.
+- Add dedicated Xiaomi / MIUI / HyperOS diagnostic check and direct shortcut to Other Permissions (PermissionsEditorActivity) for granting Show on Lock screen and Display pop-up windows.
+- Automate release artifact naming to include the full version string: enjaz-v1.2.4+2022-arm64.apk.
+- Bump version to 1.2.4+2022 with permanent signing configuration intact.
+
+## 1.2.3+2021 — 2026-11-10
+
+- Enforce AndroidScheduleMode.exactAllowWhileIdle (setExactAndAllowWhileIdle) for alarm reminders to guarantee exact second firing during lock screen and Doze mode.
+- Declare ndroid.permission.USE_EXACT_ALARM in AndroidManifest.xml for seamless automatic exact alarm scheduling permissions on Android 13+.
+- Reconfigure dedicated alarm notification channel (enjaz_alarm_v3) with system default alarm sound (RingtoneManager.TYPE_ALARM), AudioAttributesUsage.alarm, and repeating audio loop (FLAG_INSISTENT = 4).
+- Streamline alarm actions to two clear buttons: [إيقاف] (Stop) to dismiss the alarm immediately with native cancellation, and [تأجيل 5 دقائق] (Snooze 5 min) with persistent ongoing notification (ongoing: true, utoCancel: false).
+- Programmatically check notification permission before displaying NotificationPermissionSheet, eliminating the bottom sheet popup on task creation when notifications are already granted.
+- Bump version to 1.2.3+2021 for direct seamless update installation.
+
+## 1.2.2+2020 — 2026-11-10
+
+- Set notification and alarm channels to maximum importance (Importance.max / Priority.max) with sound, vibration, lights, heads-up display and public lockscreen visibility.
+- Fix speech recognition arabic_missing issue by defaulting to ar-EG / ar system recognition directly without requiring manual offline language pack download.
+- Bump versionCode to 2020 and version to 1.2.2 for direct seamless update installation.
+
+## 1.2.1+19 — Batch 0 — 2026-11-10
+
+- Check notification permission and blocked channels; read exact permission without prompting, log inexact fallback.
+- Verify pending Android requests, normalize icon resource names, retain a bounded diagnostic history without notification content.
+- Immediate notification / ten-second alarm tests, channel/sound/pending diagnostics and settings shortcuts.
+- Isolate failed monthly backup and individual restored reminder scheduling.
+- Preserve microphone permission, missing service/Arabic and network failure codes. Prevent false listening state and late starts after cancellation.
+- Permanent signing configuration unchanged. Delivery, sound, upgrade installation and speech require phone testing.
+
 # سجل التغييرات (CHANGELOG)
 
 ## [v1.1.6 - Voice Assistant Step 5 Voice Input & 30-Sentence Test Wizard] - 2026-11-08

@@ -1,4 +1,14 @@
+import 'speech_failure_view.dart';
+import 'package:drift/drift.dart' as drift;
+import '../../voice_notes/presentation/voice_recorder_sheet.dart';
 import 'dart:async';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../core/utils/money_formatter.dart';
+import '../tts_service.dart';
+import 'assistant_settings_screen.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,7 +27,6 @@ import '../action_planner.dart';
 import '../answer_service.dart';
 import '../rule_based_intent_parser.dart';
 import '../voice_input_service.dart';
-import 'voice_test_screen.dart';
 import 'widgets/answer_card.dart';
 import 'widgets/confirmation_card.dart';
 
@@ -42,7 +51,8 @@ class AssistantSheet extends ConsumerStatefulWidget {
   ConsumerState<AssistantSheet> createState() => _AssistantSheetState();
 }
 
-class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTickerProviderStateMixin {
+class _AssistantSheetState extends ConsumerState<AssistantSheet>
+    with SingleTickerProviderStateMixin {
   final _inputController = TextEditingController();
   final _focusNode = FocusNode();
 
@@ -50,8 +60,106 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
   StreamSubscription<String>? _transcriptSub;
   StreamSubscription<VoiceInputState>? _stateSub;
   StreamSubscription<String>? _errorSub;
+  StreamSubscription<String>? _finalSub;
 
+  final _tts = TtsService();
+  Timer? _confirmationTimer;
+  ActionPlan? _confirmingPlan;
+  bool _speaking = false;
   ActionPlan? _currentPlan;
+
+  Future<void> _cancelConfirmation() async {
+    _confirmationTimer?.cancel();
+    _confirmingPlan = null;
+    await _voiceService.cancel();
+  }
+
+  Future<void> _startConfirmation(ActionPlan plan) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted ||
+        _currentPlan != plan ||
+        plan.isBlocked ||
+        plan.isUnrecognized ||
+        plan.isAmbiguous ||
+        plan.hasMissingReason ||
+        prefs.getBool('assistant_confirm') == false)
+      return;
+    await _tts.stop();
+    if (!mounted || _currentPlan != plan) return;
+    _confirmingPlan = plan;
+    final started = await _voiceService.startListening();
+    if (!mounted || _confirmingPlan != plan) return;
+    if (!started) {
+      _confirmingPlan = null;
+      return;
+    }
+    setState(
+      () => _statusFeedback = 'قل تمام أو إلغاء أو تعديل، أو استخدم الأزرار',
+    );
+    _confirmationTimer = Timer(
+      Duration(seconds: prefs.getInt('assistant_window') ?? 5),
+      () async {
+        await _cancelConfirmation();
+        if (mounted)
+          setState(
+            () =>
+                _statusFeedback = 'انتهى التأكيد الصوتي. استخدم أزرار الكارت.',
+          );
+      },
+    );
+  }
+
+  Future<void> _acceptVoiceConfirmation(String text) async {
+    final plan = _confirmingPlan;
+    if (plan == null || plan != _currentPlan || _isProcessing) return;
+    final word = text.trim().replaceAll(RegExp(r'[.!،؟?]'), '');
+    final confirm = [
+      'تمام', 'أكد', 'اكد', 'تأكيد', 'ماشي', 'أيوه', 'ايوه',
+    ].contains(word);
+    final cancel = ['إلغاء', 'الغاء', 'لأ', 'لا', 'سيبك'].contains(word);
+    if (!confirm && !cancel && word != 'تعديل') return;
+    await _cancelConfirmation();
+    if (!mounted || _currentPlan != plan) return;
+    if (confirm) {
+      await _executeCurrentPlan();
+    } else if (cancel) {
+      setState(() => _currentPlan = null);
+    } else {
+      _handleEdit();
+    }
+  }
+
+  Future<void> _speakAnswer(AnswerCardData answer) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted || prefs.getBool('assistant_spoken') == false) return;
+    final kind = answer.intent.type.name;
+    final sensitive = [
+      'spending',
+      'obligations',
+      'wishlist',
+      'healthPending',
+      'recap',
+      'agenda',
+    ].contains(kind);
+    final restrictSensitive = sensitive &&
+        (prefs.getBool('assistant_sensitive') != true ||
+            ref.read(financeMaskedProvider));
+    final speech = restrictSensitive ? answer.nonSensitiveSpeechText : answer.speechText;
+    if (speech == null || speech.isEmpty) return;
+    await _cancelConfirmation();
+    if (!mounted) return;
+    setState(() => _speaking = true);
+    final ok = await _tts.speak(
+      speech,
+      rate: prefs.getDouble('assistant_rate') ?? 0.5,
+    );
+    if (mounted)
+      setState(() {
+        _speaking = false;
+        if (!ok) _statusFeedback = 'الصوت العربي المحلي غير متاح. ثبّته من إعدادات تحويل النص إلى كلام في الهاتف.';
+      });
+  }
+
   AnswerCardData? _currentAnswer;
   bool _isProcessing = false;
   String? _statusFeedback;
@@ -99,6 +207,9 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
+    _finalSub = _voiceService.finalTranscriptStream.listen(
+      _acceptVoiceConfirmation,
+    );
     _transcriptSub = _voiceService.transcriptStream.listen((text) {
       if (mounted) {
         setState(() {
@@ -113,7 +224,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
           _voiceState = state;
         });
         if (state == VoiceInputState.listening) {
-          if (!_pulseController.isAnimating && WidgetsBinding.instance is WidgetsFlutterBinding) {
+          if (!_pulseController.isAnimating) {
             _pulseController.repeat(reverse: true);
           }
         } else {
@@ -128,7 +239,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
     _errorSub = _voiceService.errorStream.listen((error) {
       if (mounted) {
         setState(() {
-          _statusFeedback = error;
+          _statusFeedback = speechFailureText(context, error);
         });
       }
     });
@@ -136,21 +247,32 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
 
   @override
   void dispose() {
+    _confirmationTimer?.cancel();
+    _tts.dispose();
     _transcriptSub?.cancel();
     _stateSub?.cancel();
     _errorSub?.cancel();
+    _finalSub?.cancel();
     _pulseController.dispose();
     _voiceService.cancel();
+    if (widget.voiceService == null) _voiceService.dispose();
     _inputController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
   Future<void> _toggleVoiceListening() async {
+    await _tts.stop();
+    if (_confirmingPlan != null) {
+      await _cancelConfirmation();
+      return;
+    }
     if (_voiceService.isListening) {
       // Tap to stop
       final finalTranscript = await _voiceService.stopListening();
-      final textToProcess = finalTranscript.isNotEmpty ? finalTranscript : _liveVoiceTranscript;
+      final textToProcess = finalTranscript.isNotEmpty
+          ? finalTranscript
+          : _liveVoiceTranscript;
       setState(() {
         _liveVoiceTranscript = '';
       });
@@ -169,7 +291,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
       final started = await _voiceService.startListening();
       if (!started && mounted) {
         setState(() {
-          _statusFeedback = 'تعذر تشغيل الميكروفون، يرجى التأكد من الصلاحية.';
+          _statusFeedback = speechFailureText(context, _voiceService.lastErrorCode ?? 'speech_failed');
         });
       }
     }
@@ -188,19 +310,16 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
       case 'finance':
       case 'obligations':
       case 'wishlist':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const FinanceScreen()),
-        );
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const FinanceScreen()));
         break;
       case 'habits':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const HabitsScreen()),
-        );
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const HabitsScreen()));
         break;
       case 'health':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const HealthScreen()),
-        );
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const HealthScreen()));
         break;
       case 'tasks':
       default:
@@ -210,7 +329,12 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
 
   Future<void> _handleInput(String text) async {
     final trimmed = text.trim();
-    if (trimmed.isEmpty) return;
+    if (trimmed.isEmpty || _isProcessing) return;
+    setState(() => _isProcessing = true);
+    try {
+    await _cancelConfirmation();
+    await _tts.stop();
+    if (!mounted) return;
 
     setState(() {
       _isProcessing = true;
@@ -227,48 +351,87 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
     if (intent.isQuestion) {
       final answerService = AnswerService(db: db);
       final answerData = await answerService.buildAnswer(intent);
+      if (!mounted) return;
       setState(() {
         _currentAnswer = answerData;
         _isProcessing = false;
       });
+      _speakAnswer(answerData);
       return;
     }
 
     // Fetch open tasks for status matching
-    final activeTasks = await (db.select(db.tasks)
-          ..where((t) => t.deletedAt.isNull()))
-        .get();
+    final activeTasks = await (db.select(
+      db.tasks,
+    )..where((t) => t.deletedAt.isNull())).get();
     final openTasks = activeTasks.where((t) => t.status != 'done').toList();
 
     final candidateTasks = openTasks
-        .map((t) => CandidateTask(
-              id: t.id,
-              title: t.title,
-              dueDate: t.dueDate,
-              status: t.status,
-            ))
+        .map(
+          (t) => CandidateTask(
+            id: t.id,
+            title: t.title,
+            dueDate: t.dueDate,
+            status: t.status,
+          ),
+        )
         .toList();
 
     final planner = ActionPlanner();
     final plan = planner.plan(intent, existingOpenTasks: candidateTasks);
+    if (plan.isUnrecognized && (await SharedPreferences.getInstance()).getBool('assistant_log') != false) {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await db.into(db.unrecognizedPhrases).insert(UnrecognizedPhrasesCompanion.insert(phrase: trimmed, at: now, createdAt: now, updatedAt: now));
+    }
+    if (!mounted) return;
 
     setState(() {
       _currentPlan = plan;
       _isProcessing = false;
     });
+    _startConfirmation(plan);
+    } catch (_) {
+      if (mounted) setState(() => _statusFeedback = 'تعذر معالجة الأمر. حاول مرة أخرى.');
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
   }
 
   Future<void> _executeCurrentPlan() async {
-    if (_currentPlan == null) return;
-
+    if (_currentPlan == null || _isProcessing) return;
+    final plan = _currentPlan!;
+    setState(() => _isProcessing = true);
+    try {
+    await _cancelConfirmation();
+    if (!mounted) return;
     final db = ref.read(databaseProvider);
+    if (plan.actionType == 'record_voice_note') {
+      setState(() => _isProcessing = true);
+      final kind = plan.slots['voiceNoteKind'] == 'idea' ? 'idea' : 'note';
+      final recording = await VoiceRecorderSheet.show(context);
+      if (!mounted) return;
+      if (recording != null) {
+        final now = DateTime.now().millisecondsSinceEpoch;
+        await db.transaction(() async {
+          final id = kind == 'idea'
+            ? await db.into(db.ideas).insert(IdeasCompanion.insert(title: 'فكرة صوتية', createdAt: now, updatedAt: now))
+            : await db.insertNote(NotesCompanion.insert(body: 'ملاحظة صوتية', createdAt: now, updatedAt: now));
+          await db.insertVoiceNote(VoiceNotesCompanion.insert(parentType: kind, parentId: id,
+            fileName: recording.relativeFileName, durationMs: drift.Value(recording.durationMs), sizeBytes: drift.Value(recording.sizeBytes),
+            recordedAt: now, createdAt: now, updatedAt: now));
+        });
+      }
+      if (mounted) setState(() { _isProcessing = false; _currentPlan = null; _statusFeedback = recording == null ? 'تم إلغاء التسجيل' : 'تم حفظ التسجيل'; });
+      return;
+    }
     final executor = ActionExecutor(db: db);
 
     setState(() {
       _isProcessing = true;
     });
 
-    final result = await executor.execute(_currentPlan!);
+    final result = await executor.execute(plan);
+    if (!mounted) return;
 
     setState(() {
       _isProcessing = false;
@@ -311,9 +474,15 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
         _statusFeedback = result.message;
       });
     }
+    } catch (_) {
+      if (mounted) setState(() => _statusFeedback = 'تعذر حفظ العملية. حاول مرة أخرى.');
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
   }
 
   void _handleEdit() {
+    _cancelConfirmation();
     if (_currentPlan == null) return;
     final plan = _currentPlan!;
     final slots = plan.slots;
@@ -352,10 +521,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
         break;
 
       default:
-        QuickAddSheet.show(
-          context,
-          initialTitle: plan.intent.rawText,
-        );
+        QuickAddSheet.show(context, initialTitle: plan.intent.rawText);
     }
   }
 
@@ -365,10 +531,12 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
     String? newDate;
 
     if (chip == 'today') {
-      newDate = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      newDate =
+          '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     } else if (chip == 'tomorrow') {
       final tomorrow = now.add(const Duration(days: 1));
-      newDate = '${tomorrow.year.toString().padLeft(4, '0')}-${tomorrow.month.toString().padLeft(2, '0')}-${tomorrow.day.toString().padLeft(2, '0')}';
+      newDate =
+          '${tomorrow.year.toString().padLeft(4, '0')}-${tomorrow.month.toString().padLeft(2, '0')}-${tomorrow.day.toString().padLeft(2, '0')}';
     } else if (chip == 'custom') {
       showDatePicker(
         context: context,
@@ -377,7 +545,8 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
         lastDate: now.add(const Duration(days: 365 * 5)),
       ).then((selected) {
         if (selected != null) {
-          final customDateStr = '${selected.year.toString().padLeft(4, '0')}-${selected.month.toString().padLeft(2, '0')}-${selected.day.toString().padLeft(2, '0')}';
+          final customDateStr =
+              '${selected.year.toString().padLeft(4, '0')}-${selected.month.toString().padLeft(2, '0')}-${selected.day.toString().padLeft(2, '0')}';
           _updatePlanDate(customDateStr, 'custom');
         }
       });
@@ -397,9 +566,13 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
     }
 
     final title = updatedSlots['title'] ?? 'مهمة';
-    final dateWords = newDate != null ? ActionPlanner.formatDateInArabicWords(newDate) : null;
+    final dateWords = newDate != null
+        ? ActionPlanner.formatDateInArabicWords(newDate)
+        : null;
     final timeStr = updatedSlots['time'] as String?;
-    final timeWords = timeStr != null ? ActionPlanner.formatTimeInArabic(timeStr) : null;
+    final timeWords = timeStr != null
+        ? ActionPlanner.formatTimeInArabic(timeStr)
+        : null;
 
     final buffer = StringBuffer('مهمة — $title');
     if (dateWords != null) buffer.write(' — $dateWords');
@@ -423,7 +596,9 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
     final title = updatedSlots['title'] ?? 'مهمة';
     final status = updatedSlots['status'] ?? 'done';
     final dateStr = updatedSlots['date'] as String?;
-    final dateWords = dateStr != null ? ActionPlanner.formatDateInArabicWords(dateStr) : null;
+    final dateWords = dateStr != null
+        ? ActionPlanner.formatDateInArabicWords(dateStr)
+        : null;
 
     String statusLabel = 'تمت';
     if (status == 'postponed') statusLabel = 'مؤجلة';
@@ -453,7 +628,9 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
     final status = updatedSlots['status'] ?? 'done';
     final dateStr = updatedSlots['date'] as String?;
     final reason = updatedSlots['reason'] as String?;
-    final dateWords = dateStr != null ? ActionPlanner.formatDateInArabicWords(dateStr) : null;
+    final dateWords = dateStr != null
+        ? ActionPlanner.formatDateInArabicWords(dateStr)
+        : null;
 
     String statusLabel = 'تمت';
     if (status == 'postponed') statusLabel = 'مؤجلة';
@@ -482,9 +659,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
     final isListening = _voiceState == VoiceInputState.listening;
 
     return Container(
-      padding: EdgeInsets.only(
-        bottom: mediaQuery.viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -519,12 +694,18 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: isListening ? Colors.red.shade100 : colorScheme.primaryContainer,
+                          color: isListening
+                              ? Colors.red.shade100
+                              : colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
-                          isListening ? Icons.mic_rounded : Icons.graphic_eq_rounded,
-                          color: isListening ? Colors.red : colorScheme.onPrimaryContainer,
+                          isListening
+                              ? Icons.mic_rounded
+                              : Icons.graphic_eq_rounded,
+                          color: isListening
+                              ? Colors.red
+                              : colorScheme.onPrimaryContainer,
                           size: 22,
                         ),
                       ),
@@ -533,16 +714,22 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'المساعد الصوتي الذكي (Voice Assistant)',
+                            'المساعد الصوتي',
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
-                            isListening ? 'جارِ الاستماع... اضغط لإيقاف التسجيل' : 'تحدث بالصوت أو اكتب نصاً أوفلاين',
+                            isListening
+                                ? 'جارِ الاستماع... اضغط لإيقاف التسجيل'
+                                : 'تحدث أو اكتب الأمر',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: isListening ? Colors.red : colorScheme.onSurfaceVariant,
-                              fontWeight: isListening ? FontWeight.bold : FontWeight.normal,
+                              color: isListening
+                                  ? Colors.red
+                                  : colorScheme.onSurfaceVariant,
+                              fontWeight: isListening
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
                         ],
@@ -552,14 +739,17 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
                   Row(
                     children: [
                       IconButton(
-                        tooltip: 'أداة اختبار الـ 30 جملة (Voice Test)',
-                        icon: const Icon(Icons.science_outlined, color: Colors.teal),
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => VoiceTestScreen(voiceService: _voiceService),
-                            ),
-                          );
+                        icon: const Icon(Icons.settings_voice),
+                        tooltip: 'إعدادات المساعد',
+                        onPressed: () async {
+                          await _cancelConfirmation();
+                          await _tts.stop();
+                          if (context.mounted)
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const AssistantSettingsScreen(),
+                              ),
+                            );
                         },
                       ),
                       IconButton(
@@ -577,7 +767,9 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
                 child: Column(
                   children: [
                     ScaleTransition(
-                      scale: isListening ? _pulseAnimation : const AlwaysStoppedAnimation(1.0),
+                      scale: isListening
+                          ? _pulseAnimation
+                          : const AlwaysStoppedAnimation(1.0),
                       child: GestureDetector(
                         onTap: _toggleVoiceListening,
                         child: Container(
@@ -585,17 +777,25 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
                           height: 80,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: isListening ? Colors.red : colorScheme.primary,
+                            color: isListening
+                                ? Colors.red
+                                : colorScheme.primary,
                             boxShadow: [
                               BoxShadow(
-                                color: (isListening ? Colors.red : colorScheme.primary).withValues(alpha: 0.35),
+                                color:
+                                    (isListening
+                                            ? Colors.red
+                                            : colorScheme.primary)
+                                        .withValues(alpha: 0.35),
                                 blurRadius: isListening ? 20 : 10,
                                 spreadRadius: isListening ? 6 : 2,
                               ),
                             ],
                           ),
                           child: Icon(
-                            isListening ? Icons.stop_rounded : Icons.mic_rounded,
+                            isListening
+                                ? Icons.stop_rounded
+                                : Icons.mic_rounded,
                             size: 40,
                             color: Colors.white,
                           ),
@@ -604,9 +804,13 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      isListening ? 'اضغط للإيقاف والمعالجة' : 'اضغط على المايك وابدأ الكلام',
+                      isListening
+                          ? 'اضغط للإيقاف والمعالجة'
+                          : 'اضغط على المايك وابدأ الكلام',
                       style: theme.textTheme.labelMedium?.copyWith(
-                        color: isListening ? Colors.red : colorScheme.onSurfaceVariant,
+                        color: isListening
+                            ? Colors.red
+                            : colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -620,29 +824,43 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isListening ? Colors.red.shade50 : colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                    color: isListening
+                        ? Colors.red.shade50
+                        : colorScheme.surfaceContainerHighest.withValues(
+                            alpha: 0.4,
+                          ),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isListening ? Colors.red.shade300 : colorScheme.outlineVariant,
+                      color: isListening
+                          ? Colors.red.shade300
+                          : colorScheme.outlineVariant,
                     ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
-                        isListening ? Icons.hearing_rounded : Icons.record_voice_over_rounded,
+                        isListening
+                            ? Icons.hearing_rounded
+                            : Icons.record_voice_over_rounded,
                         size: 20,
                         color: isListening ? Colors.red : colorScheme.primary,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          _liveVoiceTranscript.isEmpty ? 'جاري الاستماع إليك...' : _liveVoiceTranscript,
+                          _liveVoiceTranscript.isEmpty
+                              ? 'جاري الاستماع إليك...'
+                              : _liveVoiceTranscript,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: isListening ? Colors.red.shade900 : colorScheme.onSurface,
-                            fontStyle: _liveVoiceTranscript.isEmpty ? FontStyle.italic : FontStyle.normal,
+                            color: isListening
+                                ? Colors.red.shade900
+                                : colorScheme.onSurface,
+                            fontStyle: _liveVoiceTranscript.isEmpty
+                                ? FontStyle.italic
+                                : FontStyle.normal,
                           ),
                         ),
                       ),
@@ -660,7 +878,8 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
                 textInputAction: TextInputAction.send,
                 onSubmitted: _handleInput,
                 decoration: InputDecoration(
-                  hintText: 'أو اكتب أمراً هنا (مثال: سجل شاي وقهوة بـ 25 جنيه)...',
+                  hintText:
+                      'أو اكتب أمراً هنا (مثال: سجل شاي وقهوة بـ 25 جنيه)...',
                   prefixIcon: const Icon(Icons.edit_note_rounded),
                   suffixIcon: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -685,7 +904,9 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
                     ],
                   ),
                   filled: true,
-                  fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  fillColor: colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.5,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -713,10 +934,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
                   itemBuilder: (context, index) {
                     final phrase = _suggestedPhrases[index];
                     return ActionChip(
-                      label: Text(
-                        phrase,
-                        style: const TextStyle(fontSize: 12),
-                      ),
+                      label: Text(phrase, style: const TextStyle(fontSize: 12)),
                       onPressed: () {
                         _inputController.text = phrase;
                         _handleInput(phrase);
@@ -743,6 +961,8 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
                 ),
 
               // Feedback message
+              if (_voiceService.lastErrorCode != null)
+                SpeechSettingsButton(code: _voiceService.lastErrorCode!),
               if (_statusFeedback != null)
                 Container(
                   margin: const EdgeInsets.only(bottom: 16),
@@ -753,7 +973,10 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: colorScheme.onErrorContainer),
+                      Icon(
+                        Icons.info_outline,
+                        color: colorScheme.onErrorContainer,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -765,6 +988,15 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
                   ),
                 ),
 
+              if (_speaking)
+                TextButton.icon(
+                  onPressed: () async {
+                    await _tts.stop();
+                    if (mounted) setState(() => _speaking = false);
+                  },
+                  icon: const Icon(Icons.stop),
+                  label: const Text('إيقاف القراءة'),
+                ),
               // Answer Card Preview (Step 4 & Section 6)
               if (_currentAnswer != null)
                 AnswerCard(
@@ -786,6 +1018,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet> with SingleTick
                   onConfirm: _executeCurrentPlan,
                   onEdit: _handleEdit,
                   onCancel: () {
+                    _cancelConfirmation();
                     setState(() {
                       _currentPlan = null;
                     });

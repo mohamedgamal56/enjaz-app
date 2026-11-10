@@ -47,5 +47,11 @@ key.properties
 # Temporary zip files
 *.zip
 test_font.ttf
+build-artifacts/
+status_report.csv
 
 build_output/
+*.g.dart
+lib/l10n/app_localizations*.dart
+untranslated.json
+*-result.txt

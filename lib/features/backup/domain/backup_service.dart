@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
 import 'package:intl/intl.dart';
@@ -8,13 +9,61 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../../core/db/app_database.dart';
 import '../../reminders/domain/notification_service.dart';
+import '../../reminders/domain/reminder_scheduler.dart';
 import 'backup_models.dart';
 import 'backup_encryption_service.dart';
 
 class BackupService {
   BackupService._();
 
-  static const String appVersion = '1.0.0';
+  static const String appVersion = '1.2.0';
+
+  static void validateArchive(Archive archive, {int maxSchemaVersion = 8}) {
+    final data = archive.findFile('data.json');
+    if (data == null)
+      throw const FormatException('بيانات النسخة الاحتياطية ناقصة');
+    final decoded = jsonDecode(utf8.decode(data.content as List<int>));
+    if (decoded is! Map<String, dynamic> ||
+        decoded['tasks'] is! List ||
+        decoded['schema_version'] is! int ||
+        decoded['schema_version'] < 1 ||
+        decoded['schema_version'] > maxSchemaVersion) {
+      throw const FormatException('نسخة احتياطية غير صالحة أو من إصدار أحدث');
+    }
+    final version = decoded['schema_version'] as int;
+    final requiredTables = <String>[
+      'tasks', 'task_events', 'reasons', 'goals', 'milestones', 'goal_updates',
+      'ideas', 'tags', 'idea_tags', 'recurrences', 'settings',
+      if (version >= 2) 'voice_notes',
+      if (version >= 3) 'reminders',
+      if (version >= 4) 'notes',
+      if (version >= 5) ...['habits', 'habit_items', 'habit_logs', 'habit_item_logs'],
+      if (version >= 6) ...['finance_categories', 'transactions', 'quick_expenses', 'wishlist_items', 'obligations', 'obligation_instances', 'budgets'],
+      if (version >= 7) ...['health_items', 'health_events', 'treatments', 'treatment_checks'],
+      if (version >= 8) 'unrecognized_phrases',
+    ];
+    for (final key in requiredTables) {
+      if (decoded[key] is! List || (decoded[key] as List).any((row) => row is! Map<String, dynamic>)) {
+        throw FormatException('جدول ناقص أو غير صالح: $key');
+      }
+    }
+    final manifestFile = archive.findFile('manifest.json');
+    if (manifestFile != null) {
+      final manifest = BackupManifest.fromJson(
+        jsonDecode(utf8.decode(manifestFile.content as List<int>)),
+      );
+      if (manifest.schemaVersion != version || !manifest.checksums.containsKey('data.json'))
+        throw const FormatException('إصدار النسخة أحدث من التطبيق');
+      for (final entry in manifest.checksums.entries) {
+        final file = archive.findFile(entry.key);
+        if (file == null ||
+            sha256.convert(file.content as List<int>).toString() !=
+                entry.value) {
+          throw const FormatException('ملف النسخة الاحتياطية تالف');
+        }
+      }
+    }
+  }
 
   /// Export full backup archive (.zip)
   static Future<File> exportFullBackup({
@@ -32,9 +81,7 @@ class BackupService {
     final dataSha256 = sha256.convert(jsonBytes).toString();
     checksums['data.json'] = dataSha256;
 
-    archive.addFile(
-      ArchiveFile('data.json', jsonBytes.length, jsonBytes),
-    );
+    archive.addFile(ArchiveFile('data.json', jsonBytes.length, jsonBytes));
 
     // 2. Export Voice Notes if requested
     int voiceCount = 0;
@@ -51,9 +98,7 @@ class BackupService {
           final archivePath = 'voice/${p.basename(vn.fileName)}';
           checksums[archivePath] = fileHash;
 
-          archive.addFile(
-            ArchiveFile(archivePath, bytes.length, bytes),
-          );
+          archive.addFile(ArchiveFile(archivePath, bytes.length, bytes));
           voiceCount++;
         }
       }
@@ -75,12 +120,14 @@ class BackupService {
       'notes': (dataMap['notes'] as List?)?.length ?? 0,
       'habits': (dataMap['habits'] as List?)?.length ?? 0,
       'transactions': (dataMap['transactions'] as List?)?.length ?? 0,
-      'finance': ((dataMap['transactions'] as List?)?.length ?? 0) +
+      'finance':
+          ((dataMap['transactions'] as List?)?.length ?? 0) +
           ((dataMap['wishlist_items'] as List?)?.length ?? 0) +
           ((dataMap['obligations'] as List?)?.length ?? 0),
       'health_items': (dataMap['health_items'] as List?)?.length ?? 0,
       'treatments': (dataMap['treatments'] as List?)?.length ?? 0,
-      'health': ((dataMap['health_items'] as List?)?.length ?? 0) +
+      'health':
+          ((dataMap['health_items'] as List?)?.length ?? 0) +
           ((dataMap['treatments'] as List?)?.length ?? 0),
     };
 
@@ -122,14 +169,19 @@ class BackupService {
   }
 
   /// Inspect a picked backup file (.zip or encrypted .enjaz) and return preview information
-  static Future<BackupPreview> inspectBackupFile(File file, {String? password}) async {
+  static Future<BackupPreview> inspectBackupFile(
+    File file, {
+    String? password,
+  }) async {
     try {
       if (!await file.exists()) {
         return BackupPreview.invalid('الملف المحدد غير موجود.');
       }
 
       final bytes = await file.readAsBytes();
-      final isEncrypted = BackupEncryptionService.instance.isEncryptedBackup(bytes);
+      final isEncrypted = BackupEncryptionService.instance.isEncryptedBackup(
+        bytes,
+      );
 
       if (isEncrypted && (password == null || password.trim().isEmpty)) {
         return BackupPreview.encryptedNeedPassword(fileSizeBytes: bytes.length);
@@ -146,6 +198,7 @@ class BackupService {
       }
 
       final archive = ZipDecoder().decodeBytes(zipBytes);
+      validateArchive(archive);
 
       ArchiveFile? manifestFile;
       ArchiveFile? dataFile;
@@ -156,7 +209,9 @@ class BackupService {
       }
 
       if (dataFile == null) {
-        return BackupPreview.invalid('الملف المضغوط لا يحتوي على بيانات التطبيق (data.json).');
+        return BackupPreview.invalid(
+          'الملف المضغوط لا يحتوي على بيانات التطبيق (data.json).',
+        );
       }
 
       final dataString = utf8.decode(dataFile.content as List<int>);
@@ -166,29 +221,44 @@ class BackupService {
       if (manifestFile != null) {
         try {
           final manifestString = utf8.decode(manifestFile.content as List<int>);
-          final manifestMap = jsonDecode(manifestString) as Map<String, dynamic>;
+          final manifestMap =
+              jsonDecode(manifestString) as Map<String, dynamic>;
           manifest = BackupManifest.fromJson(manifestMap);
         } catch (_) {}
       }
 
-      final tasksCount = (dataMap['tasks'] as List?)?.length ?? manifest?.counts['tasks'] ?? 0;
-      final goalsCount = (dataMap['goals'] as List?)?.length ?? manifest?.counts['goals'] ?? 0;
-      final ideasCount = (dataMap['ideas'] as List?)?.length ?? manifest?.counts['ideas'] ?? 0;
-      final notesCount = (dataMap['notes'] as List?)?.length ?? manifest?.counts['notes'] ?? 0;
-      final habitsCount = (dataMap['habits'] as List?)?.length ?? manifest?.counts['habits'] ?? 0;
-      final financeCount = ((dataMap['transactions'] as List?)?.length ?? 0) +
-              ((dataMap['wishlist_items'] as List?)?.length ?? 0) +
-              ((dataMap['obligations'] as List?)?.length ?? 0) != 0
+      final tasksCount =
+          (dataMap['tasks'] as List?)?.length ?? manifest?.counts['tasks'] ?? 0;
+      final goalsCount =
+          (dataMap['goals'] as List?)?.length ?? manifest?.counts['goals'] ?? 0;
+      final ideasCount =
+          (dataMap['ideas'] as List?)?.length ?? manifest?.counts['ideas'] ?? 0;
+      final notesCount =
+          (dataMap['notes'] as List?)?.length ?? manifest?.counts['notes'] ?? 0;
+      final habitsCount =
+          (dataMap['habits'] as List?)?.length ??
+          manifest?.counts['habits'] ??
+          0;
+      final financeCount =
+          ((dataMap['transactions'] as List?)?.length ?? 0) +
+                  ((dataMap['wishlist_items'] as List?)?.length ?? 0) +
+                  ((dataMap['obligations'] as List?)?.length ?? 0) !=
+              0
           ? ((dataMap['transactions'] as List?)?.length ?? 0) +
-              ((dataMap['wishlist_items'] as List?)?.length ?? 0) +
-              ((dataMap['obligations'] as List?)?.length ?? 0)
+                ((dataMap['wishlist_items'] as List?)?.length ?? 0) +
+                ((dataMap['obligations'] as List?)?.length ?? 0)
           : (manifest?.counts['finance'] ?? 0);
-      final healthCount = ((dataMap['health_items'] as List?)?.length ?? 0) +
-              ((dataMap['treatments'] as List?)?.length ?? 0) != 0
+      final healthCount =
+          ((dataMap['health_items'] as List?)?.length ?? 0) +
+                  ((dataMap['treatments'] as List?)?.length ?? 0) !=
+              0
           ? ((dataMap['health_items'] as List?)?.length ?? 0) +
-              ((dataMap['treatments'] as List?)?.length ?? 0)
+                ((dataMap['treatments'] as List?)?.length ?? 0)
           : (manifest?.counts['health'] ?? 0);
-      final voiceNotesCount = (dataMap['voice_notes'] as List?)?.length ?? manifest?.counts['voice_notes'] ?? 0;
+      final voiceNotesCount =
+          (dataMap['voice_notes'] as List?)?.length ??
+          manifest?.counts['voice_notes'] ??
+          0;
 
       DateTime? createdAt;
       if (manifest?.createdAt != null) {
@@ -200,7 +270,8 @@ class BackupService {
       return BackupPreview(
         isValid: true,
         isEncrypted: isEncrypted,
-        schemaVersion: manifest?.schemaVersion ?? (dataMap['schema_version'] as int? ?? 1),
+        schemaVersion:
+            manifest?.schemaVersion ?? (dataMap['schema_version'] as int? ?? 1),
         createdAt: createdAt,
         includesVoice: manifest?.includesVoice ?? false,
         tasksCount: tasksCount,
@@ -228,12 +299,16 @@ class BackupService {
     bool createSafetySnapshot = true,
   }) async {
     final rawBytes = await zipFile.readAsBytes();
-    final isEncrypted = BackupEncryptionService.instance.isEncryptedBackup(rawBytes);
+    final isEncrypted = BackupEncryptionService.instance.isEncryptedBackup(
+      rawBytes,
+    );
 
     final List<int> zipBytes;
     if (isEncrypted) {
       if (password == null || password.trim().isEmpty) {
-        throw const BackupEncryptionException('يرجى إدخال كلمة المرور لفك تشفير النسخة الاحتياطية.');
+        throw const BackupEncryptionException(
+          'يرجى إدخال كلمة المرور لفك تشفير النسخة الاحتياطية.',
+        );
       }
       zipBytes = await BackupEncryptionService.instance.decrypt(
         encryptedBytes: rawBytes,
@@ -243,6 +318,8 @@ class BackupService {
       zipBytes = rawBytes;
     }
 
+    final validatedArchive = ZipDecoder().decodeBytes(zipBytes);
+    validateArchive(validatedArchive, maxSchemaVersion: db.schemaVersion);
     // 1. Create safety snapshot before restoration
     if (createSafetySnapshot) {
       try {
@@ -252,10 +329,13 @@ class BackupService {
           await backupsDir.create(recursive: true);
         }
         final safetyFile = await exportFullBackup(db: db, includeVoice: true);
-        final safetyTarget = p.join(backupsDir.path, 'safety_pre_restore_${DateTime.now().millisecondsSinceEpoch}.zip');
+        final safetyTarget = p.join(
+          backupsDir.path,
+          'safety_pre_restore_${DateTime.now().millisecondsSinceEpoch}.zip',
+        );
         await safetyFile.copy(safetyTarget);
       } catch (e) {
-        // Log safety copy error, continue restore cautiously
+        throw StateError('تعذر حفظ نسخة الأمان. لم يتم استبدال البيانات.');
       }
     }
 
@@ -279,9 +359,12 @@ class BackupService {
     // 2. Decode and import database data
     final dataString = utf8.decode(dataFile.content as List<int>);
     final dataMap = jsonDecode(dataString) as Map<String, dynamic>;
-    await db.importAllData(dataMap);
-
-    // 3. Extract audio files
+    // Write restored audio under unique names first. Existing recordings remain
+    // intact if a write or the database transaction fails.
+    final stagedFiles = <File>[];
+    final restoredNames = <String, String>{};
+    final restoreId = DateTime.now().microsecondsSinceEpoch;
+    try {
     if (voiceFiles.isNotEmpty) {
       final appDir = await getApplicationDocumentsDirectory();
       final voiceDir = Directory(p.join(appDir.path, 'voice'));
@@ -291,21 +374,40 @@ class BackupService {
 
       for (final vf in voiceFiles) {
         final fileName = p.basename(vf.name);
-        final targetPath = p.join(voiceDir.path, fileName);
+        final newName = 'restore_${restoreId}_${stagedFiles.length}_$fileName';
+        final targetPath = p.join(voiceDir.path, newName);
         final targetFile = File(targetPath);
-        await targetFile.writeAsBytes(vf.content as List<int>);
+        stagedFiles.add(targetFile);
+        await targetFile.writeAsBytes(vf.content as List<int>, flush: true);
+        restoredNames[fileName] = 'voice/$newName';
       }
+    }
+    for (final row in (dataMap['voice_notes'] as List? ?? [])) {
+      final original = row['fileName'] as String?;
+      final restored = original == null ? null : restoredNames[p.basename(original)];
+      if (restored != null) row['fileName'] = restored;
+    }
+    await db.importAllData(dataMap);
+    } catch (_) {
+      for (final file in stagedFiles) {
+        try { if (await file.exists()) await file.delete(); } catch (_) {}
+      }
+      rethrow;
     }
 
     // 4. Reschedule reminders
+    await NotificationService().cancelAll();
     await NotificationService().rescheduleAll(db);
+    await ReminderScheduler(db: db).rescheduleAllActive();
 
     return true;
   }
 
   /// Export tasks.csv with UTF-8 BOM and all fields including voice_note_count
   static Future<File> exportTasksCsv(AppDatabase db) async {
-    final tasksList = await (db.select(db.tasks)..where((t) => t.deletedAt.isNull())).get();
+    final tasksList = await (db.select(
+      db.tasks,
+    )..where((t) => t.deletedAt.isNull())).get();
     final voiceCounts = await db.getTaskVoiceNotesCounts();
 
     final buffer = StringBuffer();
@@ -356,7 +458,9 @@ class BackupService {
 
   /// Export events.csv with UTF-8 BOM and all fields
   static Future<File> exportEventsCsv(AppDatabase db) async {
-    final eventsList = await (db.select(db.taskEvents)..where((e) => e.deletedAt.isNull())).get();
+    final eventsList = await (db.select(
+      db.taskEvents,
+    )..where((e) => e.deletedAt.isNull())).get();
 
     final buffer = StringBuffer();
     // UTF-8 BOM
@@ -394,7 +498,10 @@ class BackupService {
 
   static String _escapeCsv(String val) {
     if (val.isEmpty) return '';
-    if (val.contains(',') || val.contains('"') || val.contains('\n') || val.contains('\r')) {
+    if (val.contains(',') ||
+        val.contains('"') ||
+        val.contains('\n') ||
+        val.contains('\r')) {
       return '"${val.replaceAll('"', '""')}"';
     }
     return val;

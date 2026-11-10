@@ -37,7 +37,7 @@ class RuleBasedIntentParser implements IntentParser {
 
   DateTime _getNow(DateTime? referenceNow) {
     if (referenceNow != null) return referenceNow;
-    if (_nowProvider != null) return _nowProvider!();
+    if (_nowProvider != null) return _nowProvider();
     return DateTime.now();
   }
 
@@ -942,7 +942,7 @@ class RuleBasedIntentParser implements IntentParser {
       slots: {
         if (money != null) 'amount': money,
         'currency': 'EGP',
-        if (source != null && source.isNotEmpty) 'title': source,
+        if (source.isNotEmpty) 'title': source,
         if (dateRes != null) 'date': dateRes.dateStr,
       },
       confidence: 0.95,
