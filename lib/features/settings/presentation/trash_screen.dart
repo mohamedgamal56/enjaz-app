@@ -284,8 +284,8 @@ class TrashScreen extends ConsumerWidget {
         title: Text(isArabic ? 'حذف نهائي للأمنية' : 'Delete Wishlist Item'),
         content: Text(
           isArabic
-              ? 'هل تريد حذف أمنية "${item.title}" نهائياً؟'
-              : 'Permanently delete "${item.title}"?',
+              ? 'هل تريد حذف أمنية "${item.name}" نهائياً؟'
+              : 'Permanently delete "${item.name}"?',
         ),
         actions: [
           TextButton(
@@ -785,7 +785,7 @@ class TrashScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    n.content.trim().split('\n').first,
+                                    (n.title?.isNotEmpty == true ? n.title! : n.body).trim().split('\n').first,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
@@ -1007,8 +1007,8 @@ class TrashScreen extends ConsumerWidget {
                                       backgroundColor: Color(0x22E91E63),
                                       child: Icon(Icons.card_giftcard_rounded, size: 18, color: Colors.pink),
                                     ),
-                                    title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    subtitle: Text(item.notes ?? ''),
+                                    title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    subtitle: Text(item.note ?? ''),
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -1054,7 +1054,7 @@ class TrashScreen extends ConsumerWidget {
                                       child: Icon(Icons.account_balance_wallet_rounded, size: 18, color: Colors.indigo),
                                     ),
                                     title: Text(ob.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    subtitle: Text(ob.notes ?? ''),
+                                    subtitle: Text(ob.note ?? ''),
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -1134,7 +1134,7 @@ class TrashScreen extends ConsumerWidget {
                                   child: Icon(Icons.medical_services_outlined, size: 18, color: Colors.red),
                                 ),
                                 title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                subtitle: Text(item.doctorName ?? ''),
+                                subtitle: Text(item.placeOrDoctor ?? ''),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -1185,7 +1185,7 @@ class TrashScreen extends ConsumerWidget {
                                   child: Icon(Icons.medication_rounded, size: 18, color: Colors.cyan),
                                 ),
                                 title: Text(tr.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                subtitle: Text(tr.dosage ?? ''),
+                                subtitle: Text(tr.instructionsNote ?? tr.note ?? ''),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
