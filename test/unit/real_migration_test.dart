@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -38,7 +38,7 @@ void main() {
       expect(db.schemaVersion, equals(8));
 
       // 2. Query original v1.1.5 tasks
-      final tasks = await db.getAllTasksList();
+      final tasks = await (db.select(db.tasks)).get();
       expect(tasks.length, equals(2));
 
       final task1 = tasks.firstWhere((t) => t.id == 1);
