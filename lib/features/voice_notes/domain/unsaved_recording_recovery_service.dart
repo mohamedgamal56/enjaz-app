@@ -60,13 +60,14 @@ class UnsavedRecordingRecoveryService {
     await db.into(db.voiceNotes).insert(
       VoiceNotesCompanion.insert(
         fileName: relativePath,
-        durationMs: 0,
-        sizeBytes: length,
+        durationMs: const Value(0),
+        sizeBytes: Value(length),
         createdAt: now.millisecondsSinceEpoch,
         updatedAt: now.millisecondsSinceEpoch,
         parentType: 'general',
         parentId: 0,
-        title: Value(defaultTitle),
+        label: Value(defaultTitle),
+        recordedAt: now.millisecondsSinceEpoch,
       ),
     );
   }

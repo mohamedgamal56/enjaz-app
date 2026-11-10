@@ -42,7 +42,7 @@ void main() {
 
       final voiceNotes = await db.getAllVoiceNotesList();
       expect(voiceNotes.length, equals(1));
-      expect(voiceNotes.first.title, equals('تسجيل مسترجع'));
+      expect(voiceNotes.first.label, equals('تسجيل مسترجع'));
       expect(voiceNotes.first.fileName, contains('voice_crashed_12345.m4a'));
       expect(voiceNotes.first.sizeBytes, equals(5000));
     });

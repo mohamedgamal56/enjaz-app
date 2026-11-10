@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
+import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -57,9 +58,10 @@ void main() {
           parentType: 'task',
           parentId: taskId,
           fileName: sampleAudioFile.path,
-          durationMs: 15000,
-          sizeBytes: audioBytes.length,
-          title: const Value('ملاحظة صوتية للمهمة'),
+          durationMs: const Value(15000),
+          sizeBytes: Value(audioBytes.length),
+          label: const Value('ملاحظة صوتية للمهمة'),
+          recordedAt: now,
           createdAt: now,
           updatedAt: now,
         ),
@@ -126,7 +128,7 @@ void main() {
       // Notes
       await db.insertNote(
         NotesCompanion.insert(
-          content: 'ملاحظة اختبارية',
+          body: 'ملاحظة اختبارية',
           createdAt: now,
           updatedAt: now,
         ),
@@ -136,7 +138,7 @@ void main() {
       await db.insertHabit(
         HabitsCompanion.insert(
           nameAr: 'عادة اختبارية',
-          frequency: 'daily',
+          type: 'check',
           createdAt: now,
           updatedAt: now,
         ),

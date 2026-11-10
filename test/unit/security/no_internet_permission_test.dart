@@ -29,10 +29,11 @@ void main() {
       final pubspec = await pubspecFile.readAsString();
 
       // Ensure no http, dio, or network sockets
-      final forbiddenPackages = ['dio:', 'http:', 'retrofit:', 'socket_io_client:'];
+      final forbiddenPackages = ['dio', 'http', 'retrofit', 'socket_io_client'];
       for (final pkg in forbiddenPackages) {
+        final regExp = RegExp('^\\s*${RegExp.escape(pkg)}:', multiLine: true);
         expect(
-          pubspec.contains(pkg),
+          regExp.hasMatch(pubspec),
           isFalse,
           reason: 'Forbidden networking package found in pubspec.yaml: $pkg',
         );

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -83,7 +84,7 @@ void main() {
       // Note table (v4)
       final noteId = await db.insertNote(
         NotesCompanion.insert(
-          content: 'ملاحظة بعد الترحيل',
+          body: 'ملاحظة بعد الترحيل',
           createdAt: DateTime.now().millisecondsSinceEpoch,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
         ),
@@ -94,7 +95,7 @@ void main() {
       final habitId = await db.insertHabit(
         HabitsCompanion.insert(
           nameAr: 'عادة القراءة',
-          frequency: 'daily',
+          type: 'check',
           createdAt: DateTime.now().millisecondsSinceEpoch,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
         ),
@@ -104,8 +105,10 @@ void main() {
       // Finance transaction (v6)
       final txId = await db.insertTransaction(
         TransactionsCompanion.insert(
-          amountMinor: 5000,
           kind: 'expense',
+          amountMinor: 5000,
+          categoryId: 1,
+          occurredAt: DateTime.now().millisecondsSinceEpoch,
           localDate: '2026-11-10',
           createdAt: DateTime.now().millisecondsSinceEpoch,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
@@ -114,10 +117,13 @@ void main() {
       expect(txId, isPositive);
 
       // Health item (v7)
-      final healthId = await db.insertHealthItem(
+      final healthId = await db.insertHealthItemWithEvent(
         HealthItemsCompanion.insert(
           title: 'فحص دوري',
-          category: 'checkup',
+          kind: 'checkup',
+          neededSince: '2026-11-10',
+          occurredAt: DateTime.now().millisecondsSinceEpoch,
+          localDate: '2026-11-10',
           createdAt: DateTime.now().millisecondsSinceEpoch,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
         ),
