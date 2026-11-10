@@ -1,3 +1,12 @@
+## 1.2.1+19 — Batch 0 — 2026-11-10
+
+- Check notification permission and blocked channels; read exact permission without prompting, log inexact fallback.
+- Verify pending Android requests, normalize icon resource names, retain a bounded diagnostic history without notification content.
+- Immediate notification / ten-second alarm tests, channel/sound/pending diagnostics and settings shortcuts.
+- Isolate failed monthly backup and individual restored reminder scheduling.
+- Preserve microphone permission, missing service/Arabic and network failure codes. Prevent false listening state and late starts after cancellation.
+- Permanent signing configuration unchanged. Delivery, sound, upgrade installation and speech require phone testing.
+
 # سجل التغييرات (CHANGELOG)
 
 ## [v1.1.6 - Voice Assistant Step 5 Voice Input & 30-Sentence Test Wizard] - 2026-11-08

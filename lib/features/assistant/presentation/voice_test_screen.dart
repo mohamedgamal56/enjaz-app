@@ -1,3 +1,4 @@
+import 'speech_failure_view.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -276,7 +277,7 @@ class _VoiceTestScreenState extends State<VoiceTestScreen> {
       final started = await _voiceService.startListening();
       if (!started && mounted) {
         setState(() => _activeRecordingIndex = null);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر بدء التسجيل. تحقق من الميكروفون وخدمة التعرف الصوتي.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(speechFailureText(context, _voiceService.lastErrorCode ?? 'speech_failed'))));
       }
     }
   }
@@ -406,6 +407,10 @@ class _VoiceTestScreenState extends State<VoiceTestScreen> {
       ),
       body: Column(
         children: [
+          if (_voiceService.lastErrorCode != null) ...[
+            Text(speechFailureText(context, _voiceService.lastErrorCode!)),
+            SpeechSettingsButton(code: _voiceService.lastErrorCode!),
+          ],
           // Mode switch & stats header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

@@ -40,7 +40,6 @@
   "loading": "جارٍ التحميل...",
   "about": "عن إنجاز",
   "aboutDescription": "تطبيقك الشخصي لإدارة المهام والأهداف الحياتية أوفلاين بالكامل وبدون أي تعقيد.",
-
   "task": "مهمة",
   "errand": "مشوار",
   "goal": "هدف",
@@ -61,7 +60,6 @@
   "save": "حفظ",
   "saveAndAddAnother": "حفظ وإضافة آخر",
   "taskAddedSuccess": "تمت إضافة المهمة بنجاح",
-  
   "statusTodo": "لسه",
   "statusInProgress": "جارية",
   "statusPartial": "اتعمل جزء منها",
@@ -69,7 +67,6 @@
   "statusPostponed": "مؤجلة",
   "statusWaiting": "منتظرة",
   "statusStopped": "متوقفة",
-
   "changeStatusTitle": "تغيير الحالة",
   "selectReason": "اختر السبب",
   "reasonOther": "سبب آخر",
@@ -82,7 +79,6 @@
   "addNote": "إضافة ملاحظة",
   "taskCompleted": "تم إنجاز المهمة! 🎉",
   "statusUpdated": "تم تحديث الحالة بنجاح",
-
   "sectionOverdue": "متأخرة",
   "sectionTasks": "مهام اليوم",
   "sectionErrands": "مشاوير اليوم",
@@ -90,7 +86,6 @@
   "sectionWaitingAndPostponed": "منتظرة ومؤجلة",
   "sectionDoneToday": "تمت اليوم",
   "moveToToday": "نقل لليوم",
-
   "taskDetailsTitle": "تفاصيل المهمة",
   "timeline": "الخط الزمني",
   "created": "تم الإنشاء",
@@ -106,14 +101,12 @@
   "taskDeleted": "تم نقل المهمة لسلة المحذوفات",
   "minute": "دقيقة",
   "hour": "ساعة",
-
   "multiLinePasteTitle": "تحويل الملاحظات لمهام",
   "multiLinePastePrompt": "تم اكتشاف أسطر متعددة، تحويلها لمهام منفصلة؟",
   "importNotes": "استيراد ملاحظات",
   "pasteNotesHint": "الصق ملاحظاتك أو قائمتك هنا (كل سطر هيكون مهمة منفصلة)...",
   "convert": "تحويل لمهام",
   "tasksCreatedSuccess": "تم إنشاء المهام بنجاح",
-
   "historyTitle": "سجل المهام",
   "searchHint": "ابحث في المهام، الملاحظات، أو الأسباب...",
   "filterAll": "الكل",
@@ -123,7 +116,6 @@
   "sortOldest": "الأقدم أولاً",
   "noHistoryFound": "مفيش نتائج مطابقة للبحث",
   "clearFilters": "إعادة ضبط الفلاتر",
-
   "reasonsManager": "إدارة أسباب التأجيل",
   "addReason": "إضافة سبب جديد",
   "editReason": "تعديل السبب",
@@ -141,14 +133,12 @@
   "reasonAddedSuccess": "تمت إضافة السبب بنجاح",
   "reasonUpdatedSuccess": "تم تعديل السبب بنجاح",
   "reasonArchivedSuccess": "تمت أرشفة السبب",
-
   "trash": "سلة المحذوفات",
   "emptyTrash": "سلة المحذوفات فارغة",
   "purgeTrash": "تفريغ السلة نهائياً",
   "purgeTrashConfirm": "هل أنت متأكد من تفريغ سلة المحذوفات نهائياً؟ لا يمكن التراجع عن هذا الإجراء.",
   "restore": "استعادة",
   "taskRestored": "تمت استعادة المهمة",
-
   "goalTitle": "عنوان الهدف",
   "goalDescription": "وصف الهدف وملاحظاته",
   "progressMode": "طريقة حساب التقدم",
@@ -203,7 +193,6 @@
   "filterPaused": "متوقفة",
   "filterDone": "مكتملة",
   "editGoal": "تعديل الهدف",
-
   "editIdea": "تعديل الفكرة",
   "ideaTitle": "عنوان الفكرة",
   "ideaDescription": "تفاصيل وملاحظات الفكرة",
@@ -246,7 +235,6 @@
   "voiceStorage": "مساحة التسجيلات الصوتية",
   "voiceNotesCountLabel": "عدد التسجيلات",
   "voiceStorageUsedLabel": "المساحة المستخدمة",
-
   "stats": "الإحصائيات",
   "rangeWeek": "أسبوع",
   "rangeMonth": "شهر",
@@ -294,7 +282,6 @@
   "sheetReasons": "الأسباب",
   "sheetGoals": "الأهداف",
   "sheetIdeas": "الأفكار",
-
   "remindersAndNotifications": "التنبيهات والإشعارات",
   "dailySummary": "الموجز الصباحي",
   "dailySummarySubtitle": "إشعار صباحي (08:00) بعدد مهام ومشاوير اليوم",
@@ -328,5 +315,34 @@
   "deleteRecurringTitle": "حذف المهمة المتكررة",
   "deleteRecurringThisOnly": "حذف هذه المهمة فقط",
   "deleteRecurringAllFuture": "إلغاء التكرار وحذف كل القادمة",
-  "recurrenceGenerated": "مهمة متكررة"
+  "recurrenceGenerated": "مهمة متكررة",
+  "diagnosticTitle": "فحص التنبيهات",
+  "diagnosticRefresh": "تحديث الفحص",
+  "diagnosticPermissions": "إشعارات / تنبيهات دقيقة / استثناء البطارية",
+  "diagnosticPending": "تنبيهات مسجلة لدى أندرويد",
+  "diagnosticChannels": "قنوات التنبيه وصوتها",
+  "diagnosticLog": "سجل المحاولات والأخطاء",
+  "diagnosticSettings": "فتح إعدادات التطبيق",
+  "diagnosticExactSettings": "فتح إعداد التنبيهات والتذكيرات",
+  "diagnosticImmediate": "اختبار إشعار الآن",
+  "diagnosticAlarm": "اختبار منبّه بعد 10 ثوانٍ",
+  "diagnosticSubmitted": "قَبِل أندرويد الطلب. تأكد من وصول التنبيه على هاتفك.",
+  "diagnosticFailed": "لم يتم تسجيل التنبيه. راجع السبب في السجل أدناه.",
+  "diagnosticTestBody": "إشعار تجريبي لفحص الصوت والظهور",
+  "diagnosticDelayed": "إذن التنبيهات الدقيقة غير متاح. قد يتأخر التنبيه البديل.",
+  "diagnosticGuide": "على شاومي: فعّل التشغيل التلقائي واختر بطارية بدون قيود. اختبر مع الشاشة مقفولة. القبول لدى أندرويد لا يؤكد صدور الصوت.",
+  "speechDenied": "اسمح باستخدام الميكروفون ثم حاول مجددًا.",
+  "speechPermanent": "إذن الميكروفون مرفوض دائمًا. افتح إعدادات التطبيق للسماح به.",
+  "speechUnavailable": "خدمة التعرف على الكلام غير متاحة. افتح إعدادات الصوت في الهاتف. يمكنك كتابة الأمر.",
+  "speechArabicMissing": "اللغة العربية غير متاحة للتعرف الصوتي. ثبّتها من إعدادات خدمة الكلام.",
+  "speechNetwork": "خدمة الكلام تحتاج اتصالًا أو حزمة لغة محلية. جرّب الاتصال أو اكتب الأمر.",
+  "speechFailed": "تعذر التعرف على الكلام. يمكنك إعادة المحاولة أو كتابة الأمر.",
+  "speechSettings": "إعدادات خدمة الكلام",
+  "diagnosticDisabled": "الإشعارات مقفولة في إعدادات التطبيق.",
+  "diagnosticChannelDisabled": "قناة التنبيه مقفولة. افتح إعدادات التطبيق ثم الإشعارات.",
+  "diagnosticScheduled": "أندرويد سجّل الطلب؛ وصوله يحتاج تجربة.",
+  "diagnosticMissing": "لم نجد التنبيه ضمن الطلبات المسجلة.",
+  "diagnosticSound": "الصوت",
+  "diagnosticBlocked": "القناة مقفولة",
+  "diagnosticEnabled": "القناة مفعّلة"
 }

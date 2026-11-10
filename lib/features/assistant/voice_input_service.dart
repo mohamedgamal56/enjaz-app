@@ -65,7 +65,7 @@ class RealSpeechToTextSource implements SpeechRecognizerSource {
       cancelOnError: false,
       pauseFor: const Duration(seconds: 3),
     );
-    return true;
+    return _stt.isListening;
   }
 
   @override
@@ -100,6 +100,7 @@ class VoiceInputService {
   String? _selectedLocaleId;
   Timer? _safetyTimeoutTimer;
   Timer? _restartTimer;
+  String? lastErrorCode;
   bool _starting = false;
   bool _disposed = false;
   int _generation = 0;
@@ -131,6 +132,7 @@ class VoiceInputService {
   Future<bool> startListening({String? localePreference}) async {
     if (_disposed || _starting) return false;
     if (_isUserIntendedListening) return true;
+    lastErrorCode = null;
     _starting = true;
     final generation = ++_generation;
     try {
@@ -138,18 +140,18 @@ class VoiceInputService {
       if (permissionChecker != null) {
         final granted = await permissionChecker!();
         if (!granted) {
-          _setState(VoiceInputState.error);
-          _errorController.add('صلاحية الميكروفون مطلوبة للتسجيل الصوتي.');
+          _fail('microphone_denied');
           return false;
         }
       } else {
         final permStatus = await Permission.microphone.request();
         if (!permStatus.isGranted) {
-          _setState(VoiceInputState.error);
-          _errorController.add('صلاحية الميكروفون مطلوبة للتسجيل الصوتي.');
+          _fail(permStatus.isPermanentlyDenied ? 'microphone_permanent' : 'microphone_denied');
           return false;
         }
       }
+
+      if (_disposed || generation != _generation) return false;
 
       // Trigger brief haptic vibration per Section 2.3
       {
@@ -160,13 +162,19 @@ class VoiceInputService {
 
       // Initialize recognizer
       final initSuccess = await _source.initialize(
-        onStatus: _handleStatusChanged,
-        onError: _handleError,
+        onStatus: (status) {
+          if (!_disposed && generation == _generation) _handleStatusChanged(status);
+        },
+        onError: (error) {
+          if (!_disposed && generation == _generation) _handleError(error);
+        },
       );
 
-      if (!initSuccess) {
+      if (_disposed || generation != _generation) return false;
+      if (!initSuccess || lastErrorCode != null) {
         _setState(VoiceInputState.unsupported);
-        _errorController.add('التعرف الصوتي غير متوفر على هذا الجهاز.');
+        lastErrorCode ??= 'speech_unavailable';
+        if (!_errorController.isClosed) _errorController.add(lastErrorCode!);
         return false;
       }
 
@@ -179,7 +187,8 @@ class VoiceInputService {
       );
       if (_selectedLocaleId == null) {
         _setState(VoiceInputState.unsupported);
-        _errorController.add('ثبّت حزمة التعرف على الكلام باللغة العربية من إعدادات الهاتف، أو اكتب الأمر.');
+        lastErrorCode = 'arabic_missing';
+        if (!_errorController.isClosed) _errorController.add(lastErrorCode!);
         return false;
       }
 
@@ -200,8 +209,8 @@ class VoiceInputService {
       }
 
       return await _startSingleRecognizerSession();
-    } catch (_) {
-      _fail('تعذر تشغيل التعرف الصوتي. يمكنك كتابة الأمر.');
+    } catch (error) {
+      _fail(error is PlatformException ? error.code : 'speech_failed');
       return false;
     } finally {
       _starting = false;
@@ -284,10 +293,10 @@ class VoiceInputService {
         localeId: _selectedLocaleId,
       );
       if (_disposed || generation != _generation) return false;
-      if (!started) _fail('تعذر بدء الاستماع. حاول مرة أخرى أو اكتب الأمر.');
+      if (!started && lastErrorCode == null) _fail('speech_failed');
       return started && _isUserIntendedListening;
     } catch (e) {
-      _fail('تعذر بدء الاستماع. حاول مرة أخرى أو اكتب الأمر.');
+      _fail(e is PlatformException ? e.code : 'speech_failed');
       return false;
     } finally {
       _sessionStarting = false;
@@ -320,7 +329,7 @@ class VoiceInputService {
   }
 
   void _handleError(String errorMsg) {
-    if (!_isUserIntendedListening) return;
+    if (_disposed || (!_isUserIntendedListening && !_starting)) return;
 
     // On non-fatal pause errors, try to chain next session if still intended to listen
     if (errorMsg.contains('error_no_match') ||
@@ -340,11 +349,14 @@ class VoiceInputService {
   }
 
   void _fail(String message) {
+    if (_disposed) return;
+    lastErrorCode = message;
     _isUserIntendedListening = false;
     _safetyTimeoutTimer?.cancel();
     _restartTimer?.cancel();
     _setState(VoiceInputState.error);
     if (!_errorController.isClosed) _errorController.add(message);
+    unawaited(_source.cancel().catchError((_) {}));
   }
 
   String _buildDisplayTranscript() {
@@ -396,7 +408,7 @@ class VoiceInputService {
     _isUserIntendedListening = false;
     _generation++;
     _restartTimer?.cancel();
-    _source.cancel();
+    unawaited(_source.cancel().catchError((_) {}));
     _safetyTimeoutTimer?.cancel();
     _transcriptController.close();
     _finalController.close();

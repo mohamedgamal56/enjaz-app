@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'notification_diagnostics.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
@@ -119,7 +120,7 @@ class NotificationService {
     } catch (_) {}
 
     const androidSettings = AndroidInitializationSettings(
-      '@drawable/ic_stat_enjaz',
+      'ic_stat_enjaz',
     );
 
     const initSettings = InitializationSettings(android: androidSettings);
@@ -197,7 +198,87 @@ class NotificationService {
         else { _pendingLaunchPayload = response?.payload; }
       }
     }
+    } catch (error) {
+      _initialized = false;
+      await recordFailure(error);
+      rethrow;
     } finally { _initializing = null; }
+  }
+
+
+  AndroidFlutterLocalNotificationsPlugin? get android => _notificationsPlugin
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+
+  static Future<void> recordFailure(Object error, {int? id}) =>
+      NotificationDiagnostics.record(
+        error is PlatformException ? error.code : error.runtimeType.toString(), id: id);
+
+  Future<void> _scheduleChecked({
+    required int id, required String title, required String body,
+    required tz.TZDateTime date, required NotificationDetails details,
+    String? payload, DateTimeComponents? repeats, bool exact = true,
+  }) async {
+    activeScheduledPayloads.remove(id);
+    try {
+      if (await android?.areNotificationsEnabled() == false) {
+        await NotificationDiagnostics.record('notifications_disabled', id: id);
+        return;
+      }
+      final channels = await android?.getNotificationChannels();
+      final blocked = channels?.any((c) => c.id == details.android?.channelId && c.importance == Importance.none) ?? false;
+      if (blocked) {
+        await NotificationDiagnostics.record('channel_disabled', id: id);
+        return;
+      }
+      final permitted = !exact || await android?.canScheduleExactNotifications() == true;
+      var useExact = exact && permitted;
+      Future<void> schedule(bool precise) => _notificationsPlugin.zonedSchedule(
+        id, title, body, date, details,
+        androidScheduleMode: precise ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload, matchDateTimeComponents: repeats,
+      );
+      try {
+        await schedule(useExact);
+      } on PlatformException catch (error) {
+        if (!useExact || error.code != 'exact_alarms_not_permitted') rethrow;
+        await schedule(false);
+        useExact = false;
+      }
+      final pending = await _notificationsPlugin.pendingNotificationRequests();
+      if (!pending.any((request) => request.id == id)) {
+        await NotificationDiagnostics.record('schedule_not_found', id: id);
+        return;
+      }
+      activeScheduledPayloads[id] = payload ?? title;
+      await NotificationDiagnostics.record(exact && !useExact ? 'inexact_fallback' : 'scheduled', id: id);
+    } catch (error) {
+      await recordFailure(error, id: id);
+    }
+  }
+
+  Future<List<PendingNotificationRequest>> pendingRequests() => _notificationsPlugin.pendingNotificationRequests();
+
+  Future<bool> testImmediateNotification(String title, String body) async {
+    try {
+      await initialize();
+      if (await android?.areNotificationsEnabled() == false) {
+        await NotificationDiagnostics.record('notifications_disabled', id: 99998);
+        return false;
+      }
+      final channels = await android?.getNotificationChannels();
+      if (channels?.any((c) => c.id == channelRemindersV2 && c.importance == Importance.none) ?? false) {
+        await NotificationDiagnostics.record('channel_disabled', id: 99998);
+        return false;
+      }
+      await _notificationsPlugin.show(99998, title, body,
+        const NotificationDetails(android: AndroidNotificationDetails(
+          channelRemindersV2, 'Enjaz', icon: 'ic_stat_enjaz',
+          importance: Importance.high, priority: Priority.high,
+        )));
+      await NotificationDiagnostics.record('show_requested', id: 99998);
+      return true;
+    } catch (error) { await recordFailure(error, id: 99998); return false; }
   }
 
   /// Request POST_NOTIFICATIONS permission on Android 13+
@@ -225,7 +306,7 @@ class NotificationService {
           >();
       if (androidImplementation != null) {
         final granted = await androidImplementation
-            .requestExactAlarmsPermission();
+            .canScheduleExactNotifications();
         return granted ?? false;
       }
     }
@@ -265,7 +346,7 @@ class NotificationService {
       ongoing: true,
       autoCancel: false,
       additionalFlags: Int32List.fromList([4]),
-      icon: '@drawable/ic_stat_enjaz',
+      icon: 'ic_stat_enjaz',
       timeoutAfter: autoStopMinutes * 60 * 1000,
       visibility:
           (isSensitive ||
@@ -294,35 +375,10 @@ class NotificationService {
       ],
     );
 
-    try {
-      await _notificationsPlugin.zonedSchedule(
-        id,
-        title,
-        body,
-        tzDateTime,
-        NotificationDetails(android: androidDetails),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        payload: payload,
-      );
-      activeScheduledPayloads[id] = payload ?? title;
-    } catch (_) {
-      try {
-        await _notificationsPlugin.zonedSchedule(
-          id,
-          title,
-          body,
-          tzDateTime,
-          NotificationDetails(android: androidDetails),
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
-          payload: payload,
-        );
-        activeScheduledPayloads[id] = payload ?? title;
-      } catch (_) {}
-    }
+    await _scheduleChecked(
+      id: id, title: title, body: body, date: tzDateTime,
+      details: NotificationDetails(android: androidDetails), payload: payload,
+    );
   }
 
   /// Schedule a standard Notification-type reminder
@@ -350,7 +406,7 @@ class NotificationService {
       channelDescription: 'إشعارات المهام والموجز اليومي ومراجعة المساء',
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@drawable/ic_stat_enjaz',
+      icon: 'ic_stat_enjaz',
       visibility:
           (isSensitive ||
               (await SharedPreferences.getInstance()).getBool(
@@ -373,35 +429,10 @@ class NotificationService {
       ],
     );
 
-    try {
-      await _notificationsPlugin.zonedSchedule(
-        id,
-        title,
-        body,
-        tzDateTime,
-        NotificationDetails(android: androidDetails),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        payload: payload,
-      );
-      activeScheduledPayloads[id] = payload ?? title;
-    } catch (_) {
-      try {
-        await _notificationsPlugin.zonedSchedule(
-          id,
-          title,
-          body,
-          tzDateTime,
-          NotificationDetails(android: androidDetails),
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
-          payload: payload,
-        );
-        activeScheduledPayloads[id] = payload ?? title;
-      } catch (_) {}
-    }
+    await _scheduleChecked(
+      id: id, title: title, body: body, date: tzDateTime,
+      details: NotificationDetails(android: androidDetails), payload: payload,
+    );
   }
 
   /// Test alarm firing in 10 seconds for user verification
@@ -442,22 +473,20 @@ class NotificationService {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool('backup_monthly_reminder') == false) return;
     final now = DateTime.now();
-    await _notificationsPlugin.zonedSchedule(
-      id,
-      'نسخة احتياطية لإنجاز',
-      'احفظ نسخة احتياطية من بياناتك',
-      tz.TZDateTime.from(DateTime(now.year, now.month + 1, 1, 10), tz.local),
-      const NotificationDetails(
+    await _scheduleChecked(
+      id: id,
+      title: 'نسخة احتياطية لإنجاز',
+      body: 'احفظ نسخة احتياطية من بياناتك',
+      date: tz.TZDateTime.from(DateTime(now.year, now.month + 1, 1, 10), tz.local),
+      details: const NotificationDetails(
         android: AndroidNotificationDetails(
           channelRemindersV2,
           'تنبيهات المهام والإشعارات',
-          icon: '@drawable/ic_stat_enjaz',
+          icon: 'ic_stat_enjaz',
         ),
       ),
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.dayOfMonthAndTime,
+      exact: false,
+      repeats: DateTimeComponents.dayOfMonthAndTime,
       payload: 'backup',
     );
   }
@@ -470,6 +499,7 @@ class NotificationService {
     int todayItemsCount = 0,
     String? languageCode,
   }) async {
+    await initialize();
     await _notificationsPlugin.cancel(idDailySummary);
     if (!enabled) return;
 
@@ -496,23 +526,15 @@ class NotificationService {
       'الموجز الصباحي',
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@drawable/ic_stat_enjaz',
+      icon: 'ic_stat_enjaz',
     );
 
-    try {
-      await _notificationsPlugin.zonedSchedule(
-        idDailySummary,
-        title,
-        body,
-        tzDateTime,
-        const NotificationDetails(android: androidDetails),
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time,
-        payload: 'today_summary',
-      );
-    } catch (_) {}
+    await _scheduleChecked(
+      id: idDailySummary, title: title, body: body, date: tzDateTime,
+      details: const NotificationDetails(android: androidDetails),
+      payload: 'today_summary',
+      repeats: DateTimeComponents.time, exact: false,
+    );
   }
 
   /// Schedule Evening Review (configurable time)
@@ -522,6 +544,7 @@ class NotificationService {
     required int minute,
     String? languageCode,
   }) async {
+    await initialize();
     await _notificationsPlugin.cancel(idEveningReview);
     if (!enabled) return;
 
@@ -544,23 +567,15 @@ class NotificationService {
       'مراجعة المساء',
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@drawable/ic_stat_enjaz',
+      icon: 'ic_stat_enjaz',
     );
 
-    try {
-      await _notificationsPlugin.zonedSchedule(
-        idEveningReview,
-        title,
-        body,
-        tzDateTime,
-        const NotificationDetails(android: androidDetails),
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time,
-        payload: 'evening_review',
-      );
-    } catch (_) {}
+    await _scheduleChecked(
+      id: idEveningReview, title: title, body: body, date: tzDateTime,
+      details: const NotificationDetails(android: androidDetails),
+      payload: 'evening_review',
+      repeats: DateTimeComponents.time, exact: false,
+    );
   }
 
   /// Schedule Weekly Excel Report reminder (configurable time)
@@ -570,6 +585,7 @@ class NotificationService {
     required int minute,
     String? languageCode,
   }) async {
+    await initialize();
     await _notificationsPlugin.cancel(idWeeklyExcel);
     if (!enabled) return;
 
@@ -601,29 +617,25 @@ class NotificationService {
       'تقرير الإكسيل الأسبوعي',
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@drawable/ic_stat_enjaz',
+      icon: 'ic_stat_enjaz',
     );
 
-    try {
-      await _notificationsPlugin.zonedSchedule(
-        idWeeklyExcel,
-        title,
-        body,
-        tzDateTime,
-        const NotificationDetails(android: androidDetails),
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-        payload: 'weekly_excel',
-      );
-    } catch (_) {}
+    await _scheduleChecked(
+      id: idWeeklyExcel, title: title, body: body, date: tzDateTime,
+      details: const NotificationDetails(android: androidDetails),
+      payload: 'weekly_excel',
+      repeats: DateTimeComponents.dayOfWeekAndTime, exact: false,
+    );
   }
 
   /// Reschedule all active reminders
   Future<void> rescheduleAll(AppDatabase db, {String? languageCode}) async {
     await initialize();
-    await scheduleMonthlyBackupReminder();
+    try {
+      await scheduleMonthlyBackupReminder();
+    } catch (error) {
+      await recordFailure(error, id: 99904);
+    }
 
     final todayStr = _formatDate(DateTime.now());
     final todayTasks = await db.watchTasksForDate(todayStr).first;

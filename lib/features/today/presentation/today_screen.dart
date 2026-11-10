@@ -38,12 +38,14 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       await db.purgeTrashOlderThan30Days();
       await RecurrenceService.generateAllUpcomingInstances(db);
       if (mounted) {
-        await NotificationService().rescheduleAll(
-          db,
-          languageCode: Localizations.localeOf(context).languageCode,
-        );
+        final language = Localizations.localeOf(context).languageCode;
+        try {
+          await NotificationService().rescheduleAll(db, languageCode: language);
+        } catch (error) {
+          await NotificationService.recordFailure(error);
+        }
         await ReminderScheduler(db: db).rescheduleAllActive(
-          languageCode: Localizations.localeOf(context).languageCode,
+          languageCode: language,
         );
       }
     });

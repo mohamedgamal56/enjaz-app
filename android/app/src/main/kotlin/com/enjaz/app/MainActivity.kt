@@ -30,6 +30,15 @@ class MainActivity: FlutterFragmentActivity() {
                     result.success(voice)
                 }
                 "timezone" -> result.success(java.util.TimeZone.getDefault().id)
+                "exactAlarmSettings" -> {
+                    try {
+                        val settingsIntent = if (android.os.Build.VERSION.SDK_INT >= 31)
+                            Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, android.net.Uri.parse("package:$packageName"))
+                        else Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:$packageName"))
+                        startActivity(settingsIntent)
+                        result.success(true)
+                    } catch (e: Exception) { result.error("settings_unavailable", null, null) }
+                }
                 "networkState" -> {
                     val manager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
                     val caps = manager.getNetworkCapabilities(manager.activeNetwork)

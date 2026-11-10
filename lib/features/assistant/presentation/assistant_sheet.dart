@@ -1,3 +1,4 @@
+import 'speech_failure_view.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../voice_notes/presentation/voice_recorder_sheet.dart';
 import 'dart:async';
@@ -238,7 +239,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet>
     _errorSub = _voiceService.errorStream.listen((error) {
       if (mounted) {
         setState(() {
-          _statusFeedback = error;
+          _statusFeedback = speechFailureText(context, error);
         });
       }
     });
@@ -290,7 +291,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet>
       final started = await _voiceService.startListening();
       if (!started && mounted) {
         setState(() {
-          _statusFeedback = 'تعذر تشغيل الميكروفون، يرجى التأكد من الصلاحية.';
+          _statusFeedback = speechFailureText(context, _voiceService.lastErrorCode ?? 'speech_failed');
         });
       }
     }
@@ -960,6 +961,8 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet>
                 ),
 
               // Feedback message
+              if (_voiceService.lastErrorCode != null)
+                SpeechSettingsButton(code: _voiceService.lastErrorCode!),
               if (_statusFeedback != null)
                 Container(
                   margin: const EdgeInsets.only(bottom: 16),

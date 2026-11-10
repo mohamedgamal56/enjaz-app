@@ -488,3 +488,12 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
 
 
 
+
+## Batch 0 / 2026-11-10
+
+- Notification and microphone reliability only; no UI refresh, schema migration, signing-secret or workflow change.
+- Keep existing channel IDs and user sound choices. Show blocked/silent settings instead of overriding them.
+- Pending requests confirm registration, never delivery. Android may delay inexact fallback. Phone acceptance remains unverified.
+- Keep the latest 30 diagnostic timestamp/code/ID entries, without titles, bodies or recordings. Logging failure must not crash scheduling.
+- Reuse the installed speech service; do not guarantee offline recognition or add network permission to disguise missing service/language support.
+- Add Batch 0 texts to ARB resources without broadly rewriting localization.

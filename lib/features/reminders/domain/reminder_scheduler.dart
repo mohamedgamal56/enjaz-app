@@ -152,6 +152,7 @@ class ReminderScheduler {
   Future<void> rescheduleAllActive({String? languageCode}) async {
     final allReminders = await _db.getAllActiveReminders();
     for (final r in allReminders) {
+      try {
       await cancelReminder(r.id);
       if (r.ownerType == 'task') {
         final task = await _db.getTaskById(r.ownerId);
@@ -233,6 +234,9 @@ class ReminderScheduler {
             languageCode: languageCode,
           );
         }
+      }
+      } catch (error) {
+        await NotificationService.recordFailure(error, id: getNotificationId(r.id));
       }
     }
   }
