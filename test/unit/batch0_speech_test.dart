@@ -68,10 +68,11 @@ void main() {
     expect(await service.startListening(), false);
     expect(service.lastErrorCode, 'error_network');
   });
-  test('Arabic missing cannot start an English recognition session', () async {
+  test('missing Arabic in locales list falls back to ar_EG and starts listening', () async {
     source.locales = ['en_US'];
-    expect(await service.startListening(), false);
-    expect(service.lastErrorCode, 'arabic_missing');
+    expect(await service.startListening(), true);
+    expect(service.isListening, true);
+    expect(service.lastErrorCode, isNull);
   });
   test('failed listen never leaves listening state active', () async {
     source.starts = false;

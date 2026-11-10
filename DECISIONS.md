@@ -497,3 +497,11 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
 - Keep the latest 30 diagnostic timestamp/code/ID entries, without titles, bodies or recordings. Logging failure must not crash scheduling.
 - Reuse the installed speech service; do not guarantee offline recognition or add network permission to disguise missing service/language support.
 - Add Batch 0 texts to ARB resources without broadly rewriting localization.
+
+
+## Release 1.2.2+2020 (Alarm & Speech Direct Listening) / 2026-11-10
+
+- Set alarm and reminder channels to Importance.max and Priority.max with sound, vibration, lights, fullScreenIntent, and default public lockscreen visibility.
+- Prevent arabic_missing failure by allowing speech engine to default to ar-EG / ar system recognition directly without forcing offline-only language pack pre-downloads.
+- Bumped version to 1.2.2+2020 for direct in-place update over installed builds.
+- Preserved permanent keystore signing configuration and SHA-256 fingerprint verification intact.

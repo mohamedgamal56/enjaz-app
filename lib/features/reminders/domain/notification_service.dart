@@ -169,6 +169,7 @@ class NotificationService {
             importance: Importance.max,
             playSound: true,
             enableVibration: true,
+            enableLights: true,
             audioAttributesUsage: AudioAttributesUsage.alarm,
           ),
         );
@@ -179,9 +180,10 @@ class NotificationService {
             channelRemindersV2,
             'تنبيهات المهام والإشعارات',
             description: 'إشعارات المهام والموجز اليومي ومراجعة المساء',
-            importance: Importance.high,
+            importance: Importance.max,
             playSound: true,
             enableVibration: true,
+            enableLights: true,
           ),
         );
       }
@@ -274,7 +276,9 @@ class NotificationService {
       await _notificationsPlugin.show(99998, title, body,
         const NotificationDetails(android: AndroidNotificationDetails(
           channelRemindersV2, 'Enjaz', icon: 'ic_stat_enjaz',
-          importance: Importance.high, priority: Priority.high,
+          importance: Importance.max, priority: Priority.max,
+          playSound: true, enableVibration: true, enableLights: true,
+          visibility: NotificationVisibility.public,
         )));
       await NotificationDiagnostics.record('show_requested', id: 99998);
       return true;
@@ -347,13 +351,17 @@ class NotificationService {
       autoCancel: false,
       additionalFlags: Int32List.fromList([4]),
       icon: 'ic_stat_enjaz',
+      playSound: true,
+      enableVibration: true,
+      enableLights: true,
+      fullScreenIntent: true,
       timeoutAfter: autoStopMinutes * 60 * 1000,
       visibility:
           (isSensitive ||
               (await SharedPreferences.getInstance()).getBool(
                     'app_lock_hide_notifications',
-                  ) !=
-                  false)
+                  ) ==
+                  true)
           ? NotificationVisibility.private
           : NotificationVisibility.public,
       actions: <AndroidNotificationAction>[
@@ -404,15 +412,18 @@ class NotificationService {
       channelRemindersV2,
       'تنبيهات المهام والإشعارات',
       channelDescription: 'إشعارات المهام والموجز اليومي ومراجعة المساء',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.max,
+      priority: Priority.max,
       icon: 'ic_stat_enjaz',
+      playSound: true,
+      enableVibration: true,
+      enableLights: true,
       visibility:
           (isSensitive ||
               (await SharedPreferences.getInstance()).getBool(
                     'app_lock_hide_notifications',
-                  ) !=
-                  false)
+                  ) ==
+                  true)
           ? NotificationVisibility.private
           : NotificationVisibility.public,
       actions: <AndroidNotificationAction>[

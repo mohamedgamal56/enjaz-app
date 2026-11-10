@@ -1,3 +1,9 @@
+## 1.2.2+2020 — 2026-11-10
+
+- Set notification and alarm channels to maximum importance (Importance.max / Priority.max) with sound, vibration, lights, heads-up display and public lockscreen visibility.
+- Fix speech recognition arabic_missing issue by defaulting to ar-EG / ar system recognition directly without requiring manual offline language pack download.
+- Bump versionCode to 2020 and version to 1.2.2 for direct seamless update installation.
+
 ## 1.2.1+19 — Batch 0 — 2026-11-10
 
 - Check notification permission and blocked channels; read exact permission without prompting, log inexact fallback.

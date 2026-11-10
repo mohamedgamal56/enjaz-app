@@ -182,15 +182,11 @@ class VoiceInputService {
       final supportedLocales = await _source.getSupportedLocales();
       if (_disposed || generation != _generation) return false;
       _selectedLocaleId = _resolveArabicLocale(
-        supportedLocales,
-        localePreference,
-      );
-      if (_selectedLocaleId == null) {
-        _setState(VoiceInputState.unsupported);
-        lastErrorCode = 'arabic_missing';
-        if (!_errorController.isClosed) _errorController.add(lastErrorCode!);
-        return false;
-      }
+            supportedLocales,
+            localePreference,
+          ) ??
+          localePreference ??
+          'ar_EG';
 
       _isUserIntendedListening = true;
       _accumulatedTranscript = '';
