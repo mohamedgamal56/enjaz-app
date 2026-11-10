@@ -523,3 +523,12 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
 - **Xiaomi Other Permissions Shortcut**: Added native handler and UI card targeting `com.miui.permcenter.permissions.PermissionsEditorActivity` to allow users on Xiaomi/MIUI/HyperOS to quickly enable "Show on Lock screen" and "Display pop-up windows".
 - **Versioned Artifact Output**: Configured GitHub Actions build workflow to dynamically parse the version from `pubspec.yaml` and name the output APK file and artifact `enjaz-v${VERSION}-arm64.apk` (`enjaz-v1.2.4+2022-arm64.apk`).
 - **Version Bump & Permanent Signing**: Bumped version to `1.2.4+2022` with permanent keystore signing and SHA-256 fingerprint verification intact.
+
+
+## Release 1.2.4+2024 (Solidified Channel ID & Direct Exact Scheduling) / 2026-11-10
+
+- **Fixed Approved Channel**: Solidified alarm channel ID to `enjaz_alarm_channel` and name `منبه إنجاز` with `Importance.max`, `Priority.max`, `playSound: true`, `enableVibration: true`, and `audioAttributesUsage: AudioAttributesUsage.alarm`, avoiding channel muting by MIUI/HyperOS.
+- **Robust Background Scheduling**: Removed premature check drops in `_scheduleChecked` that caused alarms to drop if `pendingNotificationRequests()` was asynchronously delayed on real devices.
+- **Exact Schedule Mode**: Enforced `AndroidScheduleMode.exactAllowWhileIdle` (`setExactAndAllowWhileIdle`) for all alarm reminders.
+- **Artifact Naming**: Produced release APK named `enjaz-v1.2.4+2024-arm64.apk`.
+- **Permanent Signing**: Kept release keystore and SHA-256 fingerprint verification intact.

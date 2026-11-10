@@ -1,3 +1,10 @@
+## 1.2.4+2024 — 2026-11-10
+
+- Solidify dedicated alarm channel to approved ID enjaz_alarm_channel and name منبه إنجاز to prevent Xiaomi/MIUI from defaulting new channels to silent/disabled.
+- Enforce AndroidScheduleMode.exactAllowWhileIdle without false drop conditions during background alarm scheduling.
+- Output versioned release artifact named enjaz-v1.2.4+2024-arm64.apk.
+- Bump version to 1.2.4+2024 with permanent signing configuration intact.
+
 ## 1.2.4+2022 — 2026-11-10
 
 - Deliver dedicated Full-Screen Intent Alarm Screen (AlarmRingScreen) that launches and illuminates over the lock screen immediately when the alarm triggers, displaying task title, real-time digital clock, pulsing bell, and prominent [إيقاف المنبه] and [تأجيل 5 دقائق] action buttons.

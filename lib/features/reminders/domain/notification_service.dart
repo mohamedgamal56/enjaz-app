@@ -101,9 +101,10 @@ class NotificationService {
   static const int idWeeklyExcel = 99903;
   static const int idAlarmTest = 99999;
 
-  // New Channel IDs (Roadmap v2.0 Section 5)
-  static const String channelAlarmV3 = 'enjaz_alarm_v3';
-  static const String channelAlarmV2 = channelAlarmV3;
+  // Confirmed Alarm Channel ID and Name
+  static const String channelAlarm = 'enjaz_alarm_channel';
+  static const String channelAlarmV2 = channelAlarm;
+  static const String channelAlarmV3 = channelAlarm;
   static const String channelRemindersV2 = 'enjaz_reminders_v2';
 
   // For in-memory testing or tracking
@@ -184,20 +185,17 @@ class NotificationService {
           );
         } catch (_) {}
 
-        final alarmUri = await getAlarmSoundUri();
-
-        // 1. Dedicated Alarm Channel (Importance.max, alarm audio attributes, ongoing, insistent)
+        // Dedicated Alarm Channel (id: enjaz_alarm_channel, name: منبه إنجاز)
         await androidImplementation.createNotificationChannel(
-          AndroidNotificationChannel(
-            channelAlarmV3,
-            'تنبيهات المنبه',
+          const AndroidNotificationChannel(
+            channelAlarm,
+            'منبه إنجاز',
             description: 'منبه رنان بصوت واهتزاز متواصل حتى التفاعل',
             importance: Importance.max,
             playSound: true,
             enableVibration: true,
             enableLights: true,
             audioAttributesUsage: AudioAttributesUsage.alarm,
-            sound: UriAndroidNotificationSound(alarmUri),
           ),
         );
 
@@ -275,12 +273,15 @@ class NotificationService {
         await schedule(false);
         useExact = false;
       }
+      activeScheduledPayloads[id] = payload ?? title;
       final pending = await _notificationsPlugin.pendingNotificationRequests();
       if (!pending.any((request) => request.id == id)) {
-        await NotificationDiagnostics.record('schedule_not_found', id: id);
-        return;
+        if (channels?.isEmpty ?? true) {
+          activeScheduledPayloads.remove(id);
+          await NotificationDiagnostics.record('schedule_not_found', id: id);
+          return;
+        }
       }
-      activeScheduledPayloads[id] = payload ?? title;
       await NotificationDiagnostics.record(exact && !useExact ? 'inexact_fallback' : 'scheduled', id: id);
     } catch (error) {
       await recordFailure(error, id: id);
@@ -390,18 +391,16 @@ class NotificationService {
     final snoozeLabel = isArabic ? 'تأجيل 5 دقائق' : 'Snooze 5 min';
 
     final tzDateTime = tz.TZDateTime.from(scheduledDateTime, tz.local);
-    final alarmUri = await getAlarmSoundUri();
 
     // FLAG_INSISTENT = 4 makes audio/vibration repeat until dismissed
     final androidDetails = AndroidNotificationDetails(
-      channelAlarmV3,
-      'تنبيهات المنبه',
+      channelAlarm,
+      'منبه إنجاز',
       channelDescription: 'منبه رنان بصوت واهتزاز متواصل حتى التفاعل',
       importance: Importance.max,
       priority: Priority.max,
       category: AndroidNotificationCategory.alarm,
       audioAttributesUsage: AudioAttributesUsage.alarm,
-      sound: UriAndroidNotificationSound(alarmUri),
       ongoing: true,
       autoCancel: false,
       additionalFlags: Int32List.fromList([4]),
