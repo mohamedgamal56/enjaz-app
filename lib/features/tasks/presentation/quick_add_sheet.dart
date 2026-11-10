@@ -908,12 +908,21 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                       initialValue: _selectedReminderOffset,
                       onSelected: (val) async {
                         if (val != null) {
-                          final enabled = await NotificationService.instance.areNotificationsEnabled();
-                          if (!enabled && context.mounted) {
-                            await NotificationPermissionSheet.show(context);
-                          }
-                          if (context.mounted) {
-                            await XiaomiPermissionHelper.checkAndPrompt(context);
+                          final granted = await XiaomiPermissionHelper.ensureAllPermissions(context);
+                          if (!granted) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    l10n.locale.languageCode == 'ar'
+                                        ? 'لم يتم تفعيل المنبه لعدم اكتمال الصلاحيات المطلوبة.'
+                                        : 'Alarm was not enabled because required permissions were not granted.',
+                                  ),
+                                  backgroundColor: Theme.of(context).colorScheme.error,
+                                ),
+                              );
+                            }
+                            return;
                           }
                         }
                         setState(() {

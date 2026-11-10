@@ -92,7 +92,7 @@ void main() {
   testWidgets('Stop cancels only the actual alarm, then releases wake flags',
       (tester) async {
     await show(tester);
-    expect(find.text('Secret task'), findsNothing);
+    expect(find.text('Secret task'), findsOneWidget);
     expect(screenFlags, contains(true));
     await tester.tap(find.text('Stop Alarm'));
     await tester.pump();

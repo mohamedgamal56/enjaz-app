@@ -27,6 +27,22 @@ class MainActivity: FlutterFragmentActivity() {
         if (intent.action == "com.enjaz.app.VOICE") assistantChannel?.invokeMethod("voiceShortcut", null)
     }
 
+    private fun checkOp(op: Int): Boolean {
+        val appOps = getSystemService(APP_OPS_SERVICE) as? android.app.AppOpsManager ?: return true
+        return try {
+            val method = appOps.javaClass.getMethod(
+                "checkOpNoThrow",
+                Int::class.javaPrimitiveType,
+                Int::class.javaPrimitiveType,
+                String::class.java
+            )
+            val result = method.invoke(appOps, op, android.os.Process.myUid(), packageName) as Int
+            result == android.app.AppOpsManager.MODE_ALLOWED
+        } catch (e: Exception) {
+            true
+        }
+    }
+
     private fun configureLockScreenFlags() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
@@ -98,6 +114,29 @@ class MainActivity: FlutterFragmentActivity() {
                     val isXiaomi = m.contains("xiaomi") || m.contains("redmi") || m.contains("poco") ||
                                    b.contains("xiaomi") || b.contains("redmi") || b.contains("poco")
                     result.success(isXiaomi)
+                }
+                "checkXiaomiPermissions" -> {
+                    val m = (android.os.Build.MANUFACTURER ?: "").lowercase()
+                    val b = (android.os.Build.BRAND ?: "").lowercase()
+                    val isXiaomi = m.contains("xiaomi") || m.contains("redmi") || m.contains("poco") ||
+                                   b.contains("xiaomi") || b.contains("redmi") || b.contains("poco")
+                    if (!isXiaomi) {
+                        result.success(mapOf(
+                            "isXiaomi" to false,
+                            "showWhenLocked" to true,
+                            "backgroundStart" to true,
+                            "allGranted" to true
+                        ))
+                    } else {
+                        val showWhenLocked = checkOp(10020)
+                        val backgroundStart = checkOp(10021)
+                        result.success(mapOf(
+                            "isXiaomi" to true,
+                            "showWhenLocked" to showWhenLocked,
+                            "backgroundStart" to backgroundStart,
+                            "allGranted" to (showWhenLocked && backgroundStart)
+                        ))
+                    }
                 }
                 "exactAlarmSettings" -> {
                     try {

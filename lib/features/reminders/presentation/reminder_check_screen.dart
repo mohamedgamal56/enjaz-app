@@ -80,6 +80,11 @@ class _ReminderCheckScreenState extends State<ReminderCheckScreen>
         accepted = await service.testImmediateNotification(
             strings.diagnosticTitle, strings.diagnosticTestBody);
       } else {
+        final ok = await XiaomiPermissionHelper.ensureAllPermissions(context);
+        if (!ok) {
+          if (mounted) setState(() => _busy = false);
+          return;
+        }
         await service.testAlarmIn10Seconds(
             isArabic: Localizations.localeOf(context).languageCode == 'ar');
         accepted = service.activeScheduledPayloads

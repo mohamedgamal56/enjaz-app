@@ -544,3 +544,11 @@ equestDismissKeyguard(this, null) and WindowManager.LayoutParams.FLAG_DISMISS_KE
 - **Direct Activity Wake Flags**: Removed flaky payload checks in `MainActivity.kt` and activated `setShowWhenLocked(true)`, `setTurnScreenOn(true)`, `FLAG_KEEP_SCREEN_ON`, and `FLAG_ALLOW_LOCK_WHILE_SCREEN_ON` in `onCreate` and `onNewIntent`.
 - **Version & Build**: Bumped version to `1.2.6+2026` generating `enjaz-v1.2.6+2026-arm64.apk` signed with the permanent release keystore.
 
+## Release 1.2.7+2027 (Alarm UX Refresh, Motivational Prompts & Strict Permission Enforcement) / 2026-11-10
+
+- **Always Visible Task Details**: Eliminated _hideDetails check in AlarmRingScreen so task, errand, and idea titles are always displayed clearly in large, bold text on the lock screen.
+- **Motivational Encouragement Banner**: Added rotating dynamic phrases ('يلا نبدأ يا بطل! 🚀', 'وقت الإنجاز حان! ⏱️', 'خطوة جديدة نحو هدفك! 🎯') above the task title to inspire instant action.
+- **Action-Oriented Alarm Controls**: Updated primary button to [تمام.. هبدأ التنفيذ] which immediately cancels alarm audio, transitions task status to in_progress, and dismisses the alarm screen; secondary button dedicated to [تأجيل 5 دقائق].
+- **Strict Permission Verification**: Added native AppOps checks for MIUI 10020 (OP_SHOW_WHEN_LOCKED) and 10021 (OP_BACKGROUND_START_ACTIVITY). If any required permission is missing when scheduling reminders or testing alarms, XiaomiPermissionHelper.ensureAllPermissions halts execution, displays step-by-step guidance, and automatically re-evaluates upon app resume.
+- **Version Bump & Artifact Naming**: Bumped version to 1.2.7+2027 producing enjaz-v1.2.7+2027-arm64.apk signed with the permanent release keystore.
+

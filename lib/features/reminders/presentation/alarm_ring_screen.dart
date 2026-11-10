@@ -37,18 +37,39 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
   bool _actionInProgress = false;
-  bool _deviceLocked = true;
   String? _error;
   String? _notice;
   Timer? _expiryTimer;
-  bool get _hideDetails =>
-      widget.appLocked || _deviceLocked || widget.alarm.sensitive;
+  late String _motivationalPhrase;
+
+  static const _motivationalPhrasesAr = [
+    'يلا نبدأ يا بطل! 🚀',
+    'وقت الإنجاز حان! ⏱️',
+    'خطوة جديدة نحو هدفك! 🎯',
+    'أنت قدها.. ابدأ الآن! 💪',
+    'تركيز وإنجاز.. يومك مميز! ✨',
+    'كل دقيقة تصنع فارقاً! 🌟',
+  ];
+
+  static const _motivationalPhrasesEn = [
+    "Let's get started, champion! 🚀",
+    "Time to achieve! ⏱️",
+    "A new step towards your goal! 🎯",
+    "You got this.. start now! 💪",
+    "Focus and execute.. your day is special! ✨",
+    "Every minute makes a difference! 🌟",
+  ];
 
   @override
   void initState() {
     super.initState();
     _taskTitle = widget.alarm.title;
     _currentTime = DateTime.now();
+
+    final isArabic = widget.alarm.languageCode != 'en';
+    final phrases = isArabic ? _motivationalPhrasesAr : _motivationalPhrasesEn;
+    final index = (widget.alarm.id.abs() + DateTime.now().minute) % phrases.length;
+    _motivationalPhrase = phrases[index];
 
     // Turn screen on and keep it lit over lock screen
     _acquireScreen();
@@ -73,17 +94,15 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
     final remaining = expires.difference(DateTime.now());
     _expiryTimer =
         Timer(remaining.isNegative ? Duration.zero : remaining, _stopAlarm);
+
+    _loadTaskDetails();
   }
 
   Future<void> _acquireScreen() async {
     const channel = MethodChannel('com.enjaz.app/assistant');
     try {
       await channel.invokeMethod('setAlarmScreen', {'enabled': true});
-      final locked = await channel.invokeMethod<bool>('isDeviceLocked') ?? true;
-      if (!mounted) return;
-      setState(() => _deviceLocked = locked);
-      if (!_hideDetails) await _loadTaskDetails();
-    } catch (_) {} // Fail closed: display only generic alarm controls.
+    } catch (_) {}
   }
 
   Future<void> _loadTaskDetails() async {
@@ -130,6 +149,37 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
               ? 'تعذّر إيقاف المنبّه. حاول مرة أخرى.'
               : 'Could not stop the alarm. Try again.';
         });
+    }
+  }
+
+  Future<void> _startExecutingOrStop() async {
+    if (_actionInProgress) return;
+    setState(() {
+      _actionInProgress = true;
+      _error = null;
+    });
+    try {
+      await NotificationService.instance.cancelNotification(widget.alarmId);
+
+      // If linked to a task that is 'todo', transition it to 'in_progress'
+      if (widget.taskId != null && _loadedTask != null && _loadedTask!.status == 'todo') {
+        try {
+          final db = AppDatabase();
+          await db.updateTaskStatus(task: _loadedTask!, newStatus: 'in_progress');
+          await db.close();
+        } catch (_) {}
+      }
+
+      if (mounted) widget.onClosed();
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _actionInProgress = false;
+          _error = Localizations.localeOf(context).languageCode == 'ar'
+              ? 'تعذّر إيقاف المنبّه. حاول مرة أخرى.'
+              : 'Could not stop the alarm. Try again.';
+        });
+      }
     }
   }
 
@@ -181,7 +231,7 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
   }
 
   Future<void> _markDoneAndClose() async {
-    if (_actionInProgress || _loadedTask == null || _hideDetails) return;
+    if (_actionInProgress || _loadedTask == null) return;
     setState(() => _actionInProgress = true);
 
     try {
@@ -239,7 +289,7 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
                           ScaleTransition(
                             scale: _pulseAnimation,
                             child: Container(
-                              padding: const EdgeInsets.all(28),
+                              padding: const EdgeInsets.all(26),
                               decoration: BoxDecoration(
                                 color: theme.colorScheme.errorContainer
                                     .withValues(alpha: 0.3),
@@ -255,12 +305,12 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
                               ),
                               child: Icon(
                                 Icons.alarm_on_rounded,
-                                size: 72,
+                                size: 68,
                                 color: theme.colorScheme.error,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 28),
+                          const SizedBox(height: 24),
 
                           // Large Digital Time
                           Text(
@@ -271,15 +321,15 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
                               color: theme.colorScheme.onSurface,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
 
-                          // Subtitle
+                          // Subtitle Badge
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 6),
                             decoration: BoxDecoration(
                               color: theme.colorScheme.secondaryContainer
-                                  .withValues(alpha: 0.5),
+                                  .withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -293,16 +343,47 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
 
                           const Spacer(flex: 1),
 
-                          // Task Title Card
+                          // Motivational Badge
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primaryContainer
+                                  .withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: theme.colorScheme.primary
+                                    .withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.auto_awesome_rounded,
+                                    size: 18, color: theme.colorScheme.primary),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _motivationalPhrase,
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Task Title Card (Always bold & center)
                           Card(
                             elevation: 0,
                             color: theme.colorScheme.surfaceContainerHighest
-                                .withValues(alpha: 0.6),
+                                .withValues(alpha: 0.65),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(22),
                               side: BorderSide(
                                 color: theme.colorScheme.outlineVariant
-                                    .withValues(alpha: 0.5),
+                                    .withValues(alpha: 0.6),
                               ),
                             ),
                             child: Padding(
@@ -311,23 +392,18 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
                               child: Column(
                                 children: [
                                   Text(
-                                    _hideDetails
-                                        ? (isAr ? 'منبه إنجاز' : 'Enjaz Alarm')
-                                        : _taskTitle,
-                                    style:
-                                        theme.textTheme.headlineSmall?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      height: 1.3,
+                                    _taskTitle,
+                                    style: theme.textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      height: 1.35,
+                                      color: theme.colorScheme.onSurface,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
-                                  if (!_hideDetails &&
-                                      (_taskDueTime != null ||
-                                          _taskDueDate != null)) ...[
-                                    const SizedBox(height: 10),
+                                  if (_taskDueTime != null || _taskDueDate != null) ...[
+                                    const SizedBox(height: 12),
                                     Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           Icons.calendar_today_rounded,
@@ -338,10 +414,9 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
                                         Text(
                                           '${_taskDueDate ?? ''} ${_taskDueTime ?? ''}'
                                               .trim(),
-                                          style: theme.textTheme.bodyMedium
-                                              ?.copyWith(
-                                            color: theme
-                                                .colorScheme.onSurfaceVariant,
+                                          style: theme.textTheme.bodyMedium?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: theme.colorScheme.onSurfaceVariant,
                                           ),
                                         ),
                                       ],
@@ -359,32 +434,40 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: Text(_error!,
                                     style: TextStyle(
-                                        color: theme.colorScheme.error),
+                                        color: theme.colorScheme.error,
+                                        fontWeight: FontWeight.bold),
                                     textAlign: TextAlign.center)),
                           if (_notice != null) ...[
-                            Text(_notice!, textAlign: TextAlign.center),
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: Text(_notice!,
+                                  style: TextStyle(
+                                      color: theme.colorScheme.primary,
+                                      fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.center),
+                            ),
                             TextButton(
                                 onPressed: widget.onClosed,
                                 child: Text(isAr ? 'إغلاق' : 'Close')),
                           ],
-                          // Primary Stop Alarm Button (Big, Prominent)
+
+                          // Primary Action Button: [تمام.. هبدأ التنفيذ] (Big, Prominent)
                           SizedBox(
                             width: double.infinity,
                             height: 60,
                             child: FilledButton.icon(
-                              onPressed: _actionInProgress ? null : _stopAlarm,
+                              onPressed: _actionInProgress ? null : _startExecutingOrStop,
                               style: FilledButton.styleFrom(
-                                backgroundColor: theme.colorScheme.error,
-                                foregroundColor: theme.colorScheme.onError,
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: theme.colorScheme.onPrimary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(18),
                                 ),
-                                elevation: 2,
+                                elevation: 3,
                               ),
-                              icon:
-                                  const Icon(Icons.alarm_off_rounded, size: 26),
+                              icon: const Icon(Icons.play_circle_filled_rounded, size: 28),
                               label: Text(
-                                isAr ? 'إيقاف المنبه' : 'Stop Alarm',
+                                isAr ? 'تمام.. هبدأ التنفيذ' : 'Stop Alarm',
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -394,13 +477,12 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
                           ),
                           const SizedBox(height: 14),
 
-                          // Snooze 5 Minutes Button
+                          // Secondary Snooze Button: [تأجيل 5 دقائق]
                           SizedBox(
                             width: double.infinity,
                             height: 54,
                             child: FilledButton.tonalIcon(
-                              onPressed:
-                                  _actionInProgress ? null : _snoozeAlarm,
+                              onPressed: _actionInProgress ? null : _snoozeAlarm,
                               style: FilledButton.styleFrom(
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(18),
@@ -418,13 +500,10 @@ class _AlarmRingScreenState extends State<AlarmRingScreen>
                           ),
 
                           // Optional: Mark Done Button if linked to a task
-                          if (!_hideDetails &&
-                              _loadedTask != null &&
-                              _loadedTask!.status != 'done') ...[
+                          if (_loadedTask != null && _loadedTask!.status != 'done') ...[
                             const SizedBox(height: 8),
                             TextButton.icon(
-                              onPressed:
-                                  _actionInProgress ? null : _markDoneAndClose,
+                              onPressed: _actionInProgress ? null : _markDoneAndClose,
                               icon: const Icon(
                                   Icons.check_circle_outline_rounded,
                                   size: 20),

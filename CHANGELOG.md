@@ -1,3 +1,16 @@
+## 1.2.7+2027 — 2026-11-10
+
+- Alarm Screen UX Overhaul: Remove _hideDetails condition completely; the task, errand or idea title is now always displayed in large, bold, prominent text in the center of the alarm screen.
+- Motivational Badge: Added rotating inspiring phrases ("يلا نبدأ يا بطل! 🚀", "وقت الإنجاز حان! ⏱️", "خطوة جديدة نحو هدفك! 🎯") dynamically displayed above the task title.
+- Revamped Alarm Action Buttons:
+  - Primary prominent action: [تمام.. هبدأ التنفيذ] (silences audio, automatically updates task status to in_progress, and dismisses alarm screen).
+  - Secondary action: [تأجيل 5 دقائق] (verified 5-minute snooze).
+- Strict Permission Verification & Xiaomi Lock Screen Check:
+  - Added native checkXiaomiPermissions in MainActivity.kt checking MIUI AppOps 10020 (OP_SHOW_WHEN_LOCKED) and 10021 (OP_BACKGROUND_START_ACTIVITY).
+  - Introduced XiaomiPermissionHelper.ensureAllPermissions: enforces permission check before enabling reminders or running test alarms.
+  - Interactive modal with auto re-check on app resume (didChangeAppLifecycleState: resumed); refuses to set reminders if required lockscreen or notification permissions are missing.
+- Bump version to 1.2.7+2027 generating enjaz-v1.2.7+2027-arm64.apk signed with permanent release keystore.
+
 ## 1.2.6+2026 — 2026-11-10
 
 - Fresh Alarm Notification Channel: Replaced alarm channel ID with enjaz_alarm_v5_music ('منبه إنجاز الحقيقي') to break Android notification channel sound immutability and force binding to bundled melodic audio (alarm_sound.wav) with AudioAttributesUsage.alarm.
