@@ -23,7 +23,9 @@ void notificationTapBackground(
   final db = AppDatabase();
   try {
     int? taskId;
-    if (payload.startsWith('task:')) {
+    if (payload.startsWith('alarm:task:')) {
+      taskId = int.tryParse(payload.substring(11));
+    } else if (payload.startsWith('task:')) {
       taskId = int.tryParse(payload.substring(5));
     } else {
       taskId = int.tryParse(payload);
@@ -433,9 +435,13 @@ class NotificationService {
       ],
     );
 
+    final actualPayload = (payload == null || payload.isEmpty)
+        ? 'alarm:generic'
+        : (payload.startsWith('alarm:') ? payload : 'alarm:$payload');
+
     await _scheduleChecked(
       id: id, title: title, body: body, date: tzDateTime,
-      details: NotificationDetails(android: androidDetails), payload: payload,
+      details: NotificationDetails(android: androidDetails), payload: actualPayload,
     );
   }
 

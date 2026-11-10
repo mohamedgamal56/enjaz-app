@@ -1,6 +1,8 @@
 package com.enjaz.app
 
 import android.view.WindowManager
+import android.os.Build
+import android.os.Bundle
 import android.content.Intent
 import android.provider.Settings
 import android.net.ConnectivityManager
@@ -13,10 +15,30 @@ class MainActivity: FlutterFragmentActivity() {
     private val privacyChannel = "com.enjaz.app/privacy"
     private var assistantChannel: MethodChannel? = null
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        configureLockScreenFlags()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        configureLockScreenFlags()
         if (intent.action == "com.enjaz.app.VOICE") assistantChannel?.invokeMethod("voiceShortcut", null)
+    }
+
+    private fun configureLockScreenFlags() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            )
+        }
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -37,6 +59,37 @@ class MainActivity: FlutterFragmentActivity() {
                     } catch (e: Exception) {
                         result.success("content://settings/system/alarm_alert")
                     }
+                }
+                "turnScreenOn" -> {
+                    configureLockScreenFlags()
+                    result.success(true)
+                }
+                "openXiaomiOtherPermissions" -> {
+                    try {
+                        val miuiIntent = Intent("miui.intent.action.APP_PERM_EDITOR").apply {
+                            setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity")
+                            putExtra("extra_pkgname", packageName)
+                        }
+                        startActivity(miuiIntent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        try {
+                            val appDetailsIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = android.net.Uri.parse("package:$packageName")
+                            }
+                            startActivity(appDetailsIntent)
+                            result.success(true)
+                        } catch (ex: Exception) {
+                            result.error("settings_unavailable", ex.message, null)
+                        }
+                    }
+                }
+                "isXiaomiDevice" -> {
+                    val m = (android.os.Build.MANUFACTURER ?: "").lowercase()
+                    val b = (android.os.Build.BRAND ?: "").lowercase()
+                    val isXiaomi = m.contains("xiaomi") || m.contains("redmi") || m.contains("poco") ||
+                                   b.contains("xiaomi") || b.contains("redmi") || b.contains("poco")
+                    result.success(isXiaomi)
                 }
                 "exactAlarmSettings" -> {
                     try {

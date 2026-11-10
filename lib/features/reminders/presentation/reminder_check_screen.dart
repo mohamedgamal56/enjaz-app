@@ -16,6 +16,7 @@ class _ReminderCheckScreenState extends State<ReminderCheckScreen>
     with WidgetsBindingObserver {
   bool _busy = true;
   bool? _notification, _exact, _battery;
+  bool _isXiaomi = false;
   List<String> _channels = [], _pending = [], _log = [];
   AppLocalizations get strings =>
       lookupAppLocalizations(Localizations.localeOf(context));
@@ -43,6 +44,11 @@ class _ReminderCheckScreenState extends State<ReminderCheckScreen>
     _notification = _exact = _battery = null;
     _channels = [];
     _pending = [];
+    try {
+      _isXiaomi = await const MethodChannel('com.enjaz.app/assistant')
+              .invokeMethod<bool>('isXiaomiDevice') ??
+          false;
+    } catch (_) {}
     final service = NotificationService.instance;
     try {
       await service.initialize();
@@ -113,6 +119,59 @@ class _ReminderCheckScreenState extends State<ReminderCheckScreen>
         status(labels[0], _notification),
         status(labels[1], _exact),
         status(labels[2], _battery),
+        if (_isXiaomi)
+          Card(
+            color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.25),
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.security_rounded,
+                          color: Theme.of(context).colorScheme.primary, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        Localizations.localeOf(context).languageCode == 'ar'
+                            ? 'أذونات خاصة بهواتف شاومي'
+                            : 'Xiaomi Special Permissions',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    Localizations.localeOf(context).languageCode == 'ar'
+                        ? 'لإظهار شاشة المنبه فوق القفل، يرجى تفعيل "الظهور على شاشة القفل" و"عرض النوافذ المنبثقة".'
+                        : 'To show alarm over lock screen, enable "Show on Lock screen" and "Display pop-up windows".',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        try {
+                          await const MethodChannel('com.enjaz.app/assistant')
+                              .invokeMethod('openXiaomiOtherPermissions');
+                        } catch (_) {
+                          openAppSettings();
+                        }
+                      },
+                      icon: const Icon(Icons.open_in_new, size: 16),
+                      label: Text(
+                        Localizations.localeOf(context).languageCode == 'ar'
+                            ? 'فتح صفحة الأذونات الإضافية في شاومي'
+                            : 'Open Xiaomi Other Permissions',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         TextButton(
             onPressed: openAppSettings, child: Text(s.diagnosticSettings)),
         TextButton(

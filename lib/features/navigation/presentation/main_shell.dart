@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../security/domain/app_lock_provider.dart';
 import '../../reminders/domain/notification_service.dart';
+import '../../reminders/presentation/alarm_ring_screen.dart';
 import '../../tasks/presentation/task_details_screen.dart';
 import '../../backup/presentation/backup_screen.dart';
 import '../../finance/presentation/finance_screen.dart';
@@ -55,9 +56,26 @@ class _MainShellState extends ConsumerState<MainShell> {
   }
   void _openPending() {
     if (!mounted || _pendingDestination == null) return;
+    final destination = _pendingDestination!;
+
+    // Alarms always display full-screen immediately, even above App Lock / PIN
+    if (destination.startsWith('alarm:')) {
+      _pendingDestination = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (_) => AlarmRingScreen.fromPayload(destination),
+          ),
+        );
+      });
+      WidgetsBinding.instance.scheduleFrame();
+      return;
+    }
+
     final lock = ref.read(appLockProvider);
     if (lock.isLoading || lock.isLocked) return;
-    final destination = _pendingDestination!;
     _pendingDestination = null;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

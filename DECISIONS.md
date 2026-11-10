@@ -514,3 +514,12 @@ eminders table (owner_type, owner_id, kind, 	rigger_type, offset_minutes, bsolu
 - **Action Buttons & Ongoing Persistence**: Set ongoing: true and utoCancel: false, presenting two direct action buttons: [إيقاف] (ction_stop, native cancelNotification: true) and [تأجيل 5 دقائق] (ction_snooze, native cancelNotification: true), preventing accidental dismissals.
 - **Permission Sheet Guard**: Added NotificationService.instance.areNotificationsEnabled() guard inside NotificationPermissionSheet.show(context) and quick_add_sheet.dart, completely preventing redundant permission popups when already allowed.
 - **Version Bump & Permanent Signing**: Bumped version to 1.2.3+2021 (ersionCode: 2021) for direct in-place update without uninstalling; preserved permanent signing configuration and SHA-256 fingerprint verification intact.
+
+
+## Release 1.2.4+2022 (Full Screen Alarm UI, Lock Screen Wake & Xiaomi Pop-up Permissions) / 2026-11-10
+
+- **Full Screen Alarm Intent (AlarmRingScreen)**: Implemented dedicated full-screen alarm dialog displaying live time, pulsing bell animation, task title, big danger-styled [إيقاف المنبه] button and [تأجيل 5 دقائق] button.
+- **Lock Screen Wake & Illumination**: Enabled `android.permission.USE_FULL_SCREEN_INTENT`, `showWhenLocked`, `turnScreenOn`, and native `setShowWhenLocked(true)`, `setTurnScreenOn(true)`, and `window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)`.
+- **Xiaomi Other Permissions Shortcut**: Added native handler and UI card targeting `com.miui.permcenter.permissions.PermissionsEditorActivity` to allow users on Xiaomi/MIUI/HyperOS to quickly enable "Show on Lock screen" and "Display pop-up windows".
+- **Versioned Artifact Output**: Configured GitHub Actions build workflow to dynamically parse the version from `pubspec.yaml` and name the output APK file and artifact `enjaz-v${VERSION}-arm64.apk` (`enjaz-v1.2.4+2022-arm64.apk`).
+- **Version Bump & Permanent Signing**: Bumped version to `1.2.4+2022` with permanent keystore signing and SHA-256 fingerprint verification intact.

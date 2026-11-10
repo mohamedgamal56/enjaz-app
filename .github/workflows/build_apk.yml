@@ -72,7 +72,11 @@ jobs:
       - name: Prepare APK
         if: github.event_name != 'pull_request'
         run: |
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk enjaz-app-arm64.apk
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | tr -d '[:space:]')
+          APK_NAME="enjaz-v${VERSION}-arm64.apk"
+          echo "APK_NAME=$APK_NAME" >> $GITHUB_ENV
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk "$APK_NAME"
+          cp "$APK_NAME" enjaz-app-arm64.apk
 
       - name: Verify APK Signature Fingerprint
         if: github.event_name != 'pull_request'
@@ -84,7 +88,7 @@ jobs:
           
           echo "Using apksigner tool: $APKSIGNER"
           EXPECTED_SHA256=$(cat android/expected_cert_sha256.txt | tr -d '[:space:]:' | tr '[:upper:]' '[:lower:]')
-          ACTUAL_RAW=$("$APKSIGNER" verify --print-certs enjaz-app-arm64.apk | grep -i "certificate SHA-256 digest:" | head -n 1 | awk '{print $NF}')
+          ACTUAL_RAW=$("$APKSIGNER" verify --print-certs "$APK_NAME" | grep -i "certificate SHA-256 digest:" | head -n 1 | awk '{print $NF}')
           ACTUAL_SHA256=$(echo "$ACTUAL_RAW" | tr -d '[:space:]:' | tr '[:upper:]' '[:lower:]')
           
           echo "Expected SHA-256: $EXPECTED_SHA256"
@@ -100,5 +104,5 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
-          name: enjaz-app-apk
-          path: enjaz-app-arm64.apk
+          name: ${{ env.APK_NAME }}
+          path: ${{ env.APK_NAME }}

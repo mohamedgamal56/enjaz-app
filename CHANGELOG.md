@@ -1,3 +1,11 @@
+## 1.2.4+2022 — 2026-11-10
+
+- Deliver dedicated Full-Screen Intent Alarm Screen (AlarmRingScreen) that launches and illuminates over the lock screen immediately when the alarm triggers, displaying task title, real-time digital clock, pulsing bell, and prominent [إيقاف المنبه] and [تأجيل 5 دقائق] action buttons.
+- Enable android.permission.USE_FULL_SCREEN_INTENT, setShowWhenLocked(true), setTurnScreenOn(true), and FLAG_KEEP_SCREEN_ON in MainActivity.kt and AndroidManifest.xml to wake the screen upon alarm trigger.
+- Add dedicated Xiaomi / MIUI / HyperOS diagnostic check and direct shortcut to Other Permissions (PermissionsEditorActivity) for granting Show on Lock screen and Display pop-up windows.
+- Automate release artifact naming to include the full version string: enjaz-v1.2.4+2022-arm64.apk.
+- Bump version to 1.2.4+2022 with permanent signing configuration intact.
+
 ## 1.2.3+2021 — 2026-11-10
 
 - Enforce AndroidScheduleMode.exactAllowWhileIdle (setExactAndAllowWhileIdle) for alarm reminders to guarantee exact second firing during lock screen and Doze mode.
