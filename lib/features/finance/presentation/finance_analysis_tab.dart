@@ -294,6 +294,249 @@ class FinanceAnalysisTab extends ConsumerWidget {
             ),
             const SizedBox(height: 14),
 
+            // 5. Spending by Weekday (الإنفاق حسب أيام الأسبوع)
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.calendar_view_week_rounded, size: 20, color: Colors.indigo),
+                            const SizedBox(width: 8),
+                            Text(
+                              isArabic ? 'الإنفاق حسب أيام الأسبوع' : 'Spending by Weekday',
+                              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        if (weekdayMap.values.any((v) => v > 0)) ...[
+                          Builder(builder: (ctx) {
+                            final maxEntry = weekdayMap.entries.reduce((a, b) => a.value >= b.value ? a : b);
+                            final dayNames = isArabic
+                                ? {6: 'السبت', 7: 'الأحد', 1: 'الإثنين', 2: 'الثلاثاء', 3: 'الأربعاء', 4: 'الخميس', 5: 'الجمعة'}
+                                : {6: 'Sat', 7: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri'};
+                            return Text(
+                              '${isArabic ? 'الأعلى:' : 'Peak:'} ${dayNames[maxEntry.key]}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.indigo,
+                              ),
+                            );
+                          }),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (!weekdayMap.values.any((v) => v > 0))
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          isArabic ? 'لا توجد مصروفات مسجلة' : 'No expenses recorded',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      )
+                    else
+                      Builder(builder: (ctx) {
+                        final totalExpense = weekdayMap.values.fold<int>(0, (sum, val) => sum + val);
+                        final maxVal = weekdayMap.values.fold<int>(0, (m, v) => v > m ? v : m);
+                        final weekDays = [
+                          (6, isArabic ? 'السبت' : 'Sat'),
+                          (7, isArabic ? 'الأحد' : 'Sun'),
+                          (1, isArabic ? 'الإثنين' : 'Mon'),
+                          (2, isArabic ? 'الثلاثاء' : 'Tue'),
+                          (3, isArabic ? 'الأربعاء' : 'Wed'),
+                          (4, isArabic ? 'الخميس' : 'Thu'),
+                          (5, isArabic ? 'الجمعة' : 'Fri'),
+                        ];
+
+                        return Column(
+                          children: weekDays.map((wd) {
+                            final amount = weekdayMap[wd.$1] ?? 0;
+                            final ratio = maxVal > 0 ? (amount / maxVal).clamp(0.0, 1.0) : 0.0;
+                            final pct = totalExpense > 0 ? ((amount / totalExpense) * 100).round() : 0;
+                            final isPeak = amount > 0 && amount == maxVal;
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4.0),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 65,
+                                    child: Text(
+                                      wd.$2,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: isPeak ? FontWeight.bold : FontWeight.w500,
+                                        color: isPeak ? Colors.indigo : null,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: LinearProgressIndicator(
+                                        value: ratio,
+                                        minHeight: 8,
+                                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                                        color: isPeak ? Colors.indigo : Colors.blue.shade300,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  SizedBox(
+                                    width: 35,
+                                    child: Text(
+                                      '$pct%',
+                                      textAlign: TextAlign.end,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: theme.colorScheme.outline,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ConstrainedBox(
+                                    constraints: const BoxConstraints(minWidth: 70),
+                                    child: Text(
+                                      MoneyFormatter.formatWithCurrency(
+                                        amount,
+                                        currency: isArabic ? 'ج.م' : 'EGP',
+                                        masked: isMasked,
+                                        format: numeralsFormat,
+                                        showDecimals: false,
+                                      ),
+                                      textAlign: TextAlign.end,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: isPeak ? FontWeight.bold : FontWeight.w600,
+                                        color: isPeak ? Colors.indigo : null,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      }),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // 6. Top 5 Single Biggest Expenses (أكبر 5 مصروفات فردية)
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.stars_rounded, size: 20, color: Colors.deepOrange),
+                        const SizedBox(width: 8),
+                        Text(
+                          isArabic ? 'أكبر 5 مصروفات فردية' : 'Top 5 Single Expenses',
+                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (topExpenses.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          isArabic ? 'لا توجد مصروفات مسجلة' : 'No expenses recorded',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      )
+                    else
+                      ...topExpenses.map((tx) {
+                        final cat = catMap[tx.categoryId];
+                        final catName = isArabic ? (cat?.nameAr ?? 'أخرى') : (cat?.nameEn ?? cat?.nameAr ?? 'Other');
+                        final color = Color(cat?.color ?? 0xFF9E9E9E);
+                        final iconData = FinanceIconHelper.getIcon(cat?.icon ?? 'more_horiz');
+                        final title = (tx.note != null && tx.note!.trim().isNotEmpty) ? tx.note!.trim() : catName;
+                        final isEssential = tx.nature == 'essential';
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6.0),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 14,
+                                backgroundColor: color.withValues(alpha: 0.15),
+                                child: Icon(iconData, size: 16, color: color),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          tx.localDate,
+                                          style: TextStyle(fontSize: 11, color: theme.colorScheme.outline),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                          decoration: BoxDecoration(
+                                            color: (isEssential ? Colors.blue : Colors.orange).withValues(alpha: 0.12),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            isEssential ? (isArabic ? 'ضروري' : 'Essential') : (isArabic ? 'كمالي' : 'Side'),
+                                            style: TextStyle(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.bold,
+                                              color: isEssential ? Colors.blue.shade700 : Colors.orange.shade800,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                MoneyFormatter.formatWithCurrency(
+                                  tx.amountMinor,
+                                  currency: isArabic ? 'ج.م' : 'EGP',
+                                  masked: isMasked,
+                                  format: numeralsFormat,
+                                  showDecimals: false,
+                                ),
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.red),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+
             // 5. Small Recurring Spending (مصروفات صغيرة متكررة)
             if (smallRecurring.isNotEmpty) ...[
               Card(

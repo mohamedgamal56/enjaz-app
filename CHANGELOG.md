@@ -1,3 +1,25 @@
+## 1.2.10+2030 — 2026-11-12 (Batch 3 — Finance, Calendar and Reports)
+
+- Finance Analysis Enhancements (CHANGES.md Section 5.4):
+  - Added "Spending by Weekday" card (`الإنفاق حسب أيام الأسبوع`) in `FinanceAnalysisTab` displaying total and percentage distribution of expenses across all 7 weekdays (Saturday through Friday) with visual proportional bars and automated peak day identification.
+  - Added "Top 5 Single Biggest Expenses" card (`أكبر 5 مصروفات فردية`) in `FinanceAnalysisTab` detailing each top expense with category icon/color, title/note, date, nature indicator (essential vs side), and formatted amount.
+- Direct Item Opening in Timeline (PLAN.md Section 6):
+  - Updated `TimelineDayView._navigateToSource` so that every timeline entry directly opens its specific underlying item rather than navigating to generic section screens:
+    - Notes open directly in `AddNoteSheet(noteToEdit)`.
+    - Transactions open directly in `AddTransactionSheet(existingTransaction)`.
+    - Ideas open directly in `IdeaDetailsScreen(ideaId)`.
+    - Goals open directly in `GoalDetailsScreen(goalId)`.
+    - Habits open directly in `HabitDetailsScreen(habitId)`.
+    - Health items and treatments open directly in `AddEditHealthItemSheet` and `AddEditTreatmentSheet`.
+    - Tasks continue opening in `TaskDetailsScreen(taskId)`.
+- Excel Report Alignment & Multi-Period Verification (PLAN.md Section 6):
+  - Added comprehensive unit test in `test/unit/excel_export_test.dart` asserting that decoded Excel dashboard (`لوحة المتابعة`) and summary (`الملخص`) KPI cells match `StatsService.computeStats` across Week, Month, Year, and All Time periods 100%.
+  - Verified right-to-left (RTL) mode is set across all sheets for Arabic.
+- Zero Regression Guarantees:
+  - Preserved alarm notification channel (`enjaz_alarm_v5_music`), Xiaomi lockscreen wake attributes, and local voice recognition.
+  - No database schema alterations or networking packages.
+- Output release artifact `enjaz-v1.2.10+2030-arm64.apk` signed with permanent release keystore.
+
 ## 1.2.9+2029 — 2026-11-10 (Batch 2 — Finish the Voice Assistant)
 
 - Single Source of Truth for Stats Alignment:

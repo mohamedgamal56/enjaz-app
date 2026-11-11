@@ -587,5 +587,21 @@ equestDismissKeyguard(this, null) and WindowManager.LayoutParams.FLAG_DISMISS_KE
 - **Version Bump & Artifact Naming**:
   - Bumped version to `1.2.9+2029` generating `enjaz-v1.2.9+2029-arm64.apk` signed with the permanent release keystore.
 
+## Decision 36: Batch 3 Finance Analysis, Timeline Item Opening & Excel Report Alignment / 2026-11-12
 
-
+- **Finance Analysis Spending by Weekday & Top Expenses (CHANGES.md 5.4)**:
+  - Displayed "Spending by Weekday" card (`الإنفاق حسب أيام الأسبوع`) in `FinanceAnalysisTab` showcasing spending across all 7 days with proportional linear indicators, percentages, and automatic detection of the highest spending day.
+  - Displayed "Top 5 Single Biggest Expenses" card (`أكبر 5 مصروفات فردية`) with category styling, note, date, nature badge (essential vs side), and formatted amounts.
+- **Direct Item Navigation in Timeline (PLAN.md Section 6)**:
+  - Upgraded `TimelineDayView._navigateToSource` to open specific underlying items instead of generic sections:
+    - Notes open in `AddNoteSheet(noteToEdit)`.
+    - Transactions open in `AddTransactionSheet(existingTransaction)`.
+    - Ideas open in `IdeaDetailsScreen(ideaId)`.
+    - Goals open in `GoalDetailsScreen(goalId)`.
+    - Habits open in `HabitDetailsScreen(habitId)`.
+    - Health items and treatments open in `AddEditHealthItemSheet` and `AddEditTreatmentSheet`.
+    - Tasks open in `TaskDetailsScreen(taskId)`.
+- **Excel Report Multi-Period Alignment Unit Testing**:
+  - Implemented acceptance test in `test/unit/excel_export_test.dart` verifying that decoded Excel dashboard and summary KPI cells match `StatsService.computeStats` across Week, Month, Year, and All Time periods 100%, and verified RTL flag across all Arabic sheets.
+- **Version Bump & Artifact Naming**:
+  - Bumped version to `1.2.10+2030` generating `enjaz-v1.2.10+2030-arm64.apk` signed with the permanent release keystore.

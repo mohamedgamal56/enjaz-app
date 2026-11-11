@@ -5,9 +5,16 @@ import '../../../core/db/app_database.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../finance/presentation/add_transaction_sheet.dart';
 import '../../finance/presentation/finance_screen.dart';
+import '../../goals/presentation/goal_details_screen.dart';
+import '../../habits/presentation/habit_details_screen.dart';
 import '../../habits/presentation/habits_screen.dart';
+import '../../health/presentation/add_edit_health_item_sheet.dart';
+import '../../health/presentation/add_edit_treatment_sheet.dart';
 import '../../health/presentation/health_screen.dart';
+import '../../ideas/presentation/idea_details_screen.dart';
+import '../../notes/presentation/add_note_sheet.dart';
 import '../../plan/presentation/plan_screen.dart';
 import '../../tasks/presentation/task_details_screen.dart';
 import '../../voice_notes/presentation/widgets/voice_player_card.dart';
@@ -31,37 +38,83 @@ class TimelineDayView extends ConsumerStatefulWidget {
 class _TimelineDayViewState extends ConsumerState<TimelineDayView> {
   TimelineModule? _selectedFilter;
 
-  void _navigateToSource(BuildContext context, TimelineEntry entry) {
+  Future<void> _navigateToSource(BuildContext context, TimelineEntry entry) async {
+    final db = ref.read(databaseProvider);
     switch (entry.sourceType) {
       case 'task':
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => TaskDetailsScreen(taskId: entry.sourceId)),
         );
         break;
+
       case 'habit':
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const HabitsScreen()),
+          MaterialPageRoute(builder: (_) => HabitDetailsScreen(habitId: entry.sourceId)),
         );
         break;
+
+      case 'idea':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => IdeaDetailsScreen(ideaId: entry.sourceId)),
+        );
+        break;
+
+      case 'goal':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => GoalDetailsScreen(goalId: entry.sourceId)),
+        );
+        break;
+
+      case 'note':
+        final note = await (db.select(db.notes)..where((n) => n.id.equals(entry.sourceId))).getSingleOrNull();
+        if (note != null && context.mounted) {
+          AddNoteSheet.show(context, noteToEdit: note);
+        } else if (context.mounted) {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PlanScreen()));
+        }
+        break;
+
       case 'transaction':
+        final tx = await (db.select(db.transactions)..where((t) => t.id.equals(entry.sourceId))).getSingleOrNull();
+        if (tx != null && context.mounted) {
+          AddTransactionSheet.show(context, existingTransaction: tx);
+        } else if (context.mounted) {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FinanceScreen()));
+        }
+        break;
+
       case 'obligation':
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const FinanceScreen()),
         );
         break;
+
       case 'health_item':
+        final item = await (db.select(db.healthItems)..where((h) => h.id.equals(entry.sourceId))).getSingleOrNull();
+        if (item != null && context.mounted) {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            builder: (_) => AddEditHealthItemSheet(itemToEdit: item),
+          );
+        } else if (context.mounted) {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HealthScreen()));
+        }
+        break;
+
       case 'treatment':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const HealthScreen()),
-        );
+        final treatment = await (db.select(db.treatments)..where((t) => t.id.equals(entry.sourceId))).getSingleOrNull();
+        if (treatment != null && context.mounted) {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            builder: (_) => AddEditTreatmentSheet(treatmentToEdit: treatment),
+          );
+        } else if (context.mounted) {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HealthScreen()));
+        }
         break;
-      case 'idea':
-      case 'goal':
-      case 'note':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const PlanScreen()),
-        );
-        break;
+
       default:
         break;
     }

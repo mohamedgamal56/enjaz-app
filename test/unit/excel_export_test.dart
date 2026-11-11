@@ -547,5 +547,96 @@ void main() {
       expect(excel.tables.keys, contains('الملاحظات'));
       expect(excel.tables.keys, contains('الصحة'));
     });
+
+    test('8. Acceptance test Batch 3: Excel numbers equal dashboard/Stats across week, month, year, and all time', () async {
+      for (final rangeType in [
+        StatsRangeType.week,
+        StatsRangeType.month,
+        StatsRangeType.year,
+        StatsRangeType.allTime,
+      ]) {
+        final range = StatsService.resolveRange(type: rangeType, referenceDate: now);
+        final stats = statsService.computeStats(
+          range: range,
+          tasks: sampleTasks,
+          rangeEvents: sampleEvents,
+          allDoneEvents: sampleEvents.where((e) => e.toStatus == 'done').toList(),
+          previousPeriodCompletedCount: 0,
+          goals: sampleGoals,
+          milestones: sampleMilestones,
+          goalUpdates: sampleGoalUpdates,
+          ideas: sampleIdeas,
+          now: now,
+        );
+
+        final file = await exportService.generateReport(
+          range: range,
+          stats: stats,
+          tasks: sampleTasks,
+          events: sampleEvents,
+          goals: sampleGoals,
+          milestones: sampleMilestones,
+          goalUpdates: sampleGoalUpdates,
+          ideas: sampleIdeas,
+          voiceNotes: sampleVoiceNotes,
+          languageCode: 'ar',
+          outputDirectory: tempDir,
+        );
+
+        expect(file.existsSync(), isTrue);
+        final bytes = file.readAsBytesSync();
+        final excel = Excel.decodeBytes(bytes);
+
+        // 1. All sheets must have isRTL == true for Arabic
+        for (final table in excel.tables.values) {
+          expect(table.isRTL, isTrue, reason: 'Sheet ${table.sheetName} should be RTL for Arabic');
+        }
+
+        // 2. Dashboard Sheet (لوحة المتابعة) KPI row numbers must match StatsResult exactly
+        final dashboardSheet = excel['لوحة المتابعة'];
+        final headerIndex = dashboardSheet.rows.indexWhere(
+          (row) => row.isNotEmpty && row[0]?.value.toString() == 'المهام المنجزة',
+        );
+        expect(headerIndex, isNot(-1), reason: 'Dashboard sheet should contain KPI header row');
+        final kpiRow = dashboardSheet.rows[headerIndex + 1];
+
+        // Completed count
+        final cellCompleted = kpiRow[0]?.value.toString();
+        expect(int.tryParse(cellCompleted ?? ''), equals(stats.completedCount));
+
+        // Completion rate
+        final cellRate = kpiRow[1]?.value.toString();
+        expect(cellRate, equals('${stats.completionRate.round()}%'));
+
+        // Postponed count
+        final cellPostponed = kpiRow[2]?.value.toString();
+        expect(int.tryParse(cellPostponed ?? ''), equals(stats.postponedCount));
+
+        // Partial count
+        final cellPartial = kpiRow[3]?.value.toString();
+        expect(int.tryParse(cellPartial ?? ''), equals(stats.partialCount));
+
+        // Best streak
+        final cellStreak = kpiRow[5]?.value.toString();
+        expect(int.tryParse(cellStreak ?? ''), equals(stats.bestStreak));
+
+        // 3. Summary Sheet (الملخص) metrics must match StatsResult
+        final summarySheet = excel['الملخص'];
+        final completedSummaryRow = summarySheet.rows.firstWhere(
+          (r) => r.isNotEmpty && r[0]?.value.toString() == 'المهام المنجزة',
+        );
+        expect(completedSummaryRow[1]?.value.toString(), equals(stats.completedCount.toString()));
+
+        final scheduledSummaryRow = summarySheet.rows.firstWhere(
+          (r) => r.isNotEmpty && r[0]?.value.toString() == 'المهام المجدولة',
+        );
+        expect(scheduledSummaryRow[1]?.value.toString(), equals(stats.scheduledCount.toString()));
+
+        final postponedSummaryRow = summarySheet.rows.firstWhere(
+          (r) => r.isNotEmpty && r[0]?.value.toString() == 'المهام المؤجلة',
+        );
+        expect(postponedSummaryRow[1]?.value.toString(), equals(stats.postponedCount.toString()));
+      }
+    });
   });
 }
