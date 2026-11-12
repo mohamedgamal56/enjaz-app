@@ -55,6 +55,7 @@ void main() {
     List<Override> overrides = const [],
   }) {
     return ProviderScope(
+      key: UniqueKey(),
       overrides: [
         homeSummaryProvider.overrideWith((ref) => Stream.value(testSummary)),
         ...overrides,
@@ -108,8 +109,7 @@ void main() {
       expect(find.text('اجتماع مناقشة المشروع'), findsOneWidget);
     });
 
-    testWidgets('HomeOverdueStrip appears only when overdueCount > 0', (tester) async {
-      // 1. With overdueCount = 2
+    testWidgets('HomeOverdueStrip appears when overdueCount > 0', (tester) async {
       await tester.pumpWidget(
         createTestWidget(
           child: const HomeScreen(),
@@ -119,10 +119,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+
       expect(find.byType(HomeOverdueStrip), findsOneWidget);
       expect(find.textContaining('مهام متأخرة'), findsOneWidget);
+    });
 
-      // 2. With overdueCount = 0
+    testWidgets('HomeOverdueStrip is hidden when overdueCount == 0', (tester) async {
       const noOverdueSummary = HomeSummaryData(overdueCount: 0);
       await tester.pumpWidget(
         createTestWidget(
@@ -133,11 +135,11 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+
       expect(find.textContaining('مهام متأخرة'), findsNothing);
     });
 
-    testWidgets('Health Card respects hideHealthDetails privacy toggle (UI.md 4.4)', (tester) async {
-      // 1. Privacy OFF -> shows actual title
+    testWidgets('Health Card shows title when privacy toggle is OFF', (tester) async {
       await tester.pumpWidget(
         createTestWidget(
           child: const HomeScreen(),
@@ -151,10 +153,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+
       expect(find.text('زيارة طبيب الأسنان'), findsOneWidget);
       expect(find.text('موعد قادم'), findsNothing);
+    });
 
-      // 2. Privacy ON -> hides title and shows 'موعد قادم'
+    testWidgets('Health Card hides title and shows placeholder when privacy toggle is ON', (tester) async {
       await tester.pumpWidget(
         createTestWidget(
           child: const HomeScreen(),
@@ -168,12 +172,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+
       expect(find.text('زيارة طبيب الأسنان'), findsNothing);
       expect(find.text('موعد قادم'), findsOneWidget);
     });
 
-    testWidgets('MoreScreen dynamically shows modules hidden on Home (UI.md Section 5)', (tester) async {
-      // 1. All cards visible on Home -> More does not show Finance or Habits
+    testWidgets('MoreScreen does not show Finance when Finance card is visible on Home', (tester) async {
       await tester.pumpWidget(
         createTestWidget(
           child: const Scaffold(body: MoreScreen()),
@@ -195,13 +199,15 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+
       expect(find.text('المال والمصروفات'), findsNothing);
       expect(find.text('العادات اليومية'), findsNothing);
       expect(find.text('الإعدادات'), findsOneWidget);
       expect(find.text('تقرير إكسيل'), findsOneWidget);
       expect(find.text('سلة المحذوفات'), findsOneWidget);
+    });
 
-      // 2. Finance card hidden on Home -> More screen dynamically shows 'المال والمصروفات'
+    testWidgets('MoreScreen dynamically shows Finance when Finance card is hidden on Home', (tester) async {
       await tester.pumpWidget(
         createTestWidget(
           child: const Scaffold(body: MoreScreen()),
@@ -223,6 +229,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+
       expect(find.text('المال والمصروفات'), findsOneWidget);
     });
 
