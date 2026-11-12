@@ -109,7 +109,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         QuickAddSheet.show(context, initialKind: 'errand');
         break;
       case QuickAddOption.expense:
-        AddTransactionSheet.show(context, initialType: 'expense');
+        AddTransactionSheet.show(context, initialKind: 'expense');
         break;
       case QuickAddOption.habit:
         AddHabitSheet.show(context);
