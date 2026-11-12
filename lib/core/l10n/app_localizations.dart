@@ -399,6 +399,8 @@ class AppLocalizations {
       'goalsCountLabel': 'عدد الأهداف',
       'ideasCountLabel': 'عدد الأفكار',
       'fileSizeLabel': 'حجم الملف',
+      'assistantRecordByVoice': 'سجّل بالصوت',
+      'assistantSettingsAndHelp': 'إعدادات المساعد والمساعدة',
     },
     'en': {
       'appName': 'Enjaz',
@@ -780,6 +782,8 @@ class AppLocalizations {
       'goalsCountLabel': 'Goals Count',
       'ideasCountLabel': 'Ideas Count',
       'fileSizeLabel': 'File Size',
+      'assistantRecordByVoice': 'Record by Voice',
+      'assistantSettingsAndHelp': 'Assistant Settings & Help',
     },
   };
 
@@ -787,6 +791,9 @@ class AppLocalizations {
     final lang = locale.languageCode;
     return _localizedValues[lang]?[key] ?? _localizedValues['ar']?[key] ?? key;
   }
+
+  String get assistantRecordByVoice => _get('assistantRecordByVoice');
+  String get assistantSettingsAndHelp => _get('assistantSettingsAndHelp');
 
   String get appName => _get('appName');
   String get tabToday => _get('tabToday');

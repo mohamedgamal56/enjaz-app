@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import '../../action_plan.dart';
 
 /// Interactive confirmation card displaying the interpreted action with fields in plain words,
@@ -89,6 +90,7 @@ class ConfirmationCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final actionColor = _getActionColor(colorScheme);
+    final l10n = AppLocalizations.of(context);
 
     if (plan.isBlocked) {
       return Card(
@@ -107,7 +109,7 @@ class ConfirmationCard extends StatelessWidget {
                   Icon(Icons.shield_outlined, color: colorScheme.error, size: 28),
                   const SizedBox(width: 10),
                   Text(
-                    'إجراء محظور بالصوت',
+                    l10n?.assistantBlockedAction ?? 'إجراء محظور بالصوت',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: colorScheme.error,
@@ -128,7 +130,7 @@ class ConfirmationCard extends StatelessWidget {
                 child: TextButton.icon(
                   onPressed: onCancel,
                   icon: const Icon(Icons.close_rounded),
-                  label: const Text('إغلاق'),
+                  label: Text(l10n?.assistantClose ?? 'إغلاق'),
                 ),
               ),
             ],
@@ -169,7 +171,7 @@ class ConfirmationCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'يرجى التأكيد للمتابعة',
+                        l10n?.assistantPleaseConfirm ?? 'يرجى التأكيد للمتابعة',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -202,7 +204,7 @@ class ConfirmationCard extends StatelessWidget {
             // 3. Ambiguous task candidates selection (if applicable)
             if (plan.isAmbiguous && plan.candidateTasks.isNotEmpty) ...[
               Text(
-                'تم العثور على أكثر من مهمة مطابقة، اختر إحداها:',
+                l10n?.assistantAmbiguousCandidateTitle ?? 'تم العثور على أكثر من مهمة مطابقة، اختر إحداها:',
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: colorScheme.error,
                   fontWeight: FontWeight.bold,
@@ -269,22 +271,22 @@ class ConfirmationCard extends StatelessWidget {
                 spacing: 8,
                 children: [
                   ChoiceChip(
-                    label: const Text('بدون تاريخ'),
+                    label: Text(l10n?.assistantDateChipNone ?? 'بدون تاريخ'),
                     selected: plan.selectedDateChip == 'none',
                     onSelected: (val) => onDateChipSelected?.call('none'),
                   ),
                   ChoiceChip(
-                    label: const Text('اليوم'),
+                    label: Text(l10n?.assistantDateChipToday ?? 'اليوم'),
                     selected: plan.selectedDateChip == 'today',
                     onSelected: (val) => onDateChipSelected?.call('today'),
                   ),
                   ChoiceChip(
-                    label: const Text('بكرة'),
+                    label: Text(l10n?.assistantDateChipTomorrow ?? 'بكرة'),
                     selected: plan.selectedDateChip == 'tomorrow',
                     onSelected: (val) => onDateChipSelected?.call('tomorrow'),
                   ),
                   ChoiceChip(
-                    label: const Text('اختر تاريخ'),
+                    label: Text(l10n?.assistantDateChipCustom ?? 'اختر تاريخ'),
                     selected: plan.selectedDateChip == 'custom',
                     onSelected: (val) => onDateChipSelected?.call('custom'),
                   ),
@@ -296,7 +298,7 @@ class ConfirmationCard extends StatelessWidget {
             // 5. Missing reason chips (VOICE.md Section 2.6)
             if (plan.hasMissingReason) ...[
               Text(
-                'السبب مطلوب، اختر سبباً:',
+                l10n?.assistantMissingReasonPrompt ?? 'السبب مطلوب، اختر سبباً:',
                 style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.error,
@@ -336,9 +338,9 @@ class ConfirmationCard extends StatelessWidget {
                     ),
                     onPressed: onConfirm,
                     icon: const Icon(Icons.check_rounded),
-                    label: const Text(
-                      'تأكيد',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    label: Text(
+                      l10n?.assistantConfirm ?? 'تأكيد',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ),
                 ),
@@ -355,14 +357,14 @@ class ConfirmationCard extends StatelessWidget {
                     ),
                     onPressed: onEdit,
                     icon: const Icon(Icons.edit_outlined, size: 18),
-                    label: const Text('تعديل'),
+                    label: Text(l10n?.assistantEdit ?? 'تعديل'),
                   ),
                 ),
                 const SizedBox(width: 8),
 
                 // إلغاء
                 IconButton(
-                  tooltip: 'إلغاء',
+                  tooltip: l10n?.assistantCancel ?? 'إلغاء',
                   style: IconButton.styleFrom(
                     foregroundColor: colorScheme.error,
                   ),

@@ -605,3 +605,22 @@ equestDismissKeyguard(this, null) and WindowManager.LayoutParams.FLAG_DISMISS_KE
   - Implemented acceptance test in `test/unit/excel_export_test.dart` verifying that decoded Excel dashboard and summary KPI cells match `StatsService.computeStats` across Week, Month, Year, and All Time periods 100%, and verified RTL flag across all Arabic sheets.
 - **Version Bump & Artifact Naming**:
   - Bumped version to `1.2.10+2030` generating `enjaz-v1.2.10+2030-arm64.apk` signed with the permanent release keystore.
+
+## Decision 37: Batch 4 Language, Numerals, Themes, Font Scale & Performance / 2026-11-12
+
+- **Hardcoded User-Visible Text Elimination & Build Gate (PLAN.md Section 7)**:
+  - Extracted all 31 hardcoded user-visible Arabic strings across presentation screens into `lib/l10n/app_ar.arb` and `lib/l10n/app_en.arb`.
+  - Added unit test `test/unit/l10n_hardcoded_text_test.dart` that scans all presentation widgets in `lib/features/` and fails the build if hardcoded Arabic string literals are passed directly to `Text(...)` instead of via `AppLocalizations`.
+- **Numerals System Verification**:
+  - Ensured that `AppFormatter` and `MoneyFormatter` strictly respect the user's setting (`NumeralsFormat.western` vs `NumeralsFormat.arabicIndic`) across dates, counters, chips, and currency amounts.
+  - Added comprehensive unit test `test/unit/numerals_everywhere_test.dart` verifying all digit conversion and formatting paths.
+- **Theme Tokens & WCAG Contrast**:
+  - Updated `AppColors.lightTextMuted` to `#57534E` and added `warningText` (`#92400E` light, `#FBBF24` dark) and `warningBorder` tokens per `UI.md` Section 3.
+  - Implemented pure Dart WCAG 2.1 relative luminance and contrast utility `lib/core/theme/color_contrast.dart`.
+  - Added unit test `test/unit/color_contrast_test.dart` verifying all text and surface token pairs in both Light and Dark themes satisfy WCAG AA contrast (≥ 4.5:1 for body text, ≥ 3.0:1 for large text/icons/buttons).
+- **Font Scale 1.3 Testing**:
+  - Added widget test `test/widget/font_scale_overflow_test.dart` rendering core widgets (`ConfirmationCard`, `AnswerCard`, `TaskCard`) under `TextScaler.linear(1.3)` in both Light and Dark themes, asserting zero clipping and zero `RenderFlex` overflows.
+- **5,000 Tasks & 5 Years Performance Benchmark**:
+  - Added benchmark test `test/unit/performance_benchmark_test.dart` creating an in-memory database populated with 5,000 tasks and multi-year events, verifying query latency (daily, overdue, inbox, paginated history, and `StatsService.computeStats`) remains responsive and sub-100ms.
+- **Version Bump & Artifact Naming**:
+  - Bumped version to `1.2.11+2031` generating `enjaz-v1.2.11+2031-arm64.apk` signed with the permanent release keystore.

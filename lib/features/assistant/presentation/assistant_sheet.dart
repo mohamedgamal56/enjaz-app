@@ -1,5 +1,6 @@
 import 'speech_failure_view.dart';
 import 'package:drift/drift.dart' as drift;
+import '../../../l10n/app_localizations.dart';
 import '../../voice_notes/presentation/voice_recorder_sheet.dart';
 import 'dart:async';
 
@@ -457,10 +458,12 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet>
                     onPressed: () async {
                       await undoAction.undo();
                       if (mounted) {
+                        final l10n = AppLocalizations.of(context);
+                        final isAr = Localizations.localeOf(context).languageCode == 'ar';
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('تم التراجع عن العملية بنجاح'),
-                            duration: Duration(seconds: 3),
+                          SnackBar(
+                            content: Text(l10n?.assistantUndoSuccess ?? (isAr ? 'تم التراجع عن العملية بنجاح' : 'Undone successfully')),
+                            duration: const Duration(seconds: 3),
                           ),
                         );
                       }
@@ -982,14 +985,14 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet>
 
               // Status / Loading Indicator
               if (_isProcessing)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Center(
                     child: Column(
                       children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 12),
-                        Text('جاري المعالجة محلياً...'),
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 12),
+                        Text(AppLocalizations.of(context)?.assistantProcessingLocally ?? (Localizations.localeOf(context).languageCode == 'ar' ? 'جاري المعالجة محلياً...' : 'Processing locally...')),
                       ],
                     ),
                   ),
@@ -1030,7 +1033,7 @@ class _AssistantSheetState extends ConsumerState<AssistantSheet>
                     if (mounted) setState(() => _speaking = false);
                   },
                   icon: const Icon(Icons.stop),
-                  label: const Text('إيقاف القراءة'),
+                  label: Text(AppLocalizations.of(context)?.assistantStopSpeaking ?? (Localizations.localeOf(context).languageCode == 'ar' ? 'إيقاف القراءة' : 'Stop Speaking')),
                 ),
               // Answer Card Preview (Step 4 & Section 6)
               if (_currentAnswer != null)

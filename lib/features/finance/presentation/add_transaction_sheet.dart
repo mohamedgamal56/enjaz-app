@@ -5,6 +5,7 @@ import 'package:drift/drift.dart' as drift;
 import '../../../core/db/app_database.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../../l10n/app_localizations.dart';
 import 'finance_icon_helper.dart';
 
 class AddTransactionSheet extends ConsumerStatefulWidget {
@@ -141,15 +142,17 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
 
   void _save() async {
     final amountMinor = MoneyFormatter.parseToMinor(_amountController.text);
+    final l10n = AppLocalizations.of(context);
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     if (amountMinor <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('برجاء إدخال مبلغ صحيح')),
+        SnackBar(content: Text(l10n?.financeInvalidAmount ?? (isAr ? 'برجاء إدخال مبلغ صحيح' : 'Please enter a valid amount'))),
       );
       return;
     }
     if (_selectedCategoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('برجاء اختيار التصنيف')),
+        SnackBar(content: Text(l10n?.financeSelectCategory ?? (isAr ? 'برجاء اختيار التصنيف' : 'Please select a category'))),
       );
       return;
     }
@@ -282,7 +285,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
               builder: (context, snapshot) {
                 final categories = snapshot.data ?? [];
                 if (categories.isEmpty) {
-                  return const Text('لا توجد تصنيفات متاحة');
+                  final l10n = AppLocalizations.of(context);
+                  final isAr = Localizations.localeOf(context).languageCode == 'ar';
+                  return Text(l10n?.financeNoCategoriesAvailable ?? (isAr ? 'لا توجد تصنيفات متاحة' : 'No categories available'));
                 }
                 if (_selectedCategoryId == null && categories.isNotEmpty) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {

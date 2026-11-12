@@ -25,8 +25,8 @@ class MoreScreen extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       children: [
-        ListTile(leading: const Icon(Icons.mic), title: const Text('سجّل بالصوت'), onTap: () => AssistantSheet.show(context)),
-        ListTile(leading: const Icon(Icons.settings_voice), title: const Text('إعدادات المساعد والمساعدة'), onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AssistantSettingsScreen()))),
+        ListTile(leading: const Icon(Icons.mic), title: Text(l10n?.assistantRecordByVoice ?? (isArabic ? 'سجّل بالصوت' : 'Record by Voice')), onTap: () => AssistantSheet.show(context)),
+        ListTile(leading: const Icon(Icons.settings_voice), title: Text(l10n?.assistantSettingsAndHelp ?? (isArabic ? 'إعدادات المساعد والمساعدة' : 'Assistant Settings & Help')), onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AssistantSettingsScreen()))),
         // App header banner
         Card(
           elevation: 0,

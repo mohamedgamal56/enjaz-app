@@ -9,6 +9,8 @@ class AppColors {
   final Color textMuted;
   final Color border;
   final Color accent;
+  final Color warningText;
+  final Color warningBorder;
   final Color todo;
   final Color inProgress;
   final Color partial;
@@ -16,6 +18,8 @@ class AppColors {
   final Color postponed;
   final Color waiting;
   final Color stopped;
+
+  Color get textSecondary => textMuted;
 
   const AppColors({
     this.isDark = false,
@@ -26,6 +30,8 @@ class AppColors {
     this.textMuted = lightTextMuted,
     this.border = lightBorder,
     this.accent = lightAccent,
+    this.warningText = lightWarningText,
+    this.warningBorder = lightWarningBorder,
     this.todo = lightStatusTodo,
     this.inProgress = lightStatusInProgress,
     this.partial = lightStatusPartial,
@@ -46,6 +52,8 @@ class AppColors {
       textMuted: isDark ? darkTextMuted : lightTextMuted,
       border: isDark ? darkBorder : lightBorder,
       accent: isDark ? darkAccent : lightAccent,
+      warningText: isDark ? darkWarningText : lightWarningText,
+      warningBorder: isDark ? darkWarningBorder : lightWarningBorder,
       todo: isDark ? darkStatusTodo : lightStatusTodo,
       inProgress: isDark ? darkStatusInProgress : lightStatusInProgress,
       partial: isDark ? darkStatusPartial : lightStatusPartial,
@@ -56,23 +64,27 @@ class AppColors {
     );
   }
 
-  // Light Tokens
+  // Light Tokens (UI.md Section 3)
   static const Color lightBackground = Color(0xFFFAFAF9);
   static const Color lightSurface = Color(0xFFFFFFFF);
   static const Color lightSurfaceVariant = Color(0xFFF5F5F4);
   static const Color lightText = Color(0xFF1C1917);
-  static const Color lightTextMuted = Color(0xFF78716C);
+  static const Color lightTextMuted = Color(0xFF57534E); // text-secondary
   static const Color lightBorder = Color(0xFFE7E5E4);
   static const Color lightAccent = Color(0xFF0D9488); // Teal
+  static const Color lightWarningText = Color(0xFF92400E);
+  static const Color lightWarningBorder = Color(0xFFF59E0B);
 
-  // Dark Tokens
+  // Dark Tokens (UI.md Section 3)
   static const Color darkBackground = Color(0xFF0F1412);
   static const Color darkSurface = Color(0xFF1A1F1E);
   static const Color darkSurfaceVariant = Color(0xFF232928);
   static const Color darkText = Color(0xFFF5F5F4);
-  static const Color darkTextMuted = Color(0xFFA8A29E);
+  static const Color darkTextMuted = Color(0xFFA8A29E); // text-secondary
   static const Color darkBorder = Color(0xFF2F3534);
   static const Color darkAccent = Color(0xFF2DD4BF); // Teal
+  static const Color darkWarningText = Color(0xFFFBBF24);
+  static const Color darkWarningBorder = Color(0xFF5C4410);
 
   // Status Colors (Light Mode)
   static const Color lightStatusTodo = Color(0xFF78716C);

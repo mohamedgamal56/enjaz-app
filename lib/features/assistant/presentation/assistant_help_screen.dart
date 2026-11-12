@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 /// Screen displaying the complete guide of commands and questions supported by the Voice Assistant (VOICE.md Sections 2.8, 5 & 6).
 class AssistantHelpScreen extends StatelessWidget {
   const AssistantHelpScreen({super.key});
@@ -425,9 +427,12 @@ class _CategoryCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             onTap: () {
               Clipboard.setData(ClipboardData(text: example));
+              final l10n = AppLocalizations.of(context);
+              final isAr = Localizations.localeOf(context).languageCode == 'ar';
+              final prefix = l10n?.assistantCopiedExample ?? (isAr ? 'تم نسخ:' : 'Copied:');
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('تم نسخ: "$example"'),
+                  content: Text('$prefix "$example"'),
                   duration: const Duration(seconds: 1),
                   behavior: SnackBarBehavior.floating,
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../answer_service.dart';
 
 /// Interactive answer card widget for question intents (VOICE.md Section 6).
@@ -171,7 +172,7 @@ class AnswerCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('إغلاق'),
+                      child: Text(AppLocalizations.of(context)?.assistantClose ?? 'إغلاق'),
                     ),
                   ),
               ],

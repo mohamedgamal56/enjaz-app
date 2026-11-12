@@ -1,3 +1,23 @@
+## 1.2.11+2031 — 2026-11-12 (Batch 4 — Language, Numerals, Themes, Font Scale, Performance)
+
+- L10n & Hardcoded Text Verification (PLAN.md Section 7):
+  - Extracted all 31 hardcoded user-visible Arabic strings across presentation screens into `lib/l10n/app_ar.arb` and `lib/l10n/app_en.arb`.
+  - Added build gate unit test `test/unit/l10n_hardcoded_text_test.dart` that scans all presentation widgets in `lib/features/` and fails the test if any user-visible strings are hardcoded without ARB localization.
+- Numerals Setting Everywhere:
+  - Verified and asserted that `AppFormatter` and `MoneyFormatter` strictly respect the user's numerals setting (`NumeralsFormat.western` vs `NumeralsFormat.arabicIndic`) across all dates, counters, chips, and amounts.
+  - Added unit test suite `test/unit/numerals_everywhere_test.dart` covering bidirectional digit translation and localized date/money formatting.
+- Design Tokens & WCAG Contrast (UI.md Section 3):
+  - Adjusted `AppColors.lightTextMuted` to `#57534E` and added `warningText` (`#92400E` light, `#FBBF24` dark) and `warningBorder` tokens.
+  - Implemented pure Dart WCAG 2.1 relative luminance and contrast utility `lib/core/theme/color_contrast.dart`.
+  - Added unit test `test/unit/color_contrast_test.dart` asserting that all text and background token pairs reach WCAG AA contrast (≥ 4.5:1 for body text, ≥ 3.0:1 for large text/components) in both Light and Dark themes.
+- Font Scale 1.3 Testing:
+  - Added widget test `test/widget/font_scale_overflow_test.dart` verifying that core widgets (`ConfirmationCard`, `AnswerCard`, `TaskCard`) render with zero clipping and zero `RenderFlex` overflows under `TextScaler.linear(1.3)` in both Light and Dark themes.
+- 5,000 Tasks & 5 Years Performance Benchmark:
+  - Added performance benchmark `test/unit/performance_benchmark_test.dart` verifying that an in-memory database with 5,000 tasks and 5 years of event data queries sub-100ms across daily, overdue, inbox, paginated history, and stats aggregation.
+- Zero Regression:
+  - Kept alarm channel (`enjaz_alarm_v5_music`), Xiaomi lockscreen flags, and local Egyptian voice recognition completely untouched.
+- Output release artifact `enjaz-v1.2.11+2031-arm64.apk` signed with permanent release keystore.
+
 ## 1.2.10+2030 — 2026-11-12 (Batch 3 — Finance, Calendar and Reports)
 
 - Finance Analysis Enhancements (CHANGES.md Section 5.4):

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../rule_based_intent_parser.dart';
 import '../voice_input_service.dart';
 import '../number_words_ar.dart';
@@ -367,9 +368,11 @@ class _VoiceTestScreenState extends State<VoiceTestScreen> {
     buffer.writeln('النتائج مقارنة آلية بتحليل الجملة المستهدفة؛ راجع النص والأرقام والتواريخ يدويًا. اختيار المجموعة لا يغيّر وضع الهاتف.');
 
     Clipboard.setData(ClipboardData(text: buffer.toString()));
+    final l10n = AppLocalizations.of(context);
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('تم نسخ جدول التقرير بصيغة Markdown بنجاح!'),
+      SnackBar(
+        content: Text(l10n?.voiceTestReportCopied ?? (isAr ? 'تم نسخ جدول التقرير بصيغة Markdown بنجاح!' : 'Markdown report copied successfully!')),
         backgroundColor: Colors.teal,
       ),
     );
@@ -387,6 +390,8 @@ class _VoiceTestScreenState extends State<VoiceTestScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final testedCount = _testItems
         .where((i) => i.recognizedText != null)
         .length;
@@ -396,7 +401,7 @@ class _VoiceTestScreenState extends State<VoiceTestScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('اختبار التعرف الصوتي (30 جملة)'),
+        title: Text(l10n?.voiceTestScreenTitle ?? (isAr ? 'اختبار التعرف الصوتي (30 جملة)' : 'Speech Recognition Test (30 Sentences)')),
         actions: [
           IconButton(
             tooltip: 'نسخ التقرير (Markdown)',

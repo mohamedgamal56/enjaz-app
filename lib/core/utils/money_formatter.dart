@@ -105,9 +105,9 @@ class MoneyFormatter {
   /// Parses decimal text entered by user (e.g. "25.50" or "25,5" or Arabic digits "٢٥٫٥") into minor units
   static int parseToMinor(String input) {
     if (input.trim().isEmpty) return 0;
-    // Normalize Arabic digits and commas
+    // Normalize Arabic digits, decimal separator (٫) and commas (، ,)
     var normalized = AppFormatter.formatStringDigits(input, format: NumeralsFormat.western);
-    normalized = normalized.replaceAll('،', '.').replaceAll(',', '.').trim();
+    normalized = normalized.replaceAll('٫', '.').replaceAll('،', '.').replaceAll(',', '.').trim();
 
     final val = double.tryParse(normalized);
     if (val == null) return 0;
