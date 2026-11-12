@@ -32,6 +32,14 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ar'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           home: Scaffold(
             body: Center(
               child: AnswerCard(

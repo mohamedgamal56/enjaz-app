@@ -116,10 +116,7 @@ void main() {
       expect(find.text('مفيش بيانات كافية للفترة دي'), findsOneWidget);
     });
 
-    testWidgets('Contrast of AppColors.textSecondary meets 4.5:1 requirement', (tester) async {
-      final lightColors = AppColors.light();
-      final darkColors = AppColors.dark();
-
+    testWidgets('Contrast of textSecondary meets 4.5:1 requirement', (tester) async {
       double contrastRatio(Color fg, Color bg) {
         final l1 = fg.computeLuminance();
         final l2 = bg.computeLuminance();
@@ -129,14 +126,14 @@ void main() {
       }
 
       // Light theme: textSecondary on background and surface
-      final lightContrastBg = contrastRatio(lightColors.textSecondary, lightColors.background);
-      final lightContrastSurface = contrastRatio(lightColors.textSecondary, lightColors.surface);
+      final lightContrastBg = contrastRatio(AppColors.lightTextMuted, AppColors.lightBackground);
+      final lightContrastSurface = contrastRatio(AppColors.lightTextMuted, AppColors.lightSurface);
       expect(lightContrastBg, greaterThanOrEqualTo(4.5));
       expect(lightContrastSurface, greaterThanOrEqualTo(4.5));
 
       // Dark theme: textSecondary on background and surface
-      final darkContrastBg = contrastRatio(darkColors.textSecondary, darkColors.background);
-      final darkContrastSurface = contrastRatio(darkColors.textSecondary, darkColors.surface);
+      final darkContrastBg = contrastRatio(AppColors.darkTextMuted, AppColors.darkBackground);
+      final darkContrastSurface = contrastRatio(AppColors.darkTextMuted, AppColors.darkSurface);
       expect(darkContrastBg, greaterThanOrEqualTo(4.5));
       expect(darkContrastSurface, greaterThanOrEqualTo(4.5));
     });
