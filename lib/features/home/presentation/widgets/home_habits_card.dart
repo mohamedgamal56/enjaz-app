@@ -112,7 +112,7 @@ class HomeHabitsCard extends ConsumerWidget {
                         const SizedBox(height: 2.0),
                         Row(
                           children: [
-                            Icon(Icons.local_fire_department_rounded, size: 14.0, color: colors.warning),
+                            Icon(Icons.local_fire_department_rounded, size: 14.0, color: colors.warningText),
                             const SizedBox(width: 2.0),
                             Expanded(
                               child: Text(

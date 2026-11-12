@@ -81,17 +81,17 @@ class HomeTodayCard extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
               decoration: BoxDecoration(
-                color: colors.successContainer,
+                color: colors.done.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8.0),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle_rounded, size: 18.0, color: colors.success),
+                  Icon(Icons.check_circle_rounded, size: 18.0, color: colors.done),
                   const SizedBox(width: 8.0),
                   Expanded(
                     child: Text(
                       isArabic ? 'أنجزت كل مهام اليوم! 🎉' : 'All today tasks completed! 🎉',
-                      style: AppTypography.caption(context, color: colors.success).copyWith(
+                      style: AppTypography.caption(context, color: colors.done).copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),

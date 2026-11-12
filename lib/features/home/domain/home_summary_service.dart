@@ -143,11 +143,11 @@ class HomeSummaryService {
       final sinceStr = dateFormat.format(sinceDate);
 
       final logs = await (db.select(db.habitLogs)
-            ..where((l) => l.date.isBiggerOrEqualValue(sinceStr)))
+            ..where((l) => l.logDate.isBiggerOrEqualValue(sinceStr)))
           .get();
 
       final checklistItemLogs = await (db.select(db.habitItemLogs)
-            ..where((l) => l.date.isBiggerOrEqualValue(sinceStr)))
+            ..where((l) => l.logDate.isBiggerOrEqualValue(sinceStr)))
           .get();
 
       final allHabitItems = await db.select(db.habitItems).get();
@@ -159,11 +159,11 @@ class HomeSummaryService {
         if (isScheduledToday) {
           habitsTotalToday++;
           // Check if done today
-          final hLogs = logs.where((l) => l.habitId == h.id && l.date == todayStr);
+          final hLogs = logs.where((l) => l.habitId == h.id && l.logDate == todayStr);
           final loggedVal = hLogs.fold<double>(0.0, (acc, l) => acc + l.value);
           final items = allHabitItems.where((i) => i.habitId == h.id).toList();
           final doneItemLogs = checklistItemLogs.where(
-            (l) => l.habitId == h.id && l.date == todayStr && l.completed,
+            (l) => l.habitId == h.id && l.logDate == todayStr && l.deletedAt == null,
           );
 
           bool isDone = false;
@@ -193,11 +193,11 @@ class HomeSummaryService {
           final isScheduled = h.scheduleDays <= 0 || (h.scheduleDays & bit) != 0;
           if (isScheduled) {
             dayScheduled++;
-            final hLogs = logs.where((l) => l.habitId == h.id && l.date == dateStr);
+            final hLogs = logs.where((l) => l.habitId == h.id && l.logDate == dateStr);
             final loggedVal = hLogs.fold<double>(0.0, (acc, l) => acc + l.value);
             final items = allHabitItems.where((i) => i.habitId == h.id).toList();
             final doneItemLogs = checklistItemLogs.where(
-              (l) => l.habitId == h.id && l.date == dateStr && l.completed,
+              (l) => l.habitId == h.id && l.logDate == dateStr && l.deletedAt == null,
             );
 
             bool isDone = false;
@@ -227,15 +227,15 @@ class HomeSummaryService {
     // 3. Finance summary
     final todayExpenses = await (db.select(db.transactions)
           ..where((t) =>
-              t.date.equals(todayStr) &
-              t.type.equals('expense') &
+              t.localDate.equals(todayStr) &
+              t.kind.equals('expense') &
               t.deletedAt.isNull()))
         .get();
 
     final monthExpenses = await (db.select(db.transactions)
           ..where((t) =>
-              t.date.like('$currentMonth%') &
-              t.type.equals('expense') &
+              t.localDate.like('$currentMonth%') &
+              t.kind.equals('expense') &
               t.deletedAt.isNull()))
         .get();
 
@@ -266,7 +266,7 @@ class HomeSummaryService {
               h.deletedAt.isNull())
           ..orderBy([
             (h) => OrderingTerm.asc(h.localDate),
-            (h) => OrderingTerm.asc(h.dueTime),
+            (h) => OrderingTerm.asc(h.scheduledAt),
           ])
           ..limit(1))
         .get();

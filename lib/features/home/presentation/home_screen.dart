@@ -39,7 +39,7 @@ class HomeScreen extends ConsumerWidget {
               child: EmptyState(
                 icon: Icons.error_outline_rounded,
                 title: isArabic ? 'حدث خطأ أثناء تحميل البيانات' : 'Error loading summary',
-                description: error.toString(),
+                subtitle: error.toString(),
                 actionLabel: isArabic ? 'إعادة المحاولة' : 'Retry',
                 onAction: () => ref.refresh(homeSummaryProvider),
               ),

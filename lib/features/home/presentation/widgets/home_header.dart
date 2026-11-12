@@ -50,7 +50,7 @@ class HomeHeader extends ConsumerWidget {
               children: [
                 Text(
                   greeting,
-                  style: AppTypography.greeting(context, color: colors.text),
+                  style: AppTypography.greeting(context).copyWith(color: colors.text),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

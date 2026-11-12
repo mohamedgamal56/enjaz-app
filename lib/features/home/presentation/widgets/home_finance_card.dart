@@ -4,10 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/money_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/card_header.dart';
-import '../../../finance/domain/finance_masked_provider.dart';
-import '../../../finance/domain/money_formatter.dart';
 import '../../../finance/presentation/finance_screen.dart';
 import '../../domain/home_summary_data.dart';
 
@@ -86,7 +85,7 @@ class HomeFinanceCard extends ConsumerWidget {
           // Spending today in large type
           Text(
             todaySpendingStr,
-            style: AppTypography.keyValue(context, color: colors.text),
+            style: AppTypography.keyValue(context).copyWith(color: colors.text),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

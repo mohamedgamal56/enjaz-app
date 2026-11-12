@@ -2,34 +2,53 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:enjaz/core/db/app_database.dart';
 import 'package:enjaz/features/home/domain/home_summary_service.dart';
 
+Task _createTask({
+  required int id,
+  required String title,
+  String dueDate = '2026-11-12',
+  String? dueTime,
+  String status = 'pending',
+}) {
+  return Task(
+    id: id,
+    title: title,
+    dueDate: dueDate,
+    dueTime: dueTime,
+    status: status,
+    kind: 'task',
+    priority: 'normal',
+    progress: status == 'done' ? 100 : 0,
+    postponeCount: 0,
+    createdAt: 1000,
+    updatedAt: 1000,
+  );
+}
+
 void main() {
   group('HomeSummaryService - Pure Logic Rules', () {
     group('Next-task rule (UI.md Section 4.2 & Section 8 Rule 4)', () {
       test('selects earlier task with time over task without time', () {
         final tasks = [
-          Task(
+          _createTask(
             id: 1,
             title: 'Task without time',
             dueDate: '2026-11-12',
             dueTime: null,
             status: 'pending',
-            createdAt: DateTime.now(),
           ),
-          Task(
+          _createTask(
             id: 2,
             title: 'Meeting at 14:00',
             dueDate: '2026-11-12',
             dueTime: '14:00',
             status: 'pending',
-            createdAt: DateTime.now(),
           ),
-          Task(
+          _createTask(
             id: 3,
             title: 'Morning review at 09:00',
             dueDate: '2026-11-12',
             dueTime: '09:00',
             status: 'pending',
-            createdAt: DateTime.now(),
           ),
         ];
 
@@ -41,19 +60,17 @@ void main() {
 
       test('falls back to first unfinished task when none have dueTime', () {
         final tasks = [
-          Task(
+          _createTask(
             id: 1,
             title: 'General task 1',
             dueDate: '2026-11-12',
             status: 'pending',
-            createdAt: DateTime.now(),
           ),
-          Task(
+          _createTask(
             id: 2,
             title: 'General task 2',
             dueDate: '2026-11-12',
             status: 'pending',
-            createdAt: DateTime.now(),
           ),
         ];
 
@@ -65,21 +82,19 @@ void main() {
 
       test('ignores completed tasks when selecting next task', () {
         final tasks = [
-          Task(
+          _createTask(
             id: 1,
             title: 'Done task at 08:00',
             dueDate: '2026-11-12',
             dueTime: '08:00',
             status: 'done',
-            createdAt: DateTime.now(),
           ),
-          Task(
+          _createTask(
             id: 2,
             title: 'Upcoming task at 10:00',
             dueDate: '2026-11-12',
             dueTime: '10:00',
             status: 'pending',
-            createdAt: DateTime.now(),
           ),
         ];
 
@@ -91,20 +106,18 @@ void main() {
 
       test('returns isAllDone = true and nextTaskTitle = null when all tasks done', () {
         final tasks = [
-          Task(
+          _createTask(
             id: 1,
             title: 'Task 1',
             dueDate: '2026-11-12',
             status: 'done',
-            createdAt: DateTime.now(),
           ),
-          Task(
+          _createTask(
             id: 2,
             title: 'Task 2',
             dueDate: '2026-11-12',
             dueTime: '12:00',
             status: 'done',
-            createdAt: DateTime.now(),
           ),
         ];
 

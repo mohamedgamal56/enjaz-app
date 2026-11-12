@@ -33,8 +33,8 @@ class HomeOverdueStrip extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: AppCard(
-        color: colors.warningContainer,
-        borderColor: colors.warning.withValues(alpha: 0.4),
+        color: colors.warningText.withValues(alpha: 0.12),
+        borderColor: colors.warningBorder,
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         onTap: () {
           Navigator.of(context).push(
@@ -46,20 +46,20 @@ class HomeOverdueStrip extends ConsumerWidget {
             Icon(
               Icons.warning_amber_rounded,
               size: 20.0,
-              color: colors.warning,
+              color: colors.warningText,
             ),
             const SizedBox(width: 10.0),
             Expanded(
               child: Text(
                 text,
-                style: AppTypography.body(context, color: colors.warning).copyWith(
+                style: AppTypography.body(context, color: colors.warningText).copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
             Text(
               isArabic ? 'عرض' : 'View',
-              style: AppTypography.caption(context, color: colors.warning).copyWith(
+              style: AppTypography.caption(context, color: colors.warningText).copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -67,7 +67,7 @@ class HomeOverdueStrip extends ConsumerWidget {
             Icon(
               Icons.arrow_forward_ios_rounded,
               size: 12.0,
-              color: colors.warning,
+              color: colors.warningText,
             ),
           ],
         ),

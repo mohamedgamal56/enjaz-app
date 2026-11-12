@@ -88,8 +88,7 @@ class HomeHealthCard extends ConsumerWidget {
             const SizedBox(height: 8.0),
             StatusChip(
               label: isArabic ? '$postponedStr مؤجل' : '$postponedStr postponed',
-              color: colors.warning,
-              backgroundColor: colors.warningContainer,
+              color: colors.postponed,
             ),
           ],
         ],
