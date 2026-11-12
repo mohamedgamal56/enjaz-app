@@ -682,3 +682,21 @@ equestDismissKeyguard(this, null) and WindowManager.LayoutParams.FLAG_DISMISS_KE
     - Unaltered alarm notification channel (`enjaz_alarm_v5_music`), Xiaomi lockscreen flags, permissions, and Egyptian Arabic voice assistant.
   - **Version Bump & Artifact Naming**:
     - Version bumped to `1.2.13+2033` generating `enjaz-v1.2.13+2033-arm64.apk` signed with the permanent release keystore.
+
+## Decision 31: UI Refresh Step 3 — Section Screens Refresh & Assistant AnswerCard Localization Fix (v1.2.14+2034)
+- **Context**: UI.md Section 6 and Section 9 require applying design tokens (`AppCard`, calm 1px borders, 0 elevation, 16px radius, `EmptyState`, `textSecondary`) across all internal section screens (Today, Goals, Ideas, Notes, Stats, Habits, Finance, Health, Timeline, History, Trash, Settings) without modifying any underlying business rules or data schemas. In addition, an assistant answer card bug caused the close button to display Arabic 'إغلاق' even when the app language was set to English.
+- **Decision**:
+  - **Section Screens Token Modernization**:
+    - Replaced fragmented `Card` widgets and manual border containers with `AppCard` across `TodayScreen` (date switcher), `HabitsScreen` (habit cards), `FinanceScreen` (monthly summary), `TransactionsTab` (transaction items), `HealthTodoTab` & `TreatmentsTab` (checkups and treatment items), and all 12 sections in `SettingsScreen`.
+    - Standardized empty states: replaced scattered custom empty columns with `EmptyState` across `TodayScreen`, `GoalsScreen`, `IdeasScreen`, `NotesTab`, `StatsScreen`, `HabitsScreen`, `TransactionsTab`, `HealthTodoTab`, `TreatmentsTab`, `HistoryScreen`, and all 7 tabs in `TrashScreen`.
+    - Replaced dim `textMuted` with `textSecondary` on labels and descriptive subtitles in `StatsScreen` and `SettingsScreen`, ensuring compliance with WCAG AA 4.5:1 minimum contrast.
+  - **Voice Assistant AnswerCard Localization Fix**:
+    - In `lib/main.dart`, registered `gen_l10n.AppLocalizations.delegate` in `localizationsDelegates` alongside `legacy_l10n`.
+    - In `lib/core/l10n/app_localizations.dart`, added `assistantClose` getter with 'إغلاق' for Arabic and 'Close' for English.
+    - In `AnswerCard` (~line 175), improved resolution of localized text with a fallback that inspects active locale.
+    - Verified with widget test in `test/widget/assistant/answer_card_test.dart`.
+  - **Zero Regression Guarantees**:
+    - Completely untouched: alarm channel (`enjaz_alarm_v5_music`), Xiaomi lockscreen flags, Drift database schema, and offline permissions (zero internet permissions).
+  - **Version Bump & Artifact Naming**:
+    - Version bumped to `1.2.14+2034` generating `enjaz-v1.2.14+2034-arm64.apk` signed with the permanent release keystore.
+

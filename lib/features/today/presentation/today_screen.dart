@@ -5,6 +5,7 @@ import '../../../core/db/app_database.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/widgets/widgets.dart';
 import '../../tasks/presentation/quick_add_sheet.dart';
 import '../../tasks/presentation/widgets/task_card.dart';
 import '../../tasks/domain/task_selection_provider.dart';
@@ -247,74 +248,72 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Date Switcher Header
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.chevron_left_rounded),
-                        tooltip: l10n.previousDay,
-                        onPressed: _previousDay,
-                      ),
-                      InkWell(
-                        onTap: _pickDate,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    weekday,
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
+              AppCard(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left_rounded),
+                      tooltip: l10n.previousDay,
+                      onPressed: _previousDay,
+                    ),
+                    InkWell(
+                      onTap: _pickDate,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  weekday,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                if (isToday) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primaryContainer,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      l10n.tabToday,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.colorScheme.onPrimaryContainer,
+                                      ),
                                     ),
                                   ),
-                                  if (isToday) ...[
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: theme.colorScheme.primaryContainer,
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        l10n.tabToday,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: theme.colorScheme.onPrimaryContainer,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
                                 ],
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              fullDate,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColors.of(context).textSecondary,
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                fullDate,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: AppColors.of(context).textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.chevron_right_rounded),
-                        tooltip: l10n.nextDay,
-                        onPressed: _nextDay,
-                      ),
-                    ],
-                  ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right_rounded),
+                      tooltip: l10n.nextDay,
+                      onPressed: _nextDay,
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),
@@ -422,54 +421,18 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                             if (!hasAnyItems) {
                               return Center(
                                 child: SingleChildScrollView(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(20),
-                                        decoration: BoxDecoration(
-                                          color: theme.colorScheme
-                                              .surfaceContainerHighest,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          Icons.task_alt_rounded,
-                                          size: 48,
-                                          color: theme.colorScheme.primary,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        l10n.emptyTodayTitle,
-                                        style: theme.textTheme.titleMedium,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        l10n.emptyTodaySubtitle,
-                                        style: theme.textTheme.bodySmall,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 20),
-                                      FilledButton.icon(
-                                        icon: const Icon(Icons.add_rounded),
-                                        label: Text(l10n.addTask),
-                                        style: FilledButton.styleFrom(
-                                          minimumSize: const Size(160, 48),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                        ),
-                                        onPressed: () {
-                                          QuickAddSheet.show(
-                                            context,
-                                            initialDate: selectedDateStr,
-                                            initialKind: 'task',
-                                          );
-                                        },
-                                      ),
-                                    ],
+                                  child: EmptyState(
+                                    icon: Icons.task_alt_rounded,
+                                    title: l10n.emptyTodayTitle,
+                                    subtitle: l10n.emptyTodaySubtitle,
+                                    actionLabel: l10n.addTask,
+                                    onAction: () {
+                                      QuickAddSheet.show(
+                                        context,
+                                        initialDate: selectedDateStr,
+                                        initialKind: 'task',
+                                      );
+                                    },
                                   ),
                                 ),
                               );

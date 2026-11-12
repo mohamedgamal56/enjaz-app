@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/db/app_database.dart';
 import '../../../core/l10n/app_localizations.dart';
+import '../../../core/widgets/widgets.dart';
 import 'add_goal_sheet.dart';
 import 'widgets/goal_card.dart';
 
@@ -86,49 +87,14 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
 
                   if (goals.isEmpty) {
                     return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.flag_outlined,
-                              size: 48,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            l10n.emptyGoalsTitle,
-                            style: theme.textTheme.titleMedium,
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 4),
-                          if (isArabic)
-                            Text(
-                              'No goals in this section yet',
-                              style: theme.textTheme.bodySmall,
-                              textAlign: TextAlign.center,
-                            ),
-                          const SizedBox(height: 20),
-                          FilledButton.icon(
-                            icon: const Icon(Icons.add_rounded),
-                            label: Text(l10n.addGoal),
-                            style: FilledButton.styleFrom(
-                              minimumSize: const Size(160, 48),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () {
-                              AddGoalSheet.show(context);
-                            },
-                          ),
-                        ],
+                      child: EmptyState(
+                        icon: Icons.flag_outlined,
+                        title: l10n.emptyGoalsTitle,
+                        subtitle: isArabic
+                            ? 'لا توجد أهداف في هذا القسم بعد'
+                            : 'No goals in this section yet',
+                        actionLabel: l10n.addGoal,
+                        onAction: () => AddGoalSheet.show(context),
                       ),
                     );
                   }

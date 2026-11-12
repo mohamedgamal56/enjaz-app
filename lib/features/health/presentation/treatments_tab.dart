@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/db/app_database.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/widgets/widgets.dart';
 import '../../reminders/domain/reminder_scheduler.dart';
 import '../domain/health_service.dart';
 import 'health_icon_helper.dart';
@@ -86,25 +87,10 @@ class TreatmentsTab extends ConsumerWidget {
 
         if (treatments.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.medication_liquid_rounded,
-                  size: 64,
-                  color: theme.colorScheme.outline,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  isArabic ? 'لا توجد علاجات أو أدوية مسجلة حالياً' : 'No treatments or medications tracked',
-                  style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.outline),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  isArabic ? 'اضغط على زر + بالأسفل لإضافة كورس علاجي' : 'Tap + button below to add medication',
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
-                ),
-              ],
+            child: EmptyState(
+              icon: Icons.medication_liquid_rounded,
+              title: isArabic ? 'لا توجد علاجات أو أدوية مسجلة حالياً' : 'No treatments or medications tracked',
+              subtitle: isArabic ? 'اضغط على زر + بالأسفل لإضافة كورس علاجي' : 'Tap + button below to add medication',
             ),
           );
         }
@@ -130,18 +116,12 @@ class TreatmentsTab extends ConsumerWidget {
                 final adherenceLabel = HealthIconHelper.getAdherenceLabel(tr.adherence, isArabic);
                 final adherenceColor = HealthIconHelper.getAdherenceColor(tr.adherence);
 
-                return Card(
+                return AppCard(
                   margin: const EdgeInsets.only(bottom: 12.0),
-                  elevation: 1,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(14.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                  padding: const EdgeInsets.all(14.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                         // Header row
                         Row(
                           children: [
@@ -377,8 +357,7 @@ class TreatmentsTab extends ConsumerWidget {
                         ),
                       ],
                     ),
-                  ),
-                );
+                  );
               },
             );
           },

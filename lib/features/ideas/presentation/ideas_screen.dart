@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/db/app_database.dart';
 import '../../../core/l10n/app_localizations.dart';
+import '../../../core/widgets/widgets.dart';
 import 'add_idea_sheet.dart';
 import 'widgets/idea_card.dart';
 
@@ -184,47 +185,14 @@ class _IdeasScreenState extends ConsumerState<IdeasScreen> {
 
                   if (ideas.isEmpty) {
                     return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.lightbulb_outline_rounded,
-                              size: 48,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            l10n.emptyIdeasTitle,
-                            style: theme.textTheme.titleMedium,
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 4),
-                          if (isArabic)
-                            Text(
-                              'No ideas recorded in this section yet',
-                              style: theme.textTheme.bodySmall,
-                              textAlign: TextAlign.center,
-                            ),
-                          const SizedBox(height: 20),
-                          FilledButton.icon(
-                            icon: const Icon(Icons.add_rounded),
-                            label: Text(l10n.addIdea),
-                            style: FilledButton.styleFrom(
-                              minimumSize: const Size(160, 48),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            onPressed: () {
-                              AddIdeaSheet.show(context);
-                            },
-                          ),
-                        ],
+                      child: EmptyState(
+                        icon: Icons.lightbulb_outline_rounded,
+                        title: l10n.emptyIdeasTitle,
+                        subtitle: isArabic
+                            ? 'لا توجد أفكار مسجلة في هذا القسم بعد'
+                            : 'No ideas recorded in this section yet',
+                        actionLabel: l10n.addIdea,
+                        onAction: () => AddIdeaSheet.show(context),
                       ),
                     );
                   }

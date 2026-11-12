@@ -8,6 +8,7 @@ import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/widgets/widgets.dart';
 import '../../excel_export/presentation/excel_export_sheet.dart';
 import '../../tasks/presentation/task_details_screen.dart';
 import '../domain/stats_service.dart';
@@ -487,7 +488,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                   children: [
                     Text(
                       l10n.currentStreak,
-                      style: AppTypography.bodySmall(context).copyWith(color: colors.textMuted),
+                      style: AppTypography.bodySmall(context).copyWith(color: colors.textSecondary),
                     ),
                     Row(
                       children: [
@@ -501,7 +502,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                         const SizedBox(width: 10),
                         Text(
                           '(${l10n.bestStreak}: ${AppFormatter.formatNumber(stats.bestStreak, format: numFmt)})',
-                          style: AppTypography.bodySmall(context).copyWith(color: colors.textMuted),
+                          style: AppTypography.bodySmall(context).copyWith(color: colors.textSecondary),
                         ),
                       ],
                     ),
@@ -569,7 +570,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           Text(
             title,
             style: AppTypography.bodySmall(context).copyWith(
-              color: colors.textMuted,
+              color: colors.textSecondary,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1195,34 +1196,12 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
 
   // --- Empty State ---
   Widget _buildEmptyState(AppColors colors, AppLocalizations l10n) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: colors.surfaceVariant,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.insights_rounded, size: 48, color: colors.accent),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            l10n.noStatsData,
-            style: AppTypography.titleMedium(context).copyWith(
-              fontWeight: FontWeight.bold,
-              color: colors.text,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            l10n.noStatsDataSubtitle,
-            style: AppTypography.bodySmall(context).copyWith(color: colors.textMuted),
-            textAlign: TextAlign.center,
-          ),
-        ],
+    return Center(
+      child: EmptyState(
+        icon: Icons.insights_rounded,
+        title: l10n.noStatsData,
+        subtitle: l10n.noStatsDataSubtitle,
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
       ),
     );
   }

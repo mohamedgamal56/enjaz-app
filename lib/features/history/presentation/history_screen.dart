@@ -5,6 +5,7 @@ import '../../../core/db/app_database.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/widgets/widgets.dart';
 import '../../tasks/domain/task_selection_provider.dart';
 import '../../tasks/presentation/widgets/bulk_selection_bar.dart';
 import '../../tasks/presentation/widgets/task_card.dart';
@@ -242,22 +243,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
                       if (tasks.isEmpty) {
                         return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.manage_search_rounded,
-                                size: 64,
-                                color: theme.colorScheme.outline,
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                l10n.noHistoryFound,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  color: theme.colorScheme.outline,
-                                ),
-                              ),
-                            ],
+                          child: EmptyState(
+                            icon: Icons.manage_search_rounded,
+                            title: l10n.noHistoryFound,
                           ),
                         );
                       }

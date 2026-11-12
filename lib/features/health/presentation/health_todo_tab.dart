@@ -5,6 +5,7 @@ import 'package:drift/drift.dart' as drift;
 import '../../../core/db/app_database.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../../core/widgets/widgets.dart';
 import '../../reminders/domain/reminder_scheduler.dart';
 import '../domain/health_service.dart';
 import 'health_icon_helper.dart';
@@ -296,25 +297,10 @@ class HealthTodoTab extends ConsumerWidget {
 
         if (items.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.health_and_safety_outlined,
-                  size: 64,
-                  color: theme.colorScheme.outline,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  isArabic ? 'لا توجد فحوصات أو كشوفات مطلوبة حالياً' : 'No pending checkups or tests',
-                  style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.outline),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  isArabic ? 'اضغط على زر + بالأسفل لإضافة فحص أو كشف' : 'Tap + button below to add an item',
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
-                ),
-              ],
+            child: EmptyState(
+              icon: Icons.health_and_safety_outlined,
+              title: isArabic ? 'لا توجد فحوصات أو كشوفات مطلوبة حالياً' : 'No pending checkups or tests',
+              subtitle: isArabic ? 'اضغط على زر + بالأسفل لإضافة فحص أو كشف' : 'Tap + button below to add an item',
             ),
           );
         }
@@ -337,23 +323,13 @@ class HealthTodoTab extends ConsumerWidget {
               );
             }
 
-            return Card(
+            return AppCard(
               margin: const EdgeInsets.only(bottom: 12.0),
-              elevation: 1,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(
-                  color: isNeglected
-                      ? Colors.orange.withValues(alpha: 0.5)
-                      : theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
-                  width: isNeglected ? 1.5 : 1,
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(14.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              padding: const EdgeInsets.all(14.0),
+              borderColor: isNeglected ? Colors.orange.withValues(alpha: 0.5) : null,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                     // Header row
                     Row(
                       children: [
@@ -554,8 +530,7 @@ class HealthTodoTab extends ConsumerWidget {
                     ),
                   ],
                 ),
-              ),
-            );
+              );
           },
         );
       },

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/db/app_database.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../../core/widgets/widgets.dart';
 import '../domain/finance_service.dart';
 import 'add_transaction_sheet.dart';
 import 'finance_analysis_tab.dart';
@@ -152,13 +153,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> with SingleTicker
                 showDecimals: false,
               );
 
-              return Container(
+              return AppCard(
                 margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(14),
-                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [

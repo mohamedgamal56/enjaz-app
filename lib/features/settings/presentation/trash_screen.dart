@@ -5,6 +5,7 @@ import '../../../core/db/app_database.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../../core/widgets/widgets.dart';
 import '../../reminders/domain/reminder_scheduler.dart';
 
 class TrashScreen extends ConsumerWidget {
@@ -1229,23 +1230,11 @@ class TrashScreen extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context, {required String title, required String subtitle}) {
-    final theme = Theme.of(context);
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.delete_outline_rounded, size: 64, color: theme.colorScheme.outline),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.outline),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
-          ),
-        ],
+      child: EmptyState(
+        icon: Icons.delete_outline_rounded,
+        title: title,
+        subtitle: subtitle,
       ),
     );
   }

@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/l10n/l10n.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/widgets/widgets.dart';
 import '../../../core/db/app_database.dart';
 import '../../voice_notes/domain/voice_note_service.dart';
 import '../../excel_export/presentation/excel_export_sheet.dart';
@@ -39,7 +41,8 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         children: [
           // Section: Profile (الملف الشخصي)
-          Card(
+          AppCard(
+            padding: EdgeInsets.zero,
             child: ListTile(
               leading: Icon(Icons.person_outline_rounded, color: theme.colorScheme.primary),
               title: Text(isArabic ? 'الملف الشخصي' : 'Profile'),
@@ -47,6 +50,7 @@ class SettingsScreen extends ConsumerWidget {
                 homeSettings.userName.isNotEmpty
                     ? homeSettings.userName
                     : (isArabic ? 'الاسم (انقر لتعديل الاسم)' : 'Name (tap to edit)'),
+                style: TextStyle(color: AppColors.of(context).textSecondary),
               ),
               trailing: const Icon(Icons.edit_outlined, size: 18),
               onTap: () => _editUserName(context, ref, homeSettings.userName, isArabic),
@@ -55,7 +59,8 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 12),
 
           // Section: Home Customization (الرئيسية)
-          Card(
+          AppCard(
+            padding: EdgeInsets.zero,
             child: ListTile(
               leading: Icon(Icons.dashboard_customize_outlined, color: theme.colorScheme.primary),
               title: Text(isArabic ? 'الرئيسية' : 'Home Screen'),
@@ -63,6 +68,7 @@ class SettingsScreen extends ConsumerWidget {
                 isArabic
                     ? 'ترتيب وإظهار البطاقات، وخصوصية الصحة'
                     : 'Cards order, visibility & health privacy',
+                style: TextStyle(color: AppColors.of(context).textSecondary),
               ),
               trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
               onTap: () => Navigator.of(context).push(
@@ -72,151 +78,158 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
 
-          Card(child: ListTile(leading: const Icon(Icons.settings_voice), title: Text(isArabic ? 'المساعد الصوتي' : 'Voice assistant'), onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AssistantSettingsScreen())))),
-          // Section: Language
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.language_rounded, color: theme.colorScheme.primary),
-                      const SizedBox(width: 12),
-                      Text(
-                        l10n.language,
-                        style: theme.textTheme.titleMedium,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  RadioListTile<String>(
-                    title: Text(l10n.languageArabic),
-                    subtitle: const Text('Arabic (RTL)'),
-                    value: 'ar',
-                    groupValue: currentLocale?.languageCode ??
-                        Localizations.localeOf(context).languageCode,
-                    onChanged: (val) {
-                      ref.read(localeProvider.notifier).setLocale(const Locale('ar'));
-                    },
-                  ),
-                  RadioListTile<String>(
-                    title: Text(l10n.languageEnglish),
-                    subtitle: const Text('English (LTR)'),
-                    value: 'en',
-                    groupValue: currentLocale?.languageCode ??
-                        Localizations.localeOf(context).languageCode,
-                    onChanged: (val) {
-                      ref.read(localeProvider.notifier).setLocale(const Locale('en'));
-                    },
-                  ),
-                ],
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: ListTile(
+              leading: const Icon(Icons.settings_voice),
+              title: Text(isArabic ? 'المساعد الصوتي' : 'Voice assistant'),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AssistantSettingsScreen()),
               ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Section: Language
+          AppCard(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.language_rounded, color: theme.colorScheme.primary),
+                    const SizedBox(width: 12),
+                    Text(
+                      l10n.language,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                RadioListTile<String>(
+                  title: Text(l10n.languageArabic),
+                  subtitle: Text('Arabic (RTL)', style: TextStyle(color: AppColors.of(context).textSecondary)),
+                  value: 'ar',
+                  groupValue: currentLocale?.languageCode ??
+                      Localizations.localeOf(context).languageCode,
+                  onChanged: (val) {
+                    ref.read(localeProvider.notifier).setLocale(const Locale('ar'));
+                  },
+                ),
+                RadioListTile<String>(
+                  title: Text(l10n.languageEnglish),
+                  subtitle: Text('English (LTR)', style: TextStyle(color: AppColors.of(context).textSecondary)),
+                  value: 'en',
+                  groupValue: currentLocale?.languageCode ??
+                      Localizations.localeOf(context).languageCode,
+                  onChanged: (val) {
+                    ref.read(localeProvider.notifier).setLocale(const Locale('en'));
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
 
           // Section: Theme
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.palette_outlined, color: theme.colorScheme.primary),
-                      const SizedBox(width: 12),
-                      Text(
-                        l10n.theme,
-                        style: theme.textTheme.titleMedium,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  RadioListTile<ThemeMode>(
-                    title: Text(l10n.themeSystem),
-                    value: ThemeMode.system,
-                    groupValue: currentThemeMode,
-                    onChanged: (val) {
-                      if (val != null) {
-                        ref.read(themeModeProvider.notifier).setThemeMode(val);
-                      }
-                    },
-                  ),
-                  RadioListTile<ThemeMode>(
-                    title: Text(l10n.themeLight),
-                    value: ThemeMode.light,
-                    groupValue: currentThemeMode,
-                    onChanged: (val) {
-                      if (val != null) {
-                        ref.read(themeModeProvider.notifier).setThemeMode(val);
-                      }
-                    },
-                  ),
-                  RadioListTile<ThemeMode>(
-                    title: Text(l10n.themeDark),
-                    value: ThemeMode.dark,
-                    groupValue: currentThemeMode,
-                    onChanged: (val) {
-                      if (val != null) {
-                        ref.read(themeModeProvider.notifier).setThemeMode(val);
-                      }
-                    },
-                  ),
-                ],
-              ),
+          AppCard(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.palette_outlined, color: theme.colorScheme.primary),
+                    const SizedBox(width: 12),
+                    Text(
+                      l10n.theme,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                RadioListTile<ThemeMode>(
+                  title: Text(l10n.themeSystem),
+                  value: ThemeMode.system,
+                  groupValue: currentThemeMode,
+                  onChanged: (val) {
+                    if (val != null) {
+                      ref.read(themeModeProvider.notifier).setThemeMode(val);
+                    }
+                  },
+                ),
+                RadioListTile<ThemeMode>(
+                  title: Text(l10n.themeLight),
+                  value: ThemeMode.light,
+                  groupValue: currentThemeMode,
+                  onChanged: (val) {
+                    if (val != null) {
+                      ref.read(themeModeProvider.notifier).setThemeMode(val);
+                    }
+                  },
+                ),
+                RadioListTile<ThemeMode>(
+                  title: Text(l10n.themeDark),
+                  value: ThemeMode.dark,
+                  groupValue: currentThemeMode,
+                  onChanged: (val) {
+                    if (val != null) {
+                      ref.read(themeModeProvider.notifier).setThemeMode(val);
+                    }
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
 
           // Section: Numerals
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.tag_rounded, color: theme.colorScheme.primary),
-                      const SizedBox(width: 12),
-                      Text(
-                        l10n.numerals,
-                        style: theme.textTheme.titleMedium,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  RadioListTile<NumeralsFormat>(
-                    title: Text(l10n.numeralsWestern),
-                    value: NumeralsFormat.western,
-                    groupValue: currentNumerals,
-                    onChanged: (val) {
-                      if (val != null) {
-                        ref.read(numeralsProvider.notifier).setFormat(val);
-                      }
-                    },
-                  ),
-                  RadioListTile<NumeralsFormat>(
-                    title: Text(l10n.numeralsArabic),
-                    value: NumeralsFormat.arabicIndic,
-                    groupValue: currentNumerals,
-                    onChanged: (val) {
-                      if (val != null) {
-                        ref.read(numeralsProvider.notifier).setFormat(val);
-                      }
-                    },
-                  ),
-                ],
-              ),
+          AppCard(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.tag_rounded, color: theme.colorScheme.primary),
+                    const SizedBox(width: 12),
+                    Text(
+                      l10n.numerals,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                RadioListTile<NumeralsFormat>(
+                  title: Text(l10n.numeralsWestern),
+                  value: NumeralsFormat.western,
+                  groupValue: currentNumerals,
+                  onChanged: (val) {
+                    if (val != null) {
+                      ref.read(numeralsProvider.notifier).setFormat(val);
+                    }
+                  },
+                ),
+                RadioListTile<NumeralsFormat>(
+                  title: Text(l10n.numeralsArabic),
+                  value: NumeralsFormat.arabicIndic,
+                  groupValue: currentNumerals,
+                  onChanged: (val) {
+                    if (val != null) {
+                      ref.read(numeralsProvider.notifier).setFormat(val);
+                    }
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
 
           // Section: Management (Reasons & Trash)
-          Card(
+          AppCard(
+            padding: EdgeInsets.zero,
             child: Column(
               children: [
                 ListTile(
@@ -253,35 +266,33 @@ class SettingsScreen extends ConsumerWidget {
               final bytes = snapshot.data?.$2 ?? 0;
               final sizeFormatted = VoiceNoteService.formatFileSize(bytes);
 
-              return Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.mic_rounded, color: theme.colorScheme.primary),
-                          const SizedBox(width: 12),
-                          Text(
-                            l10n.voiceStorage,
-                            style: theme.textTheme.titleMedium,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('${l10n.voiceNotesCountLabel}: $count'),
-                          Text(
-                            '${l10n.voiceStorageUsedLabel}: $sizeFormatted',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+              return AppCard(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.mic_rounded, color: theme.colorScheme.primary),
+                        const SizedBox(width: 12),
+                        Text(
+                          l10n.voiceStorage,
+                          style: theme.textTheme.titleMedium,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('${l10n.voiceNotesCountLabel}: $count'),
+                        Text(
+                          '${l10n.voiceStorageUsedLabel}: $sizeFormatted',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               );
             },
@@ -293,11 +304,15 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // Section: Excel Report Export (Spec 15.2)
-          Card(
+          AppCard(
+            padding: EdgeInsets.zero,
             child: ListTile(
               leading: Icon(Icons.table_chart_rounded, color: theme.colorScheme.primary),
               title: Text(l10n.exportExcel),
-              subtitle: Text(l10n.exportExcelSubtitle),
+              subtitle: Text(
+                l10n.exportExcelSubtitle,
+                style: TextStyle(color: AppColors.of(context).textSecondary),
+              ),
               trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
               onTap: () {
                 ExcelExportSheet.show(context);
@@ -307,132 +322,134 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // Section: App Lock & Security (Phase 7)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.security_rounded, color: theme.colorScheme.primary),
-                      const SizedBox(width: 12),
-                      Text(
-                        l10n.appLockSettingTitle,
-                        style: theme.textTheme.titleMedium,
-                      ),
-                    ],
+          AppCard(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.security_rounded, color: theme.colorScheme.primary),
+                    const SizedBox(width: 12),
+                    Text(
+                      l10n.appLockSettingTitle,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (!appLockState.hasDeviceSecurity) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.errorContainer.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline_rounded, color: theme.colorScheme.error),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            isArabic
+                                ? 'لم يتم تعيين قفل للشاشة على جهازك (PIN أو بصمة). يرجى تعيين قفل شاشة من إعدادات الهاتف لتفعيل الحماية.'
+                                : 'No screen lock (PIN, pattern or biometrics) is set on this phone. Please enable it in system settings first.',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  if (!appLockState.hasDeviceSecurity) ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.errorContainer.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.info_outline_rounded, color: theme.colorScheme.error),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              isArabic
-                                  ? 'لم يتم تعيين قفل للشاشة على جهازك (PIN أو بصمة). يرجى تعيين قفل شاشة من إعدادات الهاتف لتفعيل الحماية.'
-                                  : 'No screen lock (PIN, pattern or biometrics) is set on this phone. Please enable it in system settings first.',
-                              style: theme.textTheme.bodySmall,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  SwitchListTile(
+                ],
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.appLockTitle),
+                  subtitle: Text(
+                    isArabic
+                        ? 'قفل التطبيق ببصمة الهاتف أو رمز PIN أو النمط'
+                        : l10n.appLockSettingSubtitle,
+                    style: TextStyle(fontSize: 12, color: AppColors.of(context).textSecondary),
+                  ),
+                  value: appLockState.isEnabled,
+                  onChanged: (val) async {
+                    final notifier = ref.read(appLockProvider.notifier);
+                    final success = await notifier.setLockEnabled(
+                      val,
+                      localizedReason: l10n.appLockReason,
+                    );
+                    if (!success && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l10n.authFailedMessage)),
+                      );
+                    }
+                  },
+                ),
+                if (appLockState.isEnabled) ...[
+                  const Divider(height: 16),
+                  ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(l10n.appLockTitle),
+                    title: Text(
+                      isArabic ? 'مهلة القفل في الخلفية' : 'Background lock timeout',
+                      style: const TextStyle(fontSize: 14),
+                    ),
                     subtitle: Text(
                       isArabic
-                          ? 'قفل التطبيق ببصمة الهاتف أو رمز PIN أو النمط'
-                          : l10n.appLockSettingSubtitle,
-                      style: TextStyle(fontSize: 12, color: theme.colorScheme.outline),
+                          ? _formatTimeoutLabelAr(appLockState.timeoutSeconds)
+                          : _formatTimeoutLabelEn(appLockState.timeoutSeconds),
+                      style: TextStyle(fontSize: 12, color: theme.colorScheme.primary),
                     ),
-                    value: appLockState.isEnabled,
-                    onChanged: (val) async {
-                      final notifier = ref.read(appLockProvider.notifier);
-                      final success = await notifier.setLockEnabled(
-                        val,
-                        localizedReason: l10n.appLockReason,
-                      );
-                      if (!success && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(l10n.authFailedMessage)),
-                        );
-                      }
-                    },
-                  ),
-                  if (appLockState.isEnabled) ...[
-                    const Divider(height: 16),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        isArabic ? 'مهلة القفل في الخلفية' : 'Background lock timeout',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      subtitle: Text(
-                        isArabic
-                            ? _formatTimeoutLabelAr(appLockState.timeoutSeconds)
-                            : _formatTimeoutLabelEn(appLockState.timeoutSeconds),
-                        style: TextStyle(fontSize: 12, color: theme.colorScheme.primary),
-                      ),
-                      trailing: DropdownButton<int>(
-                        value: appLockState.timeoutSeconds,
-                        underline: const SizedBox(),
-                        items: [
-                          DropdownMenuItem(value: 0, child: Text(isArabic ? 'فوراً' : 'Immediately')),
-                          DropdownMenuItem(value: 30, child: Text(isArabic ? '30 ثانية' : '30 seconds')),
-                          DropdownMenuItem(value: 60, child: Text(isArabic ? 'دقيقة واحدة' : '1 minute')),
-                          DropdownMenuItem(value: 300, child: Text(isArabic ? '5 دقائق' : '5 minutes')),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) {
-                            ref.read(appLockProvider.notifier).setTimeoutSeconds(val);
-                          }
-                        },
-                      ),
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        isArabic
-                            ? 'إخفاء تفاصيل التنبيهات على شاشة القفل'
-                            : 'Hide notification details on lock screen',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      subtitle: Text(
-                        isArabic
-                            ? 'حماية خصوصية نصوص المهام والملاحظات عند قفل الشاشة'
-                            : 'Protects privacy of task & note text on phone lock screen',
-                        style: TextStyle(fontSize: 12, color: theme.colorScheme.outline),
-                      ),
-                      value: appLockState.hideNotificationDetails,
+                    trailing: DropdownButton<int>(
+                      value: appLockState.timeoutSeconds,
+                      underline: const SizedBox(),
+                      items: [
+                        DropdownMenuItem(value: 0, child: Text(isArabic ? 'فوراً' : 'Immediately')),
+                        DropdownMenuItem(value: 30, child: Text(isArabic ? '30 ثانية' : '30 seconds')),
+                        DropdownMenuItem(value: 60, child: Text(isArabic ? 'دقيقة واحدة' : '1 minute')),
+                        DropdownMenuItem(value: 300, child: Text(isArabic ? '5 دقائق' : '5 minutes')),
+                      ],
                       onChanged: (val) {
-                        ref.read(appLockProvider.notifier).setHideNotificationDetails(val);
+                        if (val != null) {
+                          ref.read(appLockProvider.notifier).setTimeoutSeconds(val);
+                        }
                       },
                     ),
-                  ],
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      isArabic
+                          ? 'إخفاء تفاصيل التنبيهات على شاشة القفل'
+                          : 'Hide notification details on lock screen',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    subtitle: Text(
+                      isArabic
+                          ? 'حماية خصوصية نصوص المهام والملاحظات عند قفل الشاشة'
+                          : 'Protects privacy of task & note text on phone lock screen',
+                      style: TextStyle(fontSize: 12, color: AppColors.of(context).textSecondary),
+                    ),
+                    value: appLockState.hideNotificationDetails,
+                    onChanged: (val) {
+                      ref.read(appLockProvider.notifier).setHideNotificationDetails(val);
+                    },
+                  ),
                 ],
-              ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
 
           // Section: Backup & Restore (Phase 7)
-          Card(
+          AppCard(
+            padding: EdgeInsets.zero,
             child: ListTile(
               leading: Icon(Icons.backup_outlined, color: theme.colorScheme.primary),
               title: Text(l10n.backupAndSecurity),
-              subtitle: Text(l10n.fullBackupDescription),
+              subtitle: Text(
+                l10n.fullBackupDescription,
+                style: TextStyle(color: AppColors.of(context).textSecondary),
+              ),
               trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
               onTap: () {
                 Navigator.of(context).push(
@@ -444,34 +461,32 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // Section: About
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.info_outline_rounded, color: theme.colorScheme.primary),
-                      const SizedBox(width: 12),
-                      Text(
-                        l10n.about,
-                        style: theme.textTheme.titleMedium,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.aboutDescription,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '${l10n.version}: 1.0.0 (Phase 7 - Final)',
-                    style: theme.textTheme.labelSmall,
-                  ),
-                ],
-              ),
+          AppCard(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded, color: theme.colorScheme.primary),
+                    const SizedBox(width: 12),
+                    Text(
+                      l10n.about,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.aboutDescription,
+                  style: theme.textTheme.bodySmall?.copyWith(color: AppColors.of(context).textSecondary),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '${l10n.version}: 1.0.0 (Phase 7 - Final)',
+                  style: theme.textTheme.labelSmall?.copyWith(color: AppColors.of(context).textSecondary),
+                ),
+              ],
             ),
           ),
         ],

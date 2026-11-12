@@ -172,7 +172,12 @@ class AnswerCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: Text(AppLocalizations.of(context)?.assistantClose ?? 'إغلاق'),
+                      child: Text(
+                        AppLocalizations.of(context)?.assistantClose ??
+                            (Localizations.localeOf(context).languageCode == 'en'
+                                ? 'Close'
+                                : 'إغلاق'),
+                      ),
                     ),
                   ),
               ],

@@ -401,6 +401,7 @@ class AppLocalizations {
       'fileSizeLabel': 'حجم الملف',
       'assistantRecordByVoice': 'سجّل بالصوت',
       'assistantSettingsAndHelp': 'إعدادات المساعد والمساعدة',
+      'assistantClose': 'إغلاق',
     },
     'en': {
       'appName': 'Enjaz',
@@ -784,6 +785,7 @@ class AppLocalizations {
       'fileSizeLabel': 'File Size',
       'assistantRecordByVoice': 'Record by Voice',
       'assistantSettingsAndHelp': 'Assistant Settings & Help',
+      'assistantClose': 'Close',
     },
   };
 
@@ -794,6 +796,7 @@ class AppLocalizations {
 
   String get assistantRecordByVoice => _get('assistantRecordByVoice');
   String get assistantSettingsAndHelp => _get('assistantSettingsAndHelp');
+  String get assistantClose => _get('assistantClose');
 
   String get appName => _get('appName');
   String get tabToday => _get('tabToday');

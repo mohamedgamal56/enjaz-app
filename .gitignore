@@ -48,6 +48,9 @@ key.properties
 *.zip
 test_font.ttf
 build-artifacts/
+build_artifacts/
+*.apk
+Enjaz Voice Assistant Review for Claude.docx
 status_report.csv
 
 build_output/

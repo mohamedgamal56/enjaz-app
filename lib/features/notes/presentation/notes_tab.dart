@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/db/app_database.dart';
+import '../../../core/widgets/widgets.dart';
 import 'note_card.dart';
 import 'add_note_sheet.dart';
 
@@ -110,37 +111,14 @@ class _NotesTabState extends ConsumerState<NotesTab> {
 
               if (notes.isEmpty) {
                 return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.description_outlined,
-                        size: 64,
-                        color: theme.colorScheme.outline,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        isArabic ? 'لا توجد ملاحظات مسجلة' : 'No notes yet',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.outline,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        isArabic
-                            ? 'اكتب أفكارك اليومية، حِكمك المفضلة، أو معلومات تود تذكرها'
-                            : 'Capture thoughts, quotes, wisdom, or reminders',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      FilledButton.tonalIcon(
-                        icon: const Icon(Icons.add_rounded),
-                        label: Text(isArabic ? 'إضافة ملاحظة جديدة' : 'Add Note'),
-                        onPressed: () => AddNoteSheet.show(context),
-                      ),
-                    ],
+                  child: EmptyState(
+                    icon: Icons.description_outlined,
+                    title: isArabic ? 'لا توجد ملاحظات مسجلة' : 'No notes yet',
+                    subtitle: isArabic
+                        ? 'اكتب أفكارك اليومية، حِكمك المفضلة، أو معلومات تود تذكرها'
+                        : 'Capture thoughts, quotes, wisdom, or reminders',
+                    actionLabel: isArabic ? 'إضافة ملاحظة جديدة' : 'Add Note',
+                    onAction: () => AddNoteSheet.show(context),
                   ),
                 );
               }

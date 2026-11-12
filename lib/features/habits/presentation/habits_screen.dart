@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/db/app_database.dart';
+import '../../../core/widgets/widgets.dart';
 import '../domain/habits_service.dart';
 import 'habit_icon_helper.dart';
 import 'habit_details_screen.dart';
@@ -84,51 +85,14 @@ class HabitsScreen extends ConsumerWidget {
 
           if (habits.isEmpty) {
             return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.repeat_rounded,
-                        size: 64,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      isArabic ? 'ابدأ في بناء عاداتك اليومية' : 'Start Building Daily Habits',
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      isArabic
-                          ? 'تابع الصلوات، القراءة، شرب الماء، الرياضة والقهوة بلمسة واحدة يومياً'
-                          : 'Track prayers, reading, water, fitness, coffee and more offline',
-                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    FilledButton.icon(
-                      icon: const Icon(Icons.auto_awesome_rounded),
-                      label: Text(isArabic ? 'إضافة من العادات المقترحة' : 'Add from Suggested Habits'),
-                      onPressed: () => SuggestedHabitsSheet.show(context),
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.add_rounded),
-                      label: Text(isArabic ? 'إنشاء عادة مخصصة' : 'Create Custom Habit'),
-                      onPressed: () => AddHabitSheet.show(context),
-                    ),
-                  ],
-                ),
+              child: EmptyState(
+                icon: Icons.repeat_rounded,
+                title: isArabic ? 'ابدأ في بناء عاداتك اليومية' : 'Start Building Daily Habits',
+                subtitle: isArabic
+                    ? 'تابع الصلوات، القراءة، شرب الماء، الرياضة والقهوة بلمسة واحدة يومياً'
+                    : 'Track prayers, reading, water, fitness, coffee and more offline',
+                actionLabel: isArabic ? 'إضافة من العادات المقترحة' : 'Add from Suggested Habits',
+                onAction: () => SuggestedHabitsSheet.show(context),
               ),
             );
           }
@@ -161,22 +125,17 @@ class HabitsScreen extends ConsumerWidget {
                       final totalLogged = logsByHabit[habit.id] ?? 0.0;
                       final doneItemIds = itemLogsByHabit[habit.id] ?? <int>{};
 
-                      return Card(
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => HabitDetailsScreen(habitId: habit.id),
-                              ),
-                            );
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
+                      return AppCard(
+                        padding: const EdgeInsets.all(16),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => HabitDetailsScreen(habitId: habit.id),
+                            ),
+                          );
+                        },
+                        child: Row(
+                          children: [
                                 CircleAvatar(
                                   radius: 24,
                                   backgroundColor: habitColor.withValues(alpha: 0.15),
@@ -287,9 +246,7 @@ class HabitsScreen extends ConsumerWidget {
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-                      );
+                          );
                     },
                   );
                 },

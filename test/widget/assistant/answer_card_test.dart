@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:enjaz/features/assistant/answer_service.dart';
 import 'package:enjaz/features/assistant/assistant_intent.dart';
 import 'package:enjaz/features/assistant/presentation/widgets/answer_card.dart';
+import 'package:enjaz/l10n/app_localizations.dart';
 
 void main() {
   group('AnswerCard Widget Tests (VOICE.md Step 4 & Section 6)', () {
@@ -61,8 +63,57 @@ void main() {
       await tester.pump();
       expect(navigateCalled, isTrue);
 
-      // Tap close button
+      // Tap close button (Arabic default fallback)
       await tester.tap(find.text('إغلاق'));
+      await tester.pump();
+      expect(closeCalled, isTrue);
+    });
+
+    testWidgets('Renders "Close" label when app locale is English', (tester) async {
+      bool closeCalled = false;
+
+      const intent = AssistantIntent(
+        type: AssistantIntentType.agenda,
+        rawText: 'what is today agenda',
+        normalizedText: 'what is today agenda',
+        slots: {},
+      );
+
+      final data = AnswerCardData(
+        intent: intent,
+        title: 'Agenda',
+        speechText: 'You have 1 task today',
+        metricChips: const ['1 task'],
+        detailItems: const ['Report submission at 4:00 PM'],
+        icon: Icons.calendar_today_rounded,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: Scaffold(
+            body: Center(
+              child: AnswerCard(
+                data: data,
+                onClose: () => closeCalled = true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Verify English "Close" button is rendered
+      expect(find.text('Close'), findsOneWidget);
+      expect(find.text('إغلاق'), findsNothing);
+
+      await tester.tap(find.text('Close'));
       await tester.pump();
       expect(closeCalled, isTrue);
     });

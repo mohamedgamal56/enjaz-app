@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/db/app_database.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../../core/widgets/widgets.dart';
 import 'add_transaction_sheet.dart';
 import 'finance_icon_helper.dart';
 import 'quick_favorites_row.dart';
@@ -118,22 +119,9 @@ class _TransactionsTabState extends ConsumerState<TransactionsTab> {
                   SliverFillRemaining(
                     hasScrollBody: false,
                     child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.receipt_long_outlined,
-                            size: 64,
-                            color: theme.colorScheme.outlineVariant,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            isArabic ? 'لا توجد معاملات في هذا الشهر' : 'No transactions this month',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.outline,
-                            ),
-                          ),
-                        ],
+                      child: EmptyState(
+                        icon: Icons.receipt_long_outlined,
+                        title: isArabic ? 'لا توجد معاملات في هذا الشهر' : 'No transactions this month',
                       ),
                     ),
                   )
@@ -234,13 +222,9 @@ class _TransactionsTabState extends ConsumerState<TransactionsTab> {
                                       ),
                                     );
                                   },
-                                  child: Card(
+                                  child: AppCard(
                                     margin: const EdgeInsets.symmetric(vertical: 4.0),
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                      side: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
-                                    ),
+                                    padding: EdgeInsets.zero,
                                     child: ListTile(
                                       contentPadding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 2.0),
                                       onTap: () {

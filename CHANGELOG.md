@@ -1,3 +1,32 @@
+## 1.2.14+2034 — 2026-11-12 (UI Refresh Step 3 — Section screens & AnswerCard localization fix, ui-3)
+
+- Section Screens Token & Card Refresh (UI.md Section 6):
+  - Applied design tokens (`AppColors`, calm 1px token borders, 0 elevation, 16px radius, `AppCard`) across all internal screens without altering existing business logic or database schema:
+    - `TodayScreen`: Date switcher modern card wrapped with `AppCard`, date subtitle using `textSecondary`, empty state replaced with unified `EmptyState`.
+    - `GoalsScreen`: Manual placeholder replaced with unified `EmptyState`.
+    - `IdeasScreen`: Replaced custom empty state with `EmptyState`.
+    - `NotesTab`: Replaced custom empty state with `EmptyState`.
+    - `StatsScreen`: Replaced `textMuted` with `textSecondary` across streak labels, metric card titles, and highlight timestamps to guarantee WCAG 4.5:1 contrast; replaced custom empty state with `EmptyState`.
+    - `HabitsScreen`: Converted habit list items to `AppCard` and replaced manual empty state with `EmptyState`.
+    - `FinanceScreen` & `TransactionsTab`: Converted month summary strip to `AppCard`, replaced manual empty state with `EmptyState`, and wrapped transaction items in `AppCard`.
+    - `HealthTodoTab` & `TreatmentsTab`: Wrapped checkup and treatment items in `AppCard` with 16px radius and token borders; unified empty states with `EmptyState`.
+    - `HistoryScreen`: Replaced custom empty state with `EmptyState`.
+    - `TrashScreen`: Replaced manual `_buildEmptyState` with `EmptyState` across all 7 trash tabs.
+    - `SettingsScreen`: Wrapped all 12 settings sections in `AppCard` (Profile, Home, Voice assistant, Language, Theme, Numerals, Management, Voice storage, Reminders, Excel, App Lock, About), ensuring secondary labels use `textSecondary`.
+- Voice Assistant AnswerCard Localization Bugfix:
+  - Fixed issue where the close button on the assistant answer card stayed in Arabic ("إغلاق") when the app language was switched to English:
+    - Registered `gen_l10n.AppLocalizations.delegate` in `lib/main.dart` `localizationsDelegates`.
+    - Added `assistantClose` to `lib/core/l10n/app_localizations.dart` in both Arabic ("إغلاق") and English ("Close") dictionaries and getters.
+    - Updated `AnswerCard` (~line 175) to resolve localized close label with fallback checking active locale.
+    - Added widget test in `test/widget/assistant/answer_card_test.dart` verifying English "Close" label and interaction.
+- Tests:
+  - Added `test/widget/section_screens_tokens_test.dart` testing `EmptyState`, `AppCard`, font scale at 1.3x, and `AppColors.textSecondary` 4.5:1 contrast in both light and dark modes.
+  - Updated `test/widget/assistant/answer_card_test.dart` covering English localization.
+- Red Lines & Integrity:
+  - Maintained alarm channel (`enjaz_alarm_v5_music`) and Xiaomi lockscreen flags untouched.
+  - Kept offline security policy intact (0 internet permissions).
+  - Maintained permanent keystore signing with SHA-256 fingerprint `7a1d0cb1de276fb092081dd1334cd717385c5f63866d7dba63bd8ed6f25faef7`.
+
 ## 1.2.13+2033 — 2026-11-12 (UI Refresh Step 2 — Home and Navigation, ui-2)
 
 - Home Dashboard (`HomeScreen`) & Reactive Summary (`HomeSummaryService`, `HomeSummaryData`):
