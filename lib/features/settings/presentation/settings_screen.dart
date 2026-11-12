@@ -14,6 +14,8 @@ import 'trash_screen.dart';
 import '../../security/domain/app_lock_provider.dart';
 import '../../backup/presentation/backup_screen.dart';
 import '../../assistant/presentation/assistant_settings_screen.dart';
+import '../../home/domain/home_settings_provider.dart';
+import 'home_customization_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -26,6 +28,7 @@ class SettingsScreen extends ConsumerWidget {
     final currentThemeMode = ref.watch(themeModeProvider);
     final currentNumerals = ref.watch(numeralsProvider);
     final appLockState = ref.watch(appLockProvider);
+    final homeSettings = ref.watch(homeSettingsProvider);
     final isArabic = (currentLocale?.languageCode ?? Localizations.localeOf(context).languageCode) == 'ar';
 
     return Scaffold(
@@ -35,6 +38,40 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         children: [
+          // Section: Profile (الملف الشخصي)
+          Card(
+            child: ListTile(
+              leading: Icon(Icons.person_outline_rounded, color: theme.colorScheme.primary),
+              title: Text(isArabic ? 'الملف الشخصي' : 'Profile'),
+              subtitle: Text(
+                homeSettings.userName.isNotEmpty
+                    ? homeSettings.userName
+                    : (isArabic ? 'الاسم (انقر لتعديل الاسم)' : 'Name (tap to edit)'),
+              ),
+              trailing: const Icon(Icons.edit_outlined, size: 18),
+              onTap: () => _editUserName(context, ref, homeSettings.userName, isArabic),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Section: Home Customization (الرئيسية)
+          Card(
+            child: ListTile(
+              leading: Icon(Icons.dashboard_customize_outlined, color: theme.colorScheme.primary),
+              title: Text(isArabic ? 'الرئيسية' : 'Home Screen'),
+              subtitle: Text(
+                isArabic
+                    ? 'ترتيب وإظهار البطاقات، وخصوصية الصحة'
+                    : 'Cards order, visibility & health privacy',
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const HomeCustomizationScreen()),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
           Card(child: ListTile(leading: const Icon(Icons.settings_voice), title: Text(isArabic ? 'المساعد الصوتي' : 'Voice assistant'), onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AssistantSettingsScreen())))),
           // Section: Language
           Card(
@@ -440,6 +477,43 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _editUserName(
+    BuildContext context,
+    WidgetRef ref,
+    String currentName,
+    bool isArabic,
+  ) async {
+    final controller = TextEditingController(text: currentName);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isArabic ? 'تعديل الاسم' : 'Edit Name'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(
+            labelText: isArabic ? 'اسمك' : 'Your Name',
+            hintText: isArabic ? 'مثال: أحمد' : 'e.g. Ahmed',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: Text(isArabic ? 'حفظ' : 'Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null) {
+      await ref.read(homeSettingsProvider.notifier).setUserName(result);
+    }
   }
 }
 

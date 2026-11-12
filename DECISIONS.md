@@ -650,3 +650,35 @@ equestDismissKeyguard(this, null) and WindowManager.LayoutParams.FLAG_DISMISS_KE
   - Alarm notification channel (`enjaz_alarm_v5_music`), Xiaomi wake lock flags, database tables, and voice assistant remain completely untouched.
 - **Version Bump & Artifact Naming**:
   - Bumped version to `1.2.12+2032` generating `enjaz-v1.2.12+2032-arm64.apk` signed with the permanent release keystore.
+
+## Decision 30: UI Refresh Step 2 — Home Dashboard, Navigation & Dynamic Modules (v1.2.13+2033)
+- **Context**: UI.md Section 4, 5, 7, and 9 require replacing the initial tasks screen with a comprehensive responsive dashboard (`HomeScreen`), replacing the bottom bar with `AppBottomBar` and centered quick add menu (`QuickAddMenu`), cleaning up `MoreScreen`, and implementing user customization settings.
+- **Decision**:
+  - **Aggregated Reactive Service (`HomeSummaryService`)**:
+    - Created single-pass lightweight queries in `HomeSummaryService` returning `HomeSummaryData` with pure rule calculation helpers (`calculateStreak`, `findNextTask`, `calculateRemainingBudget`).
+    - Merged Drift table change streams via `StreamGroup` from `package:async/async.dart` so that changes in tasks, habits, finance, health, and goals update the UI reactively without CPU spikes or list builder queries.
+  - **Dynamic Card Pairing & Layout Rules (UI.md Section 4.3)**:
+    - Today card is full width.
+    - Half-width cards (`habits`, `finance`, `health`, `goals_ideas`) pair up into 2-column rows in the user-configured order. An odd half-width card automatically expands to full width.
+    - Below 360px viewport width, all cards expand to full width.
+    - Verified under `TextScaler.linear(1.3)` with wrapping text and zero clipping.
+  - **Overdue Strip & Health Privacy Rules**:
+    - Overdue warning strip is conditionally rendered only when `overdueCount > 0`.
+    - Health card respects `homeSettings.hideHealthDetails`: when enabled, displays 'موعد قادم' without revealing the appointment title.
+    - Finance card reflects `financeMaskedProvider` with an inline eye toggle.
+  - **Navigation Flow & PopScope (UI.md Section 5)**:
+    - MainShell integrates `AppBottomBar` with 4 tabs: الرئيسية, التخطيط, الإحصائيات, المزيد.
+    - Center '+' button opens `QuickAddMenu` bottom sheet (task, errand, expense, habit, note, idea, voice note).
+    - Wrapped shell in `PopScope`: back button from any tab returns to Home (Index 0); back button on Home exits the application.
+    - Today card opens the dedicated `TodayScreen` tasks page.
+  - **More Screen Cleanup & Dynamic Hidden Modules**:
+    - Removed empty app banner card and duplicate timeline item (timeline opens from Stats top bar).
+    - Essential utilities retained: Settings, Backup & Security, Excel Export, History, Trash.
+    - Dynamic module display: any module whose Home card is hidden by the user automatically appears in More screen so it remains permanently accessible.
+  - **Settings Customization (UI.md Section 7)**:
+    - Added "الملف الشخصي" with user name dialog saved in SharedPreferences.
+    - Added "الرئيسية" (`HomeCustomizationScreen`) with `ReorderableListView` to drag-reorder cards, toggles to show/hide each card, and Health privacy switch.
+  - **Zero Regression**:
+    - Unaltered alarm notification channel (`enjaz_alarm_v5_music`), Xiaomi lockscreen flags, permissions, and Egyptian Arabic voice assistant.
+  - **Version Bump & Artifact Naming**:
+    - Version bumped to `1.2.13+2033` generating `enjaz-v1.2.13+2033-arm64.apk` signed with the permanent release keystore.

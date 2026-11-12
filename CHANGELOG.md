@@ -1,3 +1,43 @@
+## 1.2.13+2033 — 2026-11-12 (UI Refresh Step 2 — Home and Navigation, ui-2)
+
+- Home Dashboard (`HomeScreen`) & Reactive Summary (`HomeSummaryService`, `HomeSummaryData`):
+  - Created aggregated summary service that queries tasks, habits, finance, health, and goals in single-pass queries with reactive database updates via `StreamGroup`.
+  - Implemented pure business rules with unit tests:
+    - Streak rule: consecutive days ending today or yesterday if today is incomplete.
+    - Next-task rule: selects earliest task with time, or first unfinished, and marks all done when completed.
+    - Budget rule: computes remaining monthly limit or total monthly spending.
+  - Implemented all 5 cards and overdue warning strip:
+    - `HomeHeader`: greeting with user name ('أهلاً، <name>'), formatted date in words, microphone button, and settings button.
+    - `HomeOverdueStrip`: warning banner shown conditionally only when overdue tasks exist, opening tasks page.
+    - `HomeTodayCard`: today tasks progress bar, fraction 'N من M تمت', next task with time, or done celebration.
+    - `HomeHabitsCard`: mini progress ring, daily completion fraction, streak count, or empty state with add habit action.
+    - `HomeFinanceCard`: today's spending in key value typography, remaining monthly budget (or month spending), with eye masking toggle synchronized with `financeMaskedProvider`.
+    - `HomeHealthCard`: nearest appointment/test with privacy mode support (shows 'موعد قادم' when `hideHealthDetails` is on), and postponed count chip.
+    - `HomeGoalsIdeasCard`: active goals count, ideas & notes count, opening Plan tab.
+  - Responsive Layout Rules (UI.md Section 4.3):
+    - Half-width cards pair up into 2-column rows in user-defined order; odd card expands to full width.
+    - Below 360px viewport width, all cards expand to full width.
+    - Tested under `TextScaler.linear(1.3)` with zero clipping or RenderFlex overflow.
+- Navigation Modernization (`MainShell`, `AppBottomBar`, `QuickAddMenu`):
+  - Integrated `AppBottomBar` with 4 tabs: الرئيسية (`HomeScreen`), التخطيط (`PlanScreen`), الإحصائيات (`StatsScreen`), المزيد (`MoreScreen`).
+  - Centered circular '+' button opens `QuickAddMenu` bottom sheet (task, errand, expense, habit, note, idea, voice note) wired to existing creation sheets.
+  - `PopScope`: back button from any tab or pushed module returns to Home (Index 0); back on Home exits the app.
+  - Tapping Today card opens the Tasks page (`TodayScreen` with full date switcher and actions).
+- More Screen Cleanup (`MoreScreen`):
+  - Removed large non-functional app banner.
+  - Removed duplicate history entry ('التقويم والسجل الزمني' opens from Stats screen top bar).
+  - Kept only essential utilities: الإعدادات, النسخ الاحتياطي والأمان, تقرير إكسيل, السجل, سلة المحذوفات.
+  - Dynamic module visibility: when a card is hidden on Home, its corresponding module automatically appears in More so it is never unreachable.
+- Customization Settings (`SettingsScreen`, `HomeCustomizationScreen`):
+  - `Settings > الملف الشخصي`: user name configuration stored in SharedPreferences.
+  - `Settings > الرئيسية`: drag-and-drop card reordering (`ReorderableListView`), show/hide switches per card, and Health privacy toggle ('إخفاء تفاصيل الصحة في الرئيسية').
+- Tests:
+  - `test/unit/home_summary_service_test.dart` (streak, next task, budget calculation rules).
+  - `test/widget/home_navigation_test.dart` (Home rendering at 1.3x font scale, overdue strip condition, health privacy toggle, dynamic More modules, and < 360px responsiveness).
+- Zero Regression:
+  - Kept alarm notification channel (`enjaz_alarm_v5_music`), Xiaomi lockscreen flags, database tables, and Egyptian Arabic voice assistant completely untouched.
+- Output release artifact `enjaz-v1.2.13+2033-arm64.apk` signed with permanent release keystore.
+
 ## 1.2.12+2032 — 2026-11-12 (UI Refresh Step 1 — Tokens and Shared Widgets, ui-1)
 
 - Tokens & Typography Alignment (UI.md Section 3 & Section 9):

@@ -10,6 +10,11 @@ import '../../timeline/presentation/timeline_calendar_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/app_localizations.dart';
+import '../../../core/widgets/app_bottom_bar.dart';
+import '../../../core/widgets/quick_add_menu.dart';
+import '../../home/presentation/home_screen.dart';
+import '../../finance/presentation/add_transaction_sheet.dart';
+import '../../habits/presentation/add_habit_sheet.dart';
 import '../../today/presentation/today_screen.dart';
 import '../../plan/presentation/plan_screen.dart';
 import '../../stats/presentation/stats_screen.dart';
@@ -86,11 +91,40 @@ class _MainShellState extends ConsumerState<MainShell> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = const [
-    TodayScreen(),
+    HomeScreen(),
     PlanScreen(),
     StatsScreen(),
     MoreScreen(),
   ];
+
+  Future<void> _onQuickAddPressed() async {
+    final option = await QuickAddMenu.show(context);
+    if (!mounted || option == null) return;
+
+    switch (option) {
+      case QuickAddOption.task:
+        QuickAddSheet.show(context, initialKind: 'task');
+        break;
+      case QuickAddOption.errand:
+        QuickAddSheet.show(context, initialKind: 'errand');
+        break;
+      case QuickAddOption.expense:
+        AddTransactionSheet.show(context, initialType: 'expense');
+        break;
+      case QuickAddOption.habit:
+        AddHabitSheet.show(context);
+        break;
+      case QuickAddOption.note:
+        AddNoteSheet.show(context);
+        break;
+      case QuickAddOption.idea:
+        AddIdeaSheet.show(context);
+        break;
+      case QuickAddOption.voiceNote:
+        AssistantSheet.show(context);
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,89 +149,55 @@ class _MainShellState extends ConsumerState<MainShell> {
       }
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          getTitle(),
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.mic_rounded),
-            tooltip: isArabic ? 'المساعد الذكي' : 'Assistant',
-            onPressed: () => AssistantSheet.show(context),
-          ),
-          if (_currentIndex != 3)
-            IconButton(
-              icon: const Icon(Icons.settings_outlined),
-              tooltip: l10n.settings,
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                );
-              },
-            ),
-        ],
-      ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
+    return PopScope(
+      canPop: _currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _currentIndex != 0) {
           setState(() {
-            _currentIndex = index;
+            _currentIndex = 0;
           });
-        },
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.today_outlined),
-            selectedIcon: const Icon(Icons.today_rounded),
-            label: isArabic ? 'اليوم\nToday' : 'Today',
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.assignment_outlined),
-            selectedIcon: const Icon(Icons.assignment_rounded),
-            label: isArabic ? 'التخطيط\nPlan' : 'Plan',
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.bar_chart_rounded),
-            selectedIcon: const Icon(Icons.bar_chart_rounded),
-            label: isArabic ? 'الإحصائيات\nStats' : 'Stats',
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.more_horiz_rounded),
-            selectedIcon: const Icon(Icons.more_horiz_rounded),
-            label: isArabic ? 'المزيد\nMore' : 'More',
-          ),
-        ],
+        }
+      },
+      child: Scaffold(
+        appBar: (_currentIndex == 0 || _currentIndex == 2)
+            ? null
+            : AppBar(
+                title: Text(
+                  getTitle(),
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.mic_rounded),
+                    tooltip: isArabic ? 'المساعد الذكي' : 'Assistant',
+                    onPressed: () => AssistantSheet.show(context),
+                  ),
+                  if (_currentIndex != 3)
+                    IconButton(
+                      icon: const Icon(Icons.settings_outlined),
+                      tooltip: l10n.settings,
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                        );
+                      },
+                    ),
+                ],
+              ),
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _screens,
+        ),
+        bottomNavigationBar: AppBottomBar(
+          currentIndex: _currentIndex,
+          onTabSelected: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          onAddPressed: _onQuickAddPressed,
+        ),
       ),
-      // Floating button on Today and Plan. Stats and More have no button.
-      floatingActionButton: (_currentIndex == 0 || _currentIndex == 1)
-          ? FloatingActionButton(
-              tooltip: _currentIndex == 0
-                  ? l10n.addTask
-                  : (ref.watch(planSegmentProvider) == 0
-                      ? l10n.addGoal
-                      : (ref.watch(planSegmentProvider) == 1 ? l10n.addIdea : (isArabic ? 'إضافة ملاحظة' : 'Add Note'))),
-              child: const Icon(Icons.add_rounded),
-              onPressed: () {
-                if (_currentIndex == 0) {
-                  QuickAddSheet.show(context, initialKind: 'task');
-                } else if (_currentIndex == 1) {
-                  final segment = ref.read(planSegmentProvider);
-                  if (segment == 0) {
-                    AddGoalSheet.show(context);
-                  } else if (segment == 1) {
-                    AddIdeaSheet.show(context);
-                  } else {
-                    AddNoteSheet.show(context);
-                  }
-                }
-              },
-            )
-          : null,
     );
   }
 }

@@ -13,6 +13,7 @@ import '../../recurrence/domain/recurrence_service.dart';
 import '../../reminders/domain/notification_service.dart';
 import '../../reminders/domain/reminder_scheduler.dart';
 import '../../habits/presentation/habits_strip.dart';
+import '../../assistant/presentation/assistant_sheet.dart';
 
 class TodayScreen extends ConsumerStatefulWidget {
   const TodayScreen({super.key});
@@ -229,7 +230,16 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       child: Scaffold(
         appBar: selectionState.isSelecting
             ? BulkSelectionBar(currentVisibleTaskIds: _currentVisibleTaskIds)
-            : null,
+            : AppBar(
+                title: Text(isArabic ? 'مهام اليوم' : 'Tasks'),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.mic_rounded),
+                    tooltip: isArabic ? 'المساعد الذكي' : 'Assistant',
+                    onPressed: () => AssistantSheet.show(context),
+                  ),
+                ],
+              ),
         body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
