@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+import '../theme/enjaz_appearance.dart';
 
 /// AppBottomBarItem definition for AppBottomBar
 class AppBottomBarItem {
@@ -58,6 +59,10 @@ class AppBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final appearance = EnjazAppearanceTheme.of(context);
+    final rounded = appearance != EnjazAppearance.original &&
+        appearance != EnjazAppearance.classic;
+    final glow = appearance.hasGlow && colors.isDark;
     final items = customItems ?? defaultItems;
 
     // Items are split into 2 left and 2 right around the center button
@@ -66,13 +71,21 @@ class AppBottomBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(
-          top: BorderSide(
-            color: colors.border,
-            width: 1.0,
-          ),
-        ),
+        color: glow
+            ? Color.alphaBlend(
+                colors.accent.withValues(alpha: .07), colors.surface)
+            : colors.surface,
+        borderRadius: rounded
+            ? BorderRadius.vertical(top: Radius.circular(appearance.radius))
+            : null,
+        border: rounded
+            ? Border.all(color: colors.border)
+            : Border(
+                top: BorderSide(
+                  color: colors.border,
+                  width: 1.0,
+                ),
+              ),
       ),
       child: SafeArea(
         top: false,
@@ -140,17 +153,26 @@ class AppBottomBar extends StatelessWidget {
   }) {
     final colors = AppColors.of(context);
     final iconColor = isSelected ? colors.accent : colors.textSecondary;
-    final iconData = (isSelected && item.activeIcon != null) ? item.activeIcon! : item.icon;
+    final iconData =
+        (isSelected && item.activeIcon != null) ? item.activeIcon! : item.icon;
 
+    final appearance = EnjazAppearanceTheme.of(context);
     return InkWell(
       onTap: () => onTabSelected(index),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            iconData,
-            size: 22.0,
-            color: iconColor,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: isSelected && appearance != EnjazAppearance.original
+                  ? colors.accent.withValues(alpha: .14)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(appearance.radius),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              child: Icon(iconData, size: 22, color: iconColor),
+            ),
           ),
           const SizedBox(height: 3.0),
           Text(

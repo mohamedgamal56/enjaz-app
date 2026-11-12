@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/l10n/l10n.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/enjaz_appearance.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/widgets.dart';
@@ -18,6 +19,7 @@ import '../../backup/presentation/backup_screen.dart';
 import '../../assistant/presentation/assistant_settings_screen.dart';
 import '../../home/domain/home_settings_provider.dart';
 import 'home_customization_screen.dart';
+import 'appearance_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -31,6 +33,7 @@ class SettingsScreen extends ConsumerWidget {
     final currentNumerals = ref.watch(numeralsProvider);
     final appLockState = ref.watch(appLockProvider);
     final homeSettings = ref.watch(homeSettingsProvider);
+    final appearance = ref.watch(enjazAppearanceProvider);
     final isArabic = (currentLocale?.languageCode ?? Localizations.localeOf(context).languageCode) == 'ar';
 
     return Scaffold(
@@ -54,6 +57,20 @@ class SettingsScreen extends ConsumerWidget {
               ),
               trailing: const Icon(Icons.edit_outlined, size: 18),
               onTap: () => _editUserName(context, ref, homeSettings.userName, isArabic),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: ListTile(
+              leading: Icon(Icons.style_outlined, color: theme.colorScheme.primary),
+              title: Text(isArabic ? 'شكل إنجاز' : 'Enjaz appearance'),
+              subtitle: Text(appearance.title(isArabic)),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const AppearanceScreen()),
+              ),
             ),
           ),
           const SizedBox(height: 12),

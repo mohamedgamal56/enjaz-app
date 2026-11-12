@@ -13,10 +13,12 @@ import '../../domain/home_settings_provider.dart';
 /// Settings button on the end side; microphone button next to it.
 class HomeHeader extends ConsumerWidget {
   final DateTime? referenceDate;
+  final String? previewName;
 
   const HomeHeader({
     super.key,
     this.referenceDate,
+    this.previewName,
   });
 
   @override
@@ -29,10 +31,11 @@ class HomeHeader extends ConsumerWidget {
 
     final now = referenceDate ?? DateTime.now();
     final weekday = AppFormatter.formatWeekday(now, locale: locale);
-    final formattedDate = AppFormatter.formatDate(now, locale: locale, format: numerals);
+    final formattedDate =
+        AppFormatter.formatDate(now, locale: locale, format: numerals);
     final dateString = '$weekday، $formattedDate';
 
-    final userName = homeSettings.userName.trim();
+    final userName = (previewName ?? homeSettings.userName).trim();
     final greeting = userName.isNotEmpty
         ? (isArabic ? 'أهلاً، $userName' : 'Hello, $userName')
         : (isArabic ? 'أهلاً' : 'Hello');
@@ -50,14 +53,16 @@ class HomeHeader extends ConsumerWidget {
               children: [
                 Text(
                   greeting,
-                  style: AppTypography.greeting(context).copyWith(color: colors.text),
+                  style: AppTypography.greeting(context)
+                      .copyWith(color: colors.text),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2.0),
                 Text(
                   dateString,
-                  style: AppTypography.caption(context, color: colors.textSecondary),
+                  style: AppTypography.caption(context,
+                      color: colors.textSecondary),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

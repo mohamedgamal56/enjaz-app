@@ -1,3 +1,10 @@
+## 1.2.15+2035 — Enjaz appearance collection
+
+- Added 14 visual presets drawn from the distinct reference images, plus the existing appearance.
+- Settings → Enjaz appearance opens interactive dark previews with sample data. Applying a preset saves it on the device.
+- Presets use the Enjaz palette, preserve the light/dark setting, and reuse existing task, assistant, habit, spending, health and planning screens.
+- Added schedule, planner, voice, overview and section-focused layouts, while retaining home card visibility and privacy preferences.
+
 ## 1.2.14+2034 — 2026-11-12 (UI Refresh Step 3 — Section screens & AnswerCard localization fix, ui-3)
 
 - Section Screens Token & Card Refresh (UI.md Section 6):

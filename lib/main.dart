@@ -6,6 +6,7 @@ import 'core/l10n/app_localizations.dart';
 import 'l10n/app_localizations.dart' as gen_l10n;
 import 'core/l10n/l10n.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/enjaz_appearance.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/navigation/presentation/main_shell.dart';
 import 'features/reminders/presentation/alarm_overlay.dart';
@@ -26,6 +27,7 @@ class EnjazApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final customLocale = ref.watch(localeProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final appearance = ref.watch(enjazAppearanceProvider);
 
     // Default locale if none selected: Arabic as primary per spec
     final activeLocale = customLocale ?? const Locale('ar');
@@ -42,8 +44,10 @@ class EnjazApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      theme: AppTheme.light(activeLocale.languageCode),
-      darkTheme: AppTheme.dark(activeLocale.languageCode),
+      theme: EnjazAppearanceTheme.apply(
+          AppTheme.light(activeLocale.languageCode), appearance),
+      darkTheme: EnjazAppearanceTheme.apply(
+          AppTheme.dark(activeLocale.languageCode), appearance),
       themeMode: themeMode,
       builder: (context, child) =>
           AlarmOverlay(child: child ?? const SizedBox.shrink()),

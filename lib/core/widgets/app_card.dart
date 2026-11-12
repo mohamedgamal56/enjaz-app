@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/enjaz_appearance.dart';
 
 /// AppCard (UI.md Section 3 & Section 9)
 /// Calm and minimal card widget: 16px radius, 1px token border, 0 elevation,
@@ -28,8 +29,13 @@ class AppCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final cardColor = color ?? colors.surface;
-    final cardBorderColor = borderColor ?? colors.border;
-    final borderRadius = BorderRadius.circular(radius);
+    final appearance = EnjazAppearanceTheme.of(context);
+    final glow = appearance.hasGlow && colors.isDark;
+    final cardBorderColor = borderColor ??
+        (glow ? colors.accent.withValues(alpha: .32) : colors.border);
+    final borderRadius = BorderRadius.circular(
+      radius == 16 ? appearance.radius : radius,
+    );
 
     final cardContent = Container(
       padding: padding,
@@ -40,6 +46,17 @@ class AppCard extends StatelessWidget {
       margin: margin,
       decoration: BoxDecoration(
         color: cardColor,
+        gradient: glow && color == null
+            ? LinearGradient(
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
+                colors: [
+                  Color.alphaBlend(
+                      colors.accent.withValues(alpha: .10), cardColor),
+                  cardColor,
+                ],
+              )
+            : null,
         borderRadius: borderRadius,
         border: Border.all(
           color: cardBorderColor,

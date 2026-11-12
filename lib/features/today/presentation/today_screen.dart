@@ -17,7 +17,9 @@ import '../../habits/presentation/habits_strip.dart';
 import '../../assistant/presentation/assistant_sheet.dart';
 
 class TodayScreen extends ConsumerStatefulWidget {
-  const TodayScreen({super.key});
+  const TodayScreen({super.key, this.initialDate});
+
+  final DateTime? initialDate;
 
   @override
   ConsumerState<TodayScreen> createState() => _TodayScreenState();
@@ -32,8 +34,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   @override
   void initState() {
     super.initState();
-    final now = DateTime.now();
-    _selectedDate = DateTime(now.year, now.month, now.day);
+    final initialDate = widget.initialDate ?? DateTime.now();
+    _selectedDate = DateUtils.dateOnly(initialDate);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final db = ref.read(databaseProvider);
