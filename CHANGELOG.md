@@ -1,3 +1,29 @@
+## 1.2.12+2032 — 2026-11-12 (UI Refresh Step 1 — Tokens and Shared Widgets, ui-1)
+
+- Tokens & Typography Alignment (UI.md Section 3 & Section 9):
+  - Defined explicit context-aware typography styles in `AppTypography` matching UI.md Section 3: greeting (22/700), card title (15/600), key value (22/700), body (14 regular), caption (12 regular), with line heights 1.4-1.5.
+  - Enforced minimum text size 12px for all informational labels and captions across the design system.
+  - Resolved UI.md Section 2 Problem 1 by replacing dim `outline` color on secondary text in `TodayScreen` and `MoreScreen` with WCAG AA compliant `AppColors.of(context).textSecondary` (`#57534E` light, `#A8A29E` dark).
+  - Ensured card themes adhere to zero elevation, 16px radius, and 1px border.
+- 9 Shared Widgets Suite (lib/core/widgets/):
+  - Created standard reusable shared widgets:
+    1. `AppCard`: 16px radius, 1px border from tokens, 0 elevation, no shadows/gradients.
+    2. `CardHeader`: 15/600 card title with optional leading icon and trailing action link.
+    3. `ProgressBar`: 6px height fully rounded capsule with smooth progress fill.
+    4. `MiniRing`: 3px stroke circular progress ring with optional center child.
+    5. `StatValue`: 22/700 key numerical value with 12px caption label and optional trend.
+    6. `StatusChip`: fully rounded stadium chip with 1px border and 12px text.
+    7. `EmptyState`: calm and minimal placeholder with outlined icon and optional action button.
+    8. `AppBottomBar`: 4-tab bottom navigation with center circular '+' button prepared for Step 2.
+    9. `QuickAddMenu`: 7-option bottom sheet menu (task, errand, expense, habit, note, idea, voice note) prepared for Step 2.
+    10. `widgets.dart`: barrel export for easy importing.
+- Widget Verification Suite (test/widget/shared_widgets_test.dart):
+  - Comprehensive unit and widget tests covering all 9 shared widgets across Light and Dark themes, as well as under `TextScaler.linear(1.3)` with zero `RenderFlex` overflows.
+- Zero Regression Guarantees:
+  - Current layout and navigation flow left 100% intact until Step 2.
+  - Alarm notification channel (`enjaz_alarm_v5_music`), Xiaomi wake lock flags, database tables, and voice assistant remain completely untouched.
+- Output release artifact `enjaz-v1.2.12+2032-arm64.apk` signed with permanent release keystore.
+
 ## 1.2.11+2031 — 2026-11-12 (Batch 4 — Language, Numerals, Themes, Font Scale, Performance)
 
 - L10n & Hardcoded Text Verification (PLAN.md Section 7):

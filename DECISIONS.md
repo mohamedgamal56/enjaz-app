@@ -624,3 +624,29 @@ equestDismissKeyguard(this, null) and WindowManager.LayoutParams.FLAG_DISMISS_KE
   - Added benchmark test `test/unit/performance_benchmark_test.dart` creating an in-memory database populated with 5,000 tasks and multi-year events, verifying query latency (daily, overdue, inbox, paginated history, and `StatsService.computeStats`) remains responsive and sub-100ms.
 - **Version Bump & Artifact Naming**:
   - Bumped version to `1.2.11+2031` generating `enjaz-v1.2.11+2031-arm64.apk` signed with the permanent release keystore.
+
+## Decision 38: UI Refresh Step 1 — Tokens & Shared Widgets Suite (ui-1) / 2026-11-12
+
+- **Typography & Token Standards (UI.md Section 3 & Section 9)**:
+  - Aligned `AppTypography` with UI.md Section 3: defined explicit styles for greeting (22/700), card title (15/600), key value (22/700), body (14 regular), and caption (12 regular), with line heights 1.4-1.5.
+  - Enforced 12px minimum font size for all text that carries information.
+  - Resolved UI.md Section 2 Problem 1 by replacing dim `outline` color on secondary text in `TodayScreen` and `MoreScreen` with WCAG AA compliant `AppColors.of(context).textSecondary` (`#57534E` light, `#A8A29E` dark).
+- **Comprehensive Shared Widgets Suite (`lib/core/widgets/`)**:
+  - Created 9 core reusable shared widgets:
+    1. `AppCard`: 16px radius, 1px border from tokens, 0 elevation, no shadows/gradients.
+    2. `CardHeader`: 15/600 card title with optional leading icon and trailing action link.
+    3. `ProgressBar`: 6px height fully rounded capsule with smooth progress fill.
+    4. `MiniRing`: 3px stroke circular progress ring with optional center child.
+    5. `StatValue`: 22/700 key numerical value with 12px caption label and optional trend.
+    6. `StatusChip`: fully rounded stadium chip with 1px border and 12px text.
+    7. `EmptyState`: calm and minimal placeholder with outlined icon and optional action button.
+    8. `AppBottomBar`: 4-tab bottom navigation with center circular '+' button prepared for Step 2.
+    9. `QuickAddMenu`: 7-option bottom sheet menu (task, errand, expense, habit, note, idea, voice note) prepared for Step 2.
+    10. `widgets.dart`: barrel export for standard imports.
+- **Widget Test Verification (`test/widget/shared_widgets_test.dart`)**:
+  - Implemented comprehensive widget tests covering all 9 shared widgets across Light and Dark themes, as well as under `TextScaler.linear(1.3)` asserting zero `RenderFlex` overflows.
+- **Zero Regression Guarantees**:
+  - Current layout and navigation flow left 100% intact until Step 2.
+  - Alarm notification channel (`enjaz_alarm_v5_music`), Xiaomi wake lock flags, database tables, and voice assistant remain completely untouched.
+- **Version Bump & Artifact Naming**:
+  - Bumped version to `1.2.12+2032` generating `enjaz-v1.2.12+2032-arm64.apk` signed with the permanent release keystore.

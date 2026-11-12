@@ -278,7 +278,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                                       child: Text(
                                         l10n.tabToday,
                                         style: TextStyle(
-                                          fontSize: 10,
+                                          fontSize: 12,
                                           fontWeight: FontWeight.bold,
                                           color: theme.colorScheme.onPrimaryContainer,
                                         ),
@@ -291,7 +291,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                               Text(
                                 fullDate,
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.outline,
+                                  color: AppColors.of(context).textSecondary,
                                 ),
                               ),
                             ],

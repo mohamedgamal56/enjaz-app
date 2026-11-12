@@ -1,3 +1,4 @@
+import '../../../core/theme/app_colors.dart';
 import '../../assistant/presentation/assistant_sheet.dart';
 import '../../assistant/presentation/assistant_settings_screen.dart';
 import 'package:flutter/material.dart';
@@ -55,7 +56,7 @@ class MoreScreen extends ConsumerWidget {
                         isArabic
                             ? 'إدارة المهام والأهداف والملاحظات أوفلاين'
                             : 'Tasks, Goals & Notes fully offline',
-                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+                        style: theme.textTheme.bodySmall?.copyWith(color: AppColors.of(context).textSecondary),
                       ),
                     ],
                   ),
@@ -199,7 +200,7 @@ class MoreScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Card(
-      elevation: 1,
+      elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -208,7 +209,7 @@ class MoreScreen extends ConsumerWidget {
           child: Icon(icon, color: iconColor),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-        subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: theme.colorScheme.outline)),
+        subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: AppColors.of(context).textSecondary)),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
         onTap: onTap,
       ),
